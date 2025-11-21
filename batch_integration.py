@@ -250,23 +250,27 @@ class BatchIntegrator:
             save_individual_files (bool): Whether to save individual integration files (default: True)
         """
         # Enhanced file search with multiple attempts
-        h5_files = sorted(glob.glob(input_pattern, recursive=True))
+        h5_files = []
 
-        # If no files found and pattern doesn't use **, try adding ** for recursive search
-        if not h5_files and '**' not in input_pattern:
-            # Try to construct a recursive pattern
-            if input_pattern.endswith('*.h5'):
-                # Replace *.h5 with **/*.h5 for recursive search
-                recursive_pattern = input_pattern.replace('*.h5', '**/*.h5')
-                h5_files = sorted(glob.glob(recursive_pattern, recursive=True))
-                if h5_files:
-                    print(f"ℹ Using recursive search pattern: {recursive_pattern}")
-            elif os.path.isfile(input_pattern):
-                # If input_pattern is a single file, use the directory
-                directory = os.path.dirname(input_pattern)
-                h5_files = sorted(glob.glob(os.path.join(directory, '*.h5')))
-                if h5_files:
-                    print(f"ℹ Found {len(h5_files)} files in directory: {directory}")
+        # First, check if input_pattern is a single file
+        if os.path.isfile(input_pattern):
+            # User selected a single file - find all .h5 files in the same directory
+            directory = os.path.dirname(input_pattern)
+            h5_files = sorted(glob.glob(os.path.join(directory, '*.h5')))
+            if h5_files:
+                print(f"ℹ Single file selected - processing all {len(h5_files)} .h5 files in directory: {directory}")
+        else:
+            # Try glob pattern
+            h5_files = sorted(glob.glob(input_pattern, recursive=True))
+
+            # If no files found and pattern doesn't use **, try recursive search
+            if not h5_files and '**' not in input_pattern:
+                if input_pattern.endswith('*.h5'):
+                    # Replace *.h5 with **/*.h5 for recursive search
+                    recursive_pattern = input_pattern.replace('*.h5', '**/*.h5')
+                    h5_files = sorted(glob.glob(recursive_pattern, recursive=True))
+                    if h5_files:
+                        print(f"ℹ Using recursive search pattern: {recursive_pattern}")
 
         if not h5_files:
             print(f"⚠ No matching files found: {input_pattern}")
