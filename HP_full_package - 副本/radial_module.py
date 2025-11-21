@@ -865,10 +865,10 @@ class AzimuthalIntegrationModule(GUIBase):
         if not self.custom_sectors:
             try:
                 self.custom_sectors = [
-                    [tk.DoubleVar(value=0.0), tk.DoubleVar(value=90.0), tk.StringVar(value="Sector_1"), tk.DoubleVar(value=10.0)],
-                    [tk.DoubleVar(value=90.0), tk.DoubleVar(value=180.0), tk.StringVar(value="Sector_2"), tk.DoubleVar(value=10.0)],
-                    [tk.DoubleVar(value=180.0), tk.DoubleVar(value=270.0), tk.StringVar(value="Sector_3"), tk.DoubleVar(value=10.0)],
-                    [tk.DoubleVar(value=270.0), tk.DoubleVar(value=360.0), tk.StringVar(value="Sector_4"), tk.DoubleVar(value=10.0)]
+                    [tk.DoubleVar(master=self.root, value=0.0), tk.DoubleVar(master=self.root, value=90.0), tk.StringVar(master=self.root, value="Sector_1"), tk.DoubleVar(master=self.root, value=10.0)],
+                    [tk.DoubleVar(master=self.root, value=90.0), tk.DoubleVar(master=self.root, value=180.0), tk.StringVar(master=self.root, value="Sector_2"), tk.DoubleVar(master=self.root, value=10.0)],
+                    [tk.DoubleVar(master=self.root, value=180.0), tk.DoubleVar(master=self.root, value=270.0), tk.StringVar(master=self.root, value="Sector_3"), tk.DoubleVar(master=self.root, value=10.0)],
+                    [tk.DoubleVar(master=self.root, value=270.0), tk.DoubleVar(master=self.root, value=360.0), tk.StringVar(master=self.root, value="Sector_4"), tk.DoubleVar(master=self.root, value=10.0)]
                 ]
             except Exception as e:
                 print(f"Error initializing custom sectors: {e}")
@@ -998,7 +998,7 @@ class AzimuthalIntegrationModule(GUIBase):
 
             # Ensure sector has bin_step variable (for backward compatibility)
             if len(sector) == 3:
-                sector.append(tk.DoubleVar(value=10.0))
+                sector.append(tk.DoubleVar(master=self.root, value=10.0))
                 self.custom_sectors[idx] = sector
 
             # Main row container
@@ -1119,10 +1119,10 @@ class AzimuthalIntegrationModule(GUIBase):
         """
         try:
             new_sector = [
-                tk.DoubleVar(value=0.0),
-                tk.DoubleVar(value=90.0),
-                tk.StringVar(value=f"Sector_{len(self.custom_sectors) + 1}"),
-                tk.DoubleVar(value=10.0)  # Default bin size
+                tk.DoubleVar(master=self.root, value=0.0),
+                tk.DoubleVar(master=self.root, value=90.0),
+                tk.StringVar(master=self.root, value=f"Sector_{len(self.custom_sectors) + 1}"),
+                tk.DoubleVar(master=self.root, value=10.0)  # Default bin size
             ]
             self.custom_sectors.append(new_sector)
             self._create_sector_row(len(self.custom_sectors) - 1)
@@ -1219,10 +1219,10 @@ class AzimuthalIntegrationModule(GUIBase):
 
                 # Reset to single default sector
                 self.custom_sectors = [
-                    [tk.DoubleVar(value=0.0),
-                     tk.DoubleVar(value=90.0),
-                     tk.StringVar(value="Sector_1"),
-                     tk.DoubleVar(value=10.0)]
+                    [tk.DoubleVar(master=self.root, value=0.0),
+                     tk.DoubleVar(master=self.root, value=90.0),
+                     tk.StringVar(master=self.root, value="Sector_1"),
+                     tk.DoubleVar(master=self.root, value=10.0)]
                 ]
 
                 # Create the default sector row
