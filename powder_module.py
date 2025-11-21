@@ -218,44 +218,44 @@ class PowderXRDModule(GUIBase):
         self.interactive_fitting_window = None
 
     def _init_variables(self):
-        """Initialize all Tkinter variables"""
+        """Initialize all Tkinter variables - THREAD SAFE with explicit master binding"""
         # Integration and fitting variables
-        self.poni_path = tk.StringVar()
-        self.mask_path = tk.StringVar()
-        self.input_pattern = tk.StringVar()
-        self.output_dir = tk.StringVar()
-        self.dataset_path = tk.StringVar(value="entry/data/data")
-        self.npt = tk.IntVar(value=4000)
-        self.unit = tk.StringVar(value='2th_deg')
-        self.fit_method = tk.StringVar(value='pseudo')
+        self.poni_path = tk.StringVar(master=self.root)
+        self.mask_path = tk.StringVar(master=self.root)
+        self.input_pattern = tk.StringVar(master=self.root)
+        self.output_dir = tk.StringVar(master=self.root)
+        self.dataset_path = tk.StringVar(master=self.root, value="entry/data/data")
+        self.npt = tk.IntVar(master=self.root, value=4000)
+        self.unit = tk.StringVar(master=self.root, value='2th_deg')
+        self.fit_method = tk.StringVar(master=self.root, value='pseudo')
 
         # Output format options (6 formats)
-        self.format_xy = tk.BooleanVar(value=True)
-        self.format_dat = tk.BooleanVar(value=False)
-        self.format_chi = tk.BooleanVar(value=False)
-        self.format_fxye = tk.BooleanVar(value=False)
-        self.format_svg = tk.BooleanVar(value=False)
-        self.format_png = tk.BooleanVar(value=False)
+        self.format_xy = tk.BooleanVar(master=self.root, value=True)
+        self.format_dat = tk.BooleanVar(master=self.root, value=False)
+        self.format_chi = tk.BooleanVar(master=self.root, value=False)
+        self.format_fxye = tk.BooleanVar(master=self.root, value=False)
+        self.format_svg = tk.BooleanVar(master=self.root, value=False)
+        self.format_png = tk.BooleanVar(master=self.root, value=False)
 
         # Stacked plot options
-        self.create_stacked_plot = tk.BooleanVar(value=False)
-        self.stacked_plot_offset = tk.StringVar(value='auto')
+        self.create_stacked_plot = tk.BooleanVar(master=self.root, value=False)
+        self.stacked_plot_offset = tk.StringVar(master=self.root, value='auto')
 
         # Phase analysis variables
-        self.phase_peak_csv = tk.StringVar()
-        self.phase_volume_csv = tk.StringVar()
-        self.phase_volume_system = tk.StringVar(value='FCC')
-        self.phase_volume_output = tk.StringVar()
-        self.phase_wavelength = tk.DoubleVar(value=0.4133)
-        self.phase_tolerance_1 = tk.DoubleVar(value=0.3)
-        self.phase_tolerance_2 = tk.DoubleVar(value=0.4)
-        self.phase_tolerance_3 = tk.DoubleVar(value=0.01)
-        self.phase_n_points = tk.IntVar(value=4)
+        self.phase_peak_csv = tk.StringVar(master=self.root)
+        self.phase_volume_csv = tk.StringVar(master=self.root)
+        self.phase_volume_system = tk.StringVar(master=self.root, value='FCC')
+        self.phase_volume_output = tk.StringVar(master=self.root)
+        self.phase_wavelength = tk.DoubleVar(master=self.root, value=0.4133)
+        self.phase_tolerance_1 = tk.DoubleVar(master=self.root, value=0.3)
+        self.phase_tolerance_2 = tk.DoubleVar(master=self.root, value=0.4)
+        self.phase_tolerance_3 = tk.DoubleVar(master=self.root, value=0.01)
+        self.phase_n_points = tk.IntVar(master=self.root, value=4)
 
         # Birch-Murnaghan variables
-        self.bm_input_file = tk.StringVar()
-        self.bm_output_dir = tk.StringVar()
-        self.bm_order = tk.StringVar(value='3')
+        self.bm_input_file = tk.StringVar(master=self.root)
+        self.bm_output_dir = tk.StringVar(master=self.root)
+        self.bm_order = tk.StringVar(master=self.root, value='3')
 
     def capture_variables(self):
         """THREAD-SAFE: Capture all Tkinter variables at once"""
