@@ -217,6 +217,10 @@ class PowderXRDModule(GUIBase):
         # Track interactive fitting window
         self.interactive_fitting_window = None
 
+        # Track running threads for cleanup
+        self.running_threads = []
+        self._is_shutting_down = False
+
     def _init_variables(self):
         """Initialize all Tkinter variables - THREAD SAFE with explicit master binding"""
         # Integration and fitting variables
@@ -257,8 +261,63 @@ class PowderXRDModule(GUIBase):
         self.bm_output_dir = tk.StringVar(master=self.root)
         self.bm_order = tk.StringVar(master=self.root, value='3')
 
+    def _start_thread(self, target, name=None):
+        """Start a thread and track it for cleanup"""
+        if self._is_shutting_down:
+            return None
+
+        thread = threading.Thread(target=target, daemon=True, name=name)
+        self.running_threads.append(thread)
+        thread.start()
+
+        # Clean up finished threads from list
+        self.running_threads = [t for t in self.running_threads if t.is_alive()]
+
+        return thread
+
+    def cleanup(self):
+        """Clean up resources before shutdown"""
+        self._is_shutting_down = True
+
+        # Wait for running threads to complete (with timeout)
+        import time
+        timeout = 5  # seconds
+        start_time = time.time()
+
+        for thread in self.running_threads:
+            if thread.is_alive():
+                remaining_time = timeout - (time.time() - start_time)
+                if remaining_time > 0:
+                    thread.join(timeout=remaining_time)
+
+        # Clean up Tkinter variables
+        try:
+            # Clear all StringVar, IntVar, DoubleVar, BooleanVar references
+            vars_to_clear = [
+                'poni_path', 'mask_path', 'input_pattern', 'output_dir',
+                'dataset_path', 'npt', 'unit', 'fit_method',
+                'format_xy', 'format_dat', 'format_chi', 'format_fxye',
+                'format_svg', 'format_png', 'create_stacked_plot', 'stacked_plot_offset',
+                'phase_peak_csv', 'phase_volume_csv', 'phase_volume_system',
+                'phase_volume_output', 'phase_wavelength', 'phase_tolerance_1',
+                'phase_tolerance_2', 'phase_tolerance_3', 'phase_n_points',
+                'bm_input_file', 'bm_output_dir', 'bm_order'
+            ]
+
+            for var_name in vars_to_clear:
+                if hasattr(self, var_name):
+                    try:
+                        delattr(self, var_name)
+                    except:
+                        pass
+        except:
+            pass
+
     def capture_variables(self):
         """THREAD-SAFE: Capture all Tkinter variables at once"""
+        if self._is_shutting_down:
+            return None
+
         try:
             return {
                 'poni_path': str(self.poni_path.get()),
@@ -929,12 +988,16 @@ class PowderXRDModule(GUIBase):
 
     def log(self, message):
         """Thread-safe log message - NO CONSOLE OUTPUT"""
+        if self._is_shutting_down:
+            return
+
         def _log():
             try:
-                self.log_text.config(state='normal')
-                self.log_text.insert(tk.END, message + "\n")
-                self.log_text.see(tk.END)
-                self.log_text.config(state='disabled')
+                if not self._is_shutting_down and hasattr(self, 'log_text'):
+                    self.log_text.config(state='normal')
+                    self.log_text.insert(tk.END, message + "\n")
+                    self.log_text.see(tk.END)
+                    self.log_text.config(state='disabled')
             except:
                 pass
 
@@ -942,23 +1005,37 @@ class PowderXRDModule(GUIBase):
             _log()
         else:
             try:
-                self.root.after(0, _log)
+                if not self._is_shutting_down:
+                    self.root.after(0, _log)
             except:
                 pass
 
     def show_error(self, title, message):
         """Thread-safe error message"""
+        if self._is_shutting_down:
+            return
+
         def _show():
-            messagebox.showerror(title, message)
+            try:
+                if not self._is_shutting_down:
+                    messagebox.showerror(title, message)
+            except:
+                pass
 
         try:
-            self.root.after(0, _show)
+            if not self._is_shutting_down:
+                self.root.after(0, _show)
         except:
             pass
 
     def show_success_dialog(self, title, message, details=None):
         """Beautiful success dialog with improved UI"""
+        if self._is_shutting_down:
+            return
+
         def _show():
+            if self._is_shutting_down:
+                return
             dialog = tk.Toplevel(self.root)
             dialog.title(title)
             dialog.configure(bg='#F0E6FA')
@@ -1043,9 +1120,10 @@ class PowderXRDModule(GUIBase):
             
             dialog.bind('<Return>', lambda e: dialog.destroy())
             ok_btn.focus()
-        
+
         try:
-            self.root.after(0, _show)
+            if not self._is_shutting_down:
+                self.root.after(0, _show)
         except:
             pass
 
@@ -1072,7 +1150,7 @@ class PowderXRDModule(GUIBase):
         if not self.phase_peak_csv.get():
             self.show_error("Error", "Please select peak CSV file first")
             return
-        threading.Thread(target=self._separate_peaks_thread, daemon=True).start()
+        self._start_thread(self._separate_peaks_thread, name="SeparatePeaks")
 
     def _separate_peaks_thread(self):
         """Background thread for peak separation - THREAD SAFE"""
@@ -1184,7 +1262,7 @@ class PowderXRDModule(GUIBase):
         if not self.poni_path.get() or not self.mask_path.get() or not self.input_pattern.get() or not self.output_dir.get():
             self.show_error("Error", "Please fill all required fields")
             return
-        threading.Thread(target=self._run_integration_thread, daemon=True).start()
+        self._start_thread(self._run_integration_thread, name="Integration")
 
     def _run_integration_thread(self):
         """Background thread for integration - THREAD SAFE"""
@@ -1392,7 +1470,7 @@ class PowderXRDModule(GUIBase):
         if not self.output_dir.get():
             self.show_error("Error", "Please specify output directory")
             return
-        threading.Thread(target=self._run_fitting_thread, daemon=True).start()
+        self._start_thread(self._run_fitting_thread, name="Fitting")
 
     def _run_fitting_thread(self):
         """Background thread for peak fitting - THREAD SAFE"""
@@ -1432,7 +1510,7 @@ class PowderXRDModule(GUIBase):
         if not self.poni_path.get() or not self.mask_path.get() or not self.input_pattern.get() or not self.output_dir.get():
             self.show_error("Error", "Please fill all required fields")
             return
-        threading.Thread(target=self._run_full_pipeline_thread, daemon=True).start()
+        self._start_thread(self._run_full_pipeline_thread, name="FullPipeline")
 
     def _run_full_pipeline_thread(self):
         """Background thread for full pipeline - THREAD SAFE"""
@@ -1531,7 +1609,7 @@ class PowderXRDModule(GUIBase):
         if not self.phase_volume_csv.get() or not self.phase_volume_output.get():
             self.show_error("Error", "Please fill all required fields (Input CSV and Output Directory)")
             return
-        threading.Thread(target=self._run_phase_analysis_thread, daemon=True).start()
+        self._start_thread(self._run_phase_analysis_thread, name="PhaseAnalysis")
 
     def _run_phase_analysis_thread(self):
         """Background thread for phase analysis - THREAD SAFE"""
@@ -1647,7 +1725,7 @@ class PowderXRDModule(GUIBase):
         if not self.bm_input_file.get() or not self.bm_output_dir.get():
             self.show_error("Error", "Please fill all required fields")
             return
-        threading.Thread(target=self._run_birch_murnaghan_thread, daemon=True).start()
+        self._start_thread(self._run_birch_murnaghan_thread, name="BirchMurnaghan")
 
     def _run_birch_murnaghan_thread(self):
         """Background thread for Birch-Murnaghan fitting - THREAD SAFE"""
