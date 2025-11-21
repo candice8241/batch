@@ -218,42 +218,30 @@ class PowderXRDModule(GUIBase):
     def _init_variables(self):
         """Initialize all Tkinter variables"""
         # Integration and fitting variables
-        self.poni_path = tk.StringVar(master=self.root)
-        self.mask_path = tk.StringVar(master=self.root)
-        self.input_pattern = tk.StringVar(master=self.root)
-        self.output_dir = tk.StringVar(master=self.root)
-        self.dataset_path = tk.StringVar(master=self.root, value="entry/data/data")
-        self.npt = tk.IntVar(master=self.root, value=4000)
-        self.unit = tk.StringVar(master=self.root, value='2th_deg')
-        self.fit_method = tk.StringVar(master=self.root, value='pseudo')
-
-        # Output format variables
-        self.format_xy = tk.BooleanVar(master=self.root, value=True)
-        self.format_dat = tk.BooleanVar(master=self.root, value=True)
-        self.format_chi = tk.BooleanVar(master=self.root, value=False)
-        self.format_svg = tk.BooleanVar(master=self.root, value=False)
-        self.format_png = tk.BooleanVar(master=self.root, value=False)
-        self.format_fxye = tk.BooleanVar(master=self.root, value=False)
-
-        # Stacked plot variables
-        self.create_stacked_plot = tk.BooleanVar(master=self.root, value=True)
-        self.stacked_plot_offset = tk.StringVar(master=self.root, value='auto')
+        self.poni_path = tk.StringVar()
+        self.mask_path = tk.StringVar()
+        self.input_pattern = tk.StringVar()
+        self.output_dir = tk.StringVar()
+        self.dataset_path = tk.StringVar(value="entry/data/data")
+        self.npt = tk.IntVar(value=4000)
+        self.unit = tk.StringVar(value='2th_deg')
+        self.fit_method = tk.StringVar(value='pseudo')
 
         # Phase analysis variables
-        self.phase_peak_csv = tk.StringVar(master=self.root)
-        self.phase_volume_csv = tk.StringVar(master=self.root)
-        self.phase_volume_system = tk.StringVar(master=self.root, value='FCC')
-        self.phase_volume_output = tk.StringVar(master=self.root)
-        self.phase_wavelength = tk.DoubleVar(master=self.root, value=0.4133)
-        self.phase_tolerance_1 = tk.DoubleVar(master=self.root, value=0.3)
-        self.phase_tolerance_2 = tk.DoubleVar(master=self.root, value=0.4)
-        self.phase_tolerance_3 = tk.DoubleVar(master=self.root, value=0.01)
-        self.phase_n_points = tk.IntVar(master=self.root, value=4)
+        self.phase_peak_csv = tk.StringVar()
+        self.phase_volume_csv = tk.StringVar()
+        self.phase_volume_system = tk.StringVar(value='FCC')
+        self.phase_volume_output = tk.StringVar()
+        self.phase_wavelength = tk.DoubleVar(value=0.4133)
+        self.phase_tolerance_1 = tk.DoubleVar(value=0.3)
+        self.phase_tolerance_2 = tk.DoubleVar(value=0.4)
+        self.phase_tolerance_3 = tk.DoubleVar(value=0.01)
+        self.phase_n_points = tk.IntVar(value=4)
 
         # Birch-Murnaghan variables
-        self.bm_input_file = tk.StringVar(master=self.root)
-        self.bm_output_dir = tk.StringVar(master=self.root)
-        self.bm_order = tk.StringVar(master=self.root, value='3')
+        self.bm_input_file = tk.StringVar()
+        self.bm_output_dir = tk.StringVar()
+        self.bm_order = tk.StringVar(value='3')
 
     def setup_ui(self):
         """Setup the complete powder XRD UI"""
@@ -416,7 +404,7 @@ class PowderXRDModule(GUIBase):
 
         if pattern:
             btn = SpinboxStyleButton(input_frame, "Browse",
-                                    lambda: self.browse_file(var, filetypes),
+                                    lambda: self.browse_file(var, filetypes, pattern=True),
                                     width=75)
         else:
             btn = SpinboxStyleButton(input_frame, "Browse",
@@ -517,62 +505,6 @@ class PowderXRDModule(GUIBase):
                     values=['2th_deg', 'q_A^-1', 'q_nm^-1', 'r_mm'],
                     width=16, state='readonly', font=('Comic Sans MS', 9)).pack(anchor=tk.W)
 
-        # Output Formats and Stacked Plot Section - Single Line
-        formats_stacked_frame = tk.Frame(content1, bg=self.colors['card_bg'])
-        formats_stacked_frame.pack(fill=tk.X, pady=(10, 0))
-
-        # Left side: Output Formats (all in one line)
-        formats_left = tk.Frame(formats_stacked_frame, bg=self.colors['card_bg'])
-        formats_left.pack(side=tk.LEFT, fill=tk.X, expand=True)
-
-        tk.Label(formats_left, text="Output Formats:", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 10))
-
-        tk.Checkbutton(formats_left, text=".xy", variable=self.format_xy, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=5)
-        tk.Checkbutton(formats_left, text=".dat", variable=self.format_dat, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=5)
-        tk.Checkbutton(formats_left, text=".chi", variable=self.format_chi, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=5)
-        tk.Checkbutton(formats_left, text=".svg", variable=self.format_svg, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=5)
-        tk.Checkbutton(formats_left, text=".png", variable=self.format_png, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=5)
-        tk.Checkbutton(formats_left, text=".fxye", variable=self.format_fxye, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=5)
-
-        # Right side: Stacked Plot with Offset
-        stacked_right = tk.Frame(formats_stacked_frame, bg=self.colors['card_bg'])
-        stacked_right.pack(side=tk.RIGHT, padx=(20, 0))
-
-        tk.Checkbutton(stacked_right, text="Stacked Plot", variable=self.create_stacked_plot,
-                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9, 'bold'),
-                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 10))
-
-        tk.Label(stacked_right, text="Offset:", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9)).pack(side=tk.LEFT, padx=(0, 5))
-
-        offset_entry = tk.Entry(stacked_right, textvariable=self.stacked_plot_offset,
-                               font=('Comic Sans MS', 9), width=8, bg='white',
-                               relief='solid', borderwidth=1)
-        offset_entry.pack(side=tk.LEFT, ipady=2)
-
-        # Action Buttons for Integration (before Fitting Settings)
-        integration_btn_frame = tk.Frame(parent_frame, bg=self.colors['bg'])
-        integration_btn_frame.pack(fill=tk.X, pady=(15, 15))
-
-        integration_btn_cont = tk.Frame(integration_btn_frame, bg=self.colors['bg'])
-        integration_btn_cont.pack(expand=True)
-
-        integration_btns = tk.Frame(integration_btn_cont, bg=self.colors['bg'])
-        integration_btns.pack()
-
-        SpinboxStyleButton(integration_btns, "🐿️ Run Integration", self.run_integration,
-                          width=180).pack(side=tk.LEFT, padx=6)
-
-        SpinboxStyleButton(integration_btns, "📊 Plot Stacked Image", self.plot_stacked_image,
-                          width=180).pack(side=tk.LEFT, padx=6)
-
         # Fitting Settings Card
         fitting_card = self.create_card_frame(parent_frame)
         fitting_card.pack(fill=tk.X, pady=(0, 15))
@@ -598,20 +530,27 @@ class PowderXRDModule(GUIBase):
                     values=['pseudo', 'voigt'], width=22, state='readonly',
                     font=('Comic Sans MS', 9)).pack(anchor=tk.W)
 
-        # Fitting Action Buttons
-        fitting_btn_frame = tk.Frame(parent_frame, bg=self.colors['bg'])
-        fitting_btn_frame.pack(fill=tk.X, pady=(0, 15))
+        # Action Buttons
+        btn_frame = tk.Frame(parent_frame, bg=self.colors['bg'])
+        btn_frame.pack(fill=tk.X, pady=(0, 15))
 
-        fitting_btn_cont = tk.Frame(fitting_btn_frame, bg=self.colors['bg'])
-        fitting_btn_cont.pack(expand=True)
+        btn_cont = tk.Frame(btn_frame, bg=self.colors['bg'])
+        btn_cont.pack(expand=True)
 
-        fitting_btns = tk.Frame(fitting_btn_cont, bg=self.colors['bg'])
-        fitting_btns.pack()
+        btns = tk.Frame(btn_cont, bg=self.colors['bg'])
+        btns.pack()
 
-        SpinboxStyleButton(fitting_btns, "🐻 Run Fitting", self.run_fitting,
+        SpinboxStyleButton(btns, "🐿️ Run Integration", self.run_integration,
                           width=180).pack(side=tk.LEFT, padx=6)
 
-        SpinboxStyleButton(fitting_btns, "✨ Interactive Fitting", self.open_interactive_fitting,
+        SpinboxStyleButton(btns, "🐻 Run Fitting", self.run_fitting,
+                          width=180).pack(side=tk.LEFT, padx=6)
+
+        SpinboxStyleButton(btns, "🦔 Full Pipeline", self.run_full_pipeline,
+                          width=180).pack(side=tk.LEFT, padx=6)
+
+        # NEW: Interactive Peak Fitting Button
+        SpinboxStyleButton(btns, "✨ Interactive Fitting", self.open_interactive_fitting,
                           width=180).pack(side=tk.LEFT, padx=6)
 
     def browse_dataset_path(self):
@@ -924,23 +863,7 @@ class PowderXRDModule(GUIBase):
                           width=250).pack()
 
     # ==================== Processing Functions ====================
-
-    def get_selected_formats(self):
-        """Get list of selected output formats"""
-        formats = []
-        if self.format_xy.get():
-            formats.append('xy')
-        if self.format_dat.get():
-            formats.append('dat')
-        if self.format_chi.get():
-            formats.append('chi')
-        if self.format_svg.get():
-            formats.append('svg')
-        if self.format_png.get():
-            formats.append('png')
-        if self.format_fxye.get():
-            formats.append('fxye')
-        return formats if formats else ['xy']  # Default to xy if none selected
+    # (All processing functions remain the same)
 
     def log(self, message):
         """Log message to the log text widget"""
@@ -1060,78 +983,19 @@ class PowderXRDModule(GUIBase):
         try:
             self.progress.start()
             self.log("🔁 Starting Batch Integration")
-
-            # Get selected formats
-            formats = self.get_selected_formats()
-            create_stacked = self.create_stacked_plot.get()
-            offset_value = self.stacked_plot_offset.get()
-
-            self.log(f"Output formats: {', '.join(formats)}")
-            self.log(f"Create stacked plot: {'Yes' if create_stacked else 'No'}")
-            if create_stacked:
-                self.log(f"Stacked plot offset: {offset_value}")
-
             integrator = BatchIntegrator(self.poni_path.get(), self.mask_path.get())
             integrator.batch_integrate(
                 input_pattern=self.input_pattern.get(),
                 output_dir=self.output_dir.get(),
                 npt=self.npt.get(),
                 unit=self.unit.get(),
-                dataset_path=self.dataset_path.get() or None,
-                formats=formats,
-                create_stacked_plot=create_stacked,
-                stacked_plot_offset=offset_value
+                dataset_path=self.dataset_path.get() or None
             )
             self.log("✅ Integration completed!")
             self.show_success(self.root, "Integration completed!")
         except Exception as e:
             self.log(f"❌ Error: {str(e)}")
             messagebox.showerror("Error", str(e))
-        finally:
-            self.progress.stop()
-
-    def plot_stacked_image(self):
-        """Plot stacked diffraction pattern from existing integration results"""
-        if not self.output_dir.get():
-            messagebox.showerror("Error", "Please specify output directory")
-            return
-        threading.Thread(target=self._plot_stacked_image_thread, daemon=True).start()
-
-    def _plot_stacked_image_thread(self):
-        """Background thread for plotting stacked image"""
-        try:
-            self.progress.start()
-            self.log("📊 Creating Stacked Plot from existing data")
-
-            output_dir = self.output_dir.get()
-            offset_value = self.stacked_plot_offset.get()
-
-            # Check if output directory exists
-            if not os.path.exists(output_dir):
-                raise FileNotFoundError(f"Output directory not found: {output_dir}")
-
-            self.log(f"Output directory: {output_dir}")
-            self.log(f"Stacked plot offset: {offset_value}")
-
-            # We need a valid poni file to create BatchIntegrator
-            if not self.poni_path.get() or not os.path.exists(self.poni_path.get()):
-                raise FileNotFoundError("Please specify a valid PONI file")
-
-            # Create integrator (we only need it for the create_stacked_plot method)
-            integrator = BatchIntegrator(self.poni_path.get(), None)
-
-            # Call create_stacked_plot directly
-            integrator.create_stacked_plot(
-                output_dir=output_dir,
-                offset=offset_value,
-                output_name='stacked_plot.png'
-            )
-
-            self.log("✅ Stacked plot created successfully!")
-            self.show_success(self.root, "Stacked plot created successfully!")
-        except Exception as e:
-            self.log(f"❌ Error: {str(e)}")
-            messagebox.showerror("Error", f"Failed to create stacked plot:\n{str(e)}")
         finally:
             self.progress.stop()
 
@@ -1151,6 +1015,38 @@ class PowderXRDModule(GUIBase):
             fitter.run_batch_fitting()
             self.log("✅ Fitting completed!")
             self.show_success(self.root, "Fitting completed!")
+        except Exception as e:
+            self.log(f"❌ Error: {str(e)}")
+            messagebox.showerror("Error", str(e))
+        finally:
+            self.progress.stop()
+
+    def run_full_pipeline(self):
+        """Run full integration and fitting pipeline"""
+        if not self.poni_path.get() or not self.mask_path.get() or not self.input_pattern.get() or not self.output_dir.get():
+            messagebox.showerror("Error", "Please fill all required fields")
+            return
+        threading.Thread(target=self._run_full_pipeline_thread, daemon=True).start()
+
+    def _run_full_pipeline_thread(self):
+        """Background thread for full pipeline"""
+        try:
+            self.progress.start()
+            self.log("🔁 Step 1/2: Integration")
+            integrator = BatchIntegrator(self.poni_path.get(), self.mask_path.get())
+            integrator.batch_integrate(
+                input_pattern=self.input_pattern.get(),
+                output_dir=self.output_dir.get(),
+                npt=self.npt.get(),
+                unit=self.unit.get()
+            )
+            self.log("✅ Integration done")
+
+            self.log("📈 Step 2/2: Fitting")
+            fitter = DataProcessor(folder=self.output_dir.get(), fit_method=self.fit_method.get())
+            fitter.run_batch_fitting()
+            self.log("✅ Pipeline completed!")
+            self.show_success(self.root, "Full pipeline completed!")
         except Exception as e:
             self.log(f"❌ Error: {str(e)}")
             messagebox.showerror("Error", str(e))
