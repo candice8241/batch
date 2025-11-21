@@ -567,11 +567,8 @@ class PowderXRDModule(GUIBase):
         integration_btns = tk.Frame(integration_btn_cont, bg=self.colors['bg'])
         integration_btns.pack()
 
-        SpinboxStyleButton(integration_btns, "🐿️ Run Integration", self.run_integration,
-                          width=180).pack(side=tk.LEFT, padx=6)
-
-        SpinboxStyleButton(integration_btns, "📊 Plot Stacked Image", self.plot_stacked_image,
-                          width=180).pack(side=tk.LEFT, padx=6)
+        SpinboxStyleButton(integration_btns, "🐿️ Run Integration & Create Stacked Plot", self.run_integration,
+                          width=300).pack(padx=6)
 
         # Fitting Settings Card
         fitting_card = self.create_card_frame(parent_frame)
@@ -1079,10 +1076,10 @@ class PowderXRDModule(GUIBase):
         threading.Thread(target=self._run_integration_thread, daemon=True).start()
 
     def _run_integration_thread(self):
-        """Background thread for integration"""
+        """Background thread for integration and stacked plot creation"""
         try:
             self.start_progress()
-            self.log("🔁 Starting Batch Integration")
+            self.log("🔁 Starting Batch Integration & Stacked Plot Creation")
 
             # Get selected formats
             formats = self.get_selected_formats()
@@ -1090,10 +1087,10 @@ class PowderXRDModule(GUIBase):
             offset_value = self.stacked_plot_offset.get()
 
             self.log(f"Output formats: {', '.join(formats)}")
-            self.log(f"Create stacked plot: {'Yes' if create_stacked else 'No'}")
-            if create_stacked:
-                self.log(f"Stacked plot offset: {offset_value}")
+            self.log(f"Stacked plot offset: {offset_value}")
 
+            # Step 1: Run integration
+            self.log("\n📊 Step 1/2: Running 1D Integration...")
             integrator = BatchIntegrator(self.poni_path.get(), self.mask_path.get())
             integrator.batch_integrate(
                 input_pattern=self.input_pattern.get(),
@@ -1102,59 +1099,30 @@ class PowderXRDModule(GUIBase):
                 unit=self.unit.get(),
                 dataset_path=self.dataset_path.get() or None,
                 formats=formats,
-                create_stacked_plot=create_stacked,
+                create_stacked_plot=False,  # Don't create in batch_integrate
                 stacked_plot_offset=offset_value
             )
             self.log("✅ Integration completed!")
-            self.show_success_dialog("Integration completed!")
+
+            # Step 2: Create stacked plot if enabled
+            if create_stacked:
+                self.log("\n📈 Step 2/2: Creating Stacked Plot...")
+                output_dir = self.output_dir.get()
+
+                integrator.create_stacked_plot(
+                    output_dir=output_dir,
+                    offset=offset_value,
+                    output_name='stacked_plot.png'
+                )
+                self.log("✅ Stacked plot created successfully!")
+                self.show_success_dialog("Integration & Stacked Plot completed successfully!")
+            else:
+                self.log("\n⏭️ Skipping stacked plot creation (checkbox not selected)")
+                self.show_success_dialog("Integration completed successfully!")
+
         except Exception as e:
             self.log(f"❌ Error: {str(e)}")
             self.show_error("Error", str(e))
-        finally:
-            self.stop_progress()
-
-    def plot_stacked_image(self):
-        """Plot stacked diffraction pattern from existing integration results"""
-        if not self.output_dir.get():
-            messagebox.showerror("Error", "Please specify output directory")
-            return
-        threading.Thread(target=self._plot_stacked_image_thread, daemon=True).start()
-
-    def _plot_stacked_image_thread(self):
-        """Background thread for plotting stacked image"""
-        try:
-            self.start_progress()
-            self.log("📊 Creating Stacked Plot from existing data")
-
-            output_dir = self.output_dir.get()
-            offset_value = self.stacked_plot_offset.get()
-
-            # Check if output directory exists
-            if not os.path.exists(output_dir):
-                raise FileNotFoundError(f"Output directory not found: {output_dir}")
-
-            self.log(f"Output directory: {output_dir}")
-            self.log(f"Stacked plot offset: {offset_value}")
-
-            # We need a valid poni file to create BatchIntegrator
-            if not self.poni_path.get() or not os.path.exists(self.poni_path.get()):
-                raise FileNotFoundError("Please specify a valid PONI file")
-
-            # Create integrator (we only need it for the create_stacked_plot method)
-            integrator = BatchIntegrator(self.poni_path.get(), None)
-
-            # Call create_stacked_plot directly
-            integrator.create_stacked_plot(
-                output_dir=output_dir,
-                offset=offset_value,
-                output_name='stacked_plot.png'
-            )
-
-            self.log("✅ Stacked plot created successfully!")
-            self.show_success_dialog("Stacked plot created successfully!")
-        except Exception as e:
-            self.log(f"❌ Error: {str(e)}")
-            self.show_error("Error", f"Failed to create stacked plot:\n{str(e)}")
         finally:
             self.stop_progress()
 
