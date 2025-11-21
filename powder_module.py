@@ -530,7 +530,7 @@ class PowderXRDModule(GUIBase):
                     values=['2th_deg', 'q_A^-1', 'q_nm^-1', 'r_mm'],
                     width=16, state='readonly', font=('Comic Sans MS', 9)).pack(anchor=tk.W)
 
-        # ===== IMPROVED LAYOUT: Output Formats and Stacked Plot Side by Side =====
+        # ===== Output Formats Card =====
         formats_card = self.create_card_frame(parent_frame)
         formats_card.pack(fill=tk.X, pady=(0, 15))
 
@@ -543,22 +543,14 @@ class PowderXRDModule(GUIBase):
         tk.Label(header_formats, text="📊", bg=self.colors['card_bg'],
                 font=('Segoe UI Emoji', 14)).pack(side=tk.LEFT, padx=(0, 6))
 
-        tk.Label(header_formats, text="Output Formats & Stacked Plot",
+        tk.Label(header_formats, text="Output Formats",
                 bg=self.colors['card_bg'], fg=self.colors['primary'],
                 font=('Comic Sans MS', 11, 'bold')).pack(side=tk.LEFT)
 
-        # Container for side-by-side layout
-        main_container = tk.Frame(content_formats, bg=self.colors['card_bg'])
-        main_container.pack(fill=tk.BOTH, expand=True, pady=5)
-
-        # LEFT SECTION: Output Formats
-        left_section = tk.Frame(main_container, bg=self.colors['card_bg'])
-        left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 20))
-
-        tk.Label(left_section, text="Select Output Formats:", bg=self.colors['card_bg'],
+        tk.Label(content_formats, text="Select Output Formats:", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
-        formats_grid = tk.Frame(left_section, bg=self.colors['card_bg'])
+        formats_grid = tk.Frame(content_formats, bg=self.colors['card_bg'])
         formats_grid.pack(fill=tk.X)
 
         row1 = tk.Frame(formats_grid, bg=self.colors['card_bg'])
@@ -585,37 +577,59 @@ class PowderXRDModule(GUIBase):
                       font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
 
-        # RIGHT SECTION: Stacked Plot Options
-        right_section = tk.Frame(main_container, bg='#F0E6FA', relief='solid',
-                                borderwidth=2, padx=15, pady=12)
-        right_section.pack(side=tk.LEFT, fill=tk.Y)
+        # ===== Stacked Plot Options Card =====
+        stacked_card = self.create_card_frame(parent_frame)
+        stacked_card.pack(fill=tk.X, pady=(0, 15))
 
-        stacked_header = tk.Frame(right_section, bg='#F0E6FA')
-        stacked_header.pack(pady=(0, 10))
+        content_stacked = tk.Frame(stacked_card, bg=self.colors['card_bg'], padx=20, pady=12)
+        content_stacked.pack(fill=tk.BOTH, expand=True)
 
-        tk.Label(stacked_header, text="📈", bg='#F0E6FA',
-                font=('Segoe UI Emoji', 12)).pack(side=tk.LEFT, padx=(0, 5))
+        header_stacked = tk.Frame(content_stacked, bg=self.colors['card_bg'])
+        header_stacked.pack(anchor=tk.W, pady=(0, 8))
 
-        tk.Label(stacked_header, text="Stacked Plot", bg='#F0E6FA',
-                fg='#9966CC', font=('Comic Sans MS', 10, 'bold')).pack(side=tk.LEFT)
+        tk.Label(header_stacked, text="📈", bg=self.colors['card_bg'],
+                font=('Segoe UI Emoji', 14)).pack(side=tk.LEFT, padx=(0, 6))
 
-        tk.Checkbutton(right_section, text="Create Stacked Plot",
+        tk.Label(header_stacked, text="Stacked Plot Options",
+                bg=self.colors['card_bg'], fg=self.colors['primary'],
+                font=('Comic Sans MS', 11, 'bold')).pack(side=tk.LEFT)
+
+        stacked_options = tk.Frame(content_stacked, bg=self.colors['card_bg'])
+        stacked_options.pack(fill=tk.X, pady=5)
+
+        tk.Checkbutton(stacked_options, text="Create Stacked Plot",
                       variable=self.create_stacked_plot,
-                      bg='#F0E6FA', font=('Comic Sans MS', 9),
-                      fg='#4A4A4A', selectcolor='#E8D5F0',
-                      activebackground='#F0E6FA').pack(anchor=tk.W, pady=(0, 10))
+                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(anchor=tk.W, pady=(0, 10))
 
-        tk.Label(right_section, text="Offset Value:", bg='#F0E6FA',
-                fg='#4A4A4A', font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
+        offset_frame = tk.Frame(content_stacked, bg=self.colors['card_bg'])
+        offset_frame.pack(fill=tk.X)
 
-        offset_entry = tk.Entry(right_section, textvariable=self.stacked_plot_offset,
+        tk.Label(offset_frame, text="Offset Value:", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
+
+        offset_input_frame = tk.Frame(offset_frame, bg=self.colors['card_bg'])
+        offset_input_frame.pack(fill=tk.X)
+
+        offset_entry = tk.Entry(offset_input_frame, textvariable=self.stacked_plot_offset,
                                font=('Arial', 10), width=15, justify='center',
                                bg='white', relief='solid', borderwidth=1)
-        offset_entry.pack(ipady=3)
+        offset_entry.pack(side=tk.LEFT, ipady=3)
 
-        tk.Label(right_section, text="(use 'auto' or number)",
-                bg='#F0E6FA', fg='#888888',
-                font=('Comic Sans MS', 8, 'italic')).pack(pady=(5, 0))
+        tk.Label(offset_input_frame, text="  (use 'auto' or number)",
+                bg=self.colors['card_bg'], fg='#888888',
+                font=('Comic Sans MS', 8, 'italic')).pack(side=tk.LEFT, padx=(5, 0))
+
+        # Run Integration Button
+        btn_frame1 = tk.Frame(parent_frame, bg=self.colors['bg'])
+        btn_frame1.pack(fill=tk.X, pady=(0, 15))
+
+        btn_cont1 = tk.Frame(btn_frame1, bg=self.colors['bg'])
+        btn_cont1.pack(expand=True)
+
+        SpinboxStyleButton(btn_cont1, "🐿️ Run Integration", self.run_integration,
+                          width=200).pack()
 
         # Fitting Settings Card
         fitting_card = self.create_card_frame(parent_frame)
@@ -642,23 +656,17 @@ class PowderXRDModule(GUIBase):
                     values=['pseudo', 'voigt'], width=22, state='readonly',
                     font=('Comic Sans MS', 9)).pack(anchor=tk.W)
 
-        # Action Buttons
-        btn_frame = tk.Frame(parent_frame, bg=self.colors['bg'])
-        btn_frame.pack(fill=tk.X, pady=(0, 15))
+        # Action Buttons for Fitting and Interactive
+        btn_frame2 = tk.Frame(parent_frame, bg=self.colors['bg'])
+        btn_frame2.pack(fill=tk.X, pady=(0, 15))
 
-        btn_cont = tk.Frame(btn_frame, bg=self.colors['bg'])
-        btn_cont.pack(expand=True)
+        btn_cont2 = tk.Frame(btn_frame2, bg=self.colors['bg'])
+        btn_cont2.pack(expand=True)
 
-        btns = tk.Frame(btn_cont, bg=self.colors['bg'])
+        btns = tk.Frame(btn_cont2, bg=self.colors['bg'])
         btns.pack()
 
-        SpinboxStyleButton(btns, "🐿️ Run Integration", self.run_integration,
-                          width=180).pack(side=tk.LEFT, padx=6)
-
         SpinboxStyleButton(btns, "🐻 Run Fitting", self.run_fitting,
-                          width=180).pack(side=tk.LEFT, padx=6)
-
-        SpinboxStyleButton(btns, "🦔 Full Pipeline", self.run_full_pipeline,
                           width=180).pack(side=tk.LEFT, padx=6)
 
         SpinboxStyleButton(btns, "✨ Interactive Fitting", self.open_interactive_fitting,
@@ -1013,31 +1021,31 @@ class PowderXRDModule(GUIBase):
                         fg='#666666', font=('Comic Sans MS', 9),
                         wraplength=420, justify=tk.LEFT).pack()
             
-            # OK Button with gradient-like effect
+            # OK Button - simplified
             btn_frame = tk.Frame(dialog, bg='#F0E6FA')
             btn_frame.pack(pady=15)
-            
+
             ok_btn = tk.Button(
                 btn_frame,
-                text="🎉 Awesome!",
+                text="OK",
                 command=dialog.destroy,
                 bg='#C8A2D9',
                 fg='white',
-                font=('Comic Sans MS', 12, 'bold'),
+                font=('Comic Sans MS', 11),
                 relief='flat',
                 borderwidth=0,
-                padx=40,
-                pady=12,
+                padx=35,
+                pady=10,
                 cursor='hand2'
             )
             ok_btn.pack()
-            
+
             # Enhanced hover effect
             def on_enter(e):
-                ok_btn.config(bg='#B794F6', font=('Comic Sans MS', 12, 'bold'))
+                ok_btn.config(bg='#B794F6')
             def on_leave(e):
-                ok_btn.config(bg='#C8A2D9', font=('Comic Sans MS', 12, 'bold'))
-            
+                ok_btn.config(bg='#C8A2D9')
+
             ok_btn.bind('<Enter>', on_enter)
             ok_btn.bind('<Leave>', on_leave)
             
@@ -1248,7 +1256,7 @@ class PowderXRDModule(GUIBase):
 
             if vars['create_stacked_plot'] and total_files > 1:
                 self.log(f"📈 Creating combined stacked plot for all {total_files} files...")
-                self._create_combined_stacked_plot(vars['output_dir'], vars['stacked_plot_offset'])
+                self._create_combined_stacked_plot(vars['output_dir'], vars['stacked_plot_offset'], vars['unit'])
 
             self.log(f"\n{'='*60}")
             self.log(f"✅ All integrations completed!")
@@ -1285,7 +1293,7 @@ class PowderXRDModule(GUIBase):
                 pass
         return 0.0
 
-    def _create_combined_stacked_plot(self, output_dir, offset):
+    def _create_combined_stacked_plot(self, output_dir, offset, unit='2th_deg'):
         """Create a stacked plot combining all integrated files, sorted by pressure"""
         try:
             xy_files = glob.glob(os.path.join(output_dir, "*.xy"))
@@ -1318,6 +1326,7 @@ class PowderXRDModule(GUIBase):
 
             all_x_min = float('inf')
             all_x_max = float('-inf')
+            all_y_max = float('-inf')
 
             for xy_file in xy_files_sorted:
                 data = np.loadtxt(xy_file)
@@ -1340,17 +1349,28 @@ class PowderXRDModule(GUIBase):
 
                 ax.plot(x, y_offset, linewidth=1.5, alpha=0.8, color=curve_color)
 
+                # Place pressure label above the data line
+                max_y_in_curve = np.max(y_offset)
                 ax.text(x_min + 0.02 * (x_max - x_min),
-                       i * offset_value + np.mean(y[:10]),
+                       max_y_in_curve + offset_value * 0.15,
                        f'{pressure:.1f} GPa',
                        fontsize=9,
-                       verticalalignment='center',
+                       verticalalignment='bottom',
                        horizontalalignment='left',
                        bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
                                 edgecolor='gray', alpha=0.8))
 
+            # Set x-axis label based on unit
+            unit_labels = {
+                '2th_deg': '2θ (°)',
+                'q_A^-1': 'Q (Å⁻¹)',
+                'q_nm^-1': 'Q (nm⁻¹)',
+                'r_mm': 'r (mm)'
+            }
+            xlabel = unit_labels.get(unit, unit)
+
             ax.set_xlim(x_min, x_max)
-            ax.set_xlabel('Q (Å⁻¹)', fontsize=13, fontweight='bold')
+            ax.set_xlabel(xlabel, fontsize=13, fontweight='bold')
             ax.set_ylabel('Intensity (offset)', fontsize=13, fontweight='bold')
             ax.set_title('Stacked XRD Patterns (Sorted by Pressure)',
                         fontsize=14, fontweight='bold')
@@ -1396,105 +1416,6 @@ class PowderXRDModule(GUIBase):
             msg = "Peak fitting completed successfully!"
             details = f"Method: {vars['fit_method']}"
             self.show_success_dialog("Fitting Complete", msg, details)
-
-        except Exception as e:
-            error_msg = str(e)
-            self.log(f"❌ Error: {error_msg}")
-            try:
-                self.root.after(0, lambda msg=error_msg: self.show_error("Error", msg))
-            except:
-                pass
-        finally:
-            try:
-                self.root.after(0, self.progress.stop)
-            except:
-                pass
-
-    def run_full_pipeline(self):
-        """Run full integration and fitting pipeline"""
-        if not self.poni_path.get() or not self.mask_path.get() or not self.input_pattern.get() or not self.output_dir.get():
-            self.show_error("Error", "Please fill all required fields")
-            return
-        threading.Thread(target=self._run_full_pipeline_thread, daemon=True).start()
-
-    def _run_full_pipeline_thread(self):
-        """Background thread for full pipeline - THREAD SAFE"""
-        vars = self.capture_variables()
-        if vars is None:
-            self.log("❌ Failed to read settings")
-            return
-
-        formats = []
-        if vars['format_xy']: formats.append('xy')
-        if vars['format_dat']: formats.append('dat')
-        if vars['format_chi']: formats.append('chi')
-        if vars['format_fxye']: formats.append('fxye')
-        if vars['format_svg']: formats.append('svg')
-        if vars['format_png']: formats.append('png')
-        if not formats: formats = ['xy']
-
-        try:
-            self.root.after(0, self.progress.start)
-
-            if os.path.isdir(vars['input_pattern']):
-                target_dir = vars['input_pattern']
-            elif os.path.isfile(vars['input_pattern']) and vars['input_pattern'].lower().endswith('.h5'):
-                target_dir = os.path.dirname(vars['input_pattern'])
-            else:
-                raise ValueError(f"Invalid input: {vars['input_pattern']}")
-
-            h5_files = sorted([os.path.join(target_dir, f)
-                              for f in os.listdir(target_dir)
-                              if f.lower().endswith('.h5')])
-
-            if not h5_files:
-                raise ValueError(f"No .h5 files found in directory: {target_dir}")
-
-            total_files = len(h5_files)
-            self.log(f"\n{'='*60}")
-            self.log(f"🔁 Starting Full Pipeline (Integration + Fitting)")
-            self.log(f"📁 Directory: {target_dir}")
-            self.log(f"📊 Total files to process: {total_files}")
-            self.log(f"{'='*60}\n")
-
-            # Step 1: Integration
-            self.log(f"📊 Step 1/2: Integration")
-            integrator = BatchIntegrator(vars['poni_path'], vars['mask_path'])
-
-            for i, h5_file in enumerate(h5_files, 1):
-                self.log(f"[{i}/{total_files}] Integrating: {os.path.basename(h5_file)}")
-                integrator.batch_integrate(
-                    input_pattern=h5_file,
-                    output_dir=vars['output_dir'],
-                    npt=vars['npt'],
-                    unit=vars['unit'],
-                    dataset_path=vars['dataset_path'],
-                    formats=formats,
-                    create_stacked_plot=False
-                )
-                self.log(f"[{i}/{total_files}] ✓ Integration complete\n")
-
-            if vars['create_stacked_plot'] and total_files > 1:
-                self.log(f"📈 Creating combined stacked plot...")
-                self._create_combined_stacked_plot(vars['output_dir'], vars['stacked_plot_offset'])
-
-            self.log(f"✅ Step 1/2 completed: All {total_files} files integrated\n")
-
-            # Step 2: Fitting
-            self.log(f"📈 Step 2/2: Peak Fitting")
-            fitter = DataProcessor(folder=vars['output_dir'], fit_method=vars['fit_method'])
-            fitter.run_batch_fitting()
-            self.log(f"✅ Step 2/2 completed: Peak fitting finished\n")
-
-            self.log(f"{'='*60}")
-            self.log(f"✅ Full Pipeline Completed!")
-            self.log(f"📊 Total processed: {total_files} files")
-            self.log(f"💾 Output directory: {vars['output_dir']}")
-            self.log(f"{'='*60}\n")
-
-            msg = "Full pipeline completed successfully!"
-            details = f"{total_files} file(s) integrated and fitted\nMethod: {vars['fit_method']}"
-            self.show_success_dialog("Pipeline Complete", msg, details)
 
         except Exception as e:
             error_msg = str(e)
