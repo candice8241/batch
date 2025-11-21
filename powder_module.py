@@ -452,8 +452,8 @@ class PowderXRDModule(GUIBase):
                                [("PONI files", "*.poni"), ("All files", "*.*")])
         self.create_file_picker_with_spinbox_btn(content1, "Mask File", self.mask_path,
                                [("EDF files", "*.edf"), ("All files", "*.*")])
-        self.create_file_picker_with_spinbox_btn(content1, "Input Folder (containing .h5 files)",
-                               self.input_pattern, [], pattern=True)
+        self.create_file_picker_with_spinbox_btn(content1, "Input .h5 File",
+                               self.input_pattern, [("HDF5 files", "*.h5"), ("All files", "*.*")])
         self.create_folder_picker_with_spinbox_btn(content1, "Output Directory", self.output_dir)
 
         # Dataset Path
@@ -1113,62 +1113,51 @@ class PowderXRDModule(GUIBase):
         try:
             self.root.after(0, self.progress.start)
 
+            # Determine the directory to process
             if os.path.isdir(input_pattern):
-                h5_files = sorted([os.path.join(input_pattern, f)
-                                  for f in os.listdir(input_pattern)
-                                  if f.lower().endswith('.h5')])
-
-                if not h5_files:
-                    raise ValueError(f"No .h5 files found in directory: {input_pattern}")
-
-                self.log(f"📁 Found {len(h5_files)} .h5 files in directory")
-
-                integrator = BatchIntegrator(poni_path, mask_path)
-
-                for i, h5_file in enumerate(h5_files, 1):
-                    msg = f"\n🔄 Processing file {i}/{len(h5_files)}: {os.path.basename(h5_file)}"
-                    self.log(msg)
-
-                    integrator.batch_integrate(
-                        input_pattern=h5_file,
-                        output_dir=output_dir,
-                        npt=npt,
-                        unit=unit,
-                        dataset_path=dataset_path,
-                        formats=formats,
-                        create_stacked_plot=False
-                    )
-
-                if create_stacked and len(h5_files) > 1:
-                    self.log(f"\n📈 Creating combined stacked plot for all {len(h5_files)} files...")
-                    self._create_combined_stacked_plot(output_dir, offset)
-
-                num_files = len(h5_files)
-                self.log("\n✅ All integrations completed!")
-                success_msg = f"Integration completed!\n{num_files} file(s) processed"
-                self.show_success(self.root, success_msg)
-
+                # If it's a directory, use it directly
+                target_dir = input_pattern
+            elif os.path.isfile(input_pattern) and input_pattern.lower().endswith('.h5'):
+                # If it's a single .h5 file, get its parent directory
+                target_dir = os.path.dirname(input_pattern)
+                self.log(f"📂 Input is a single .h5 file, processing entire directory: {target_dir}")
             else:
-                self.log("🔁 Starting Batch Integration")
-                self.log(f"📊 Output formats: {', '.join(formats)}")
+                raise ValueError(f"Invalid input: {input_pattern}")
 
-                if create_stacked:
-                    self.log(f"📈 Stacked plot with offset: {offset}")
+            # Get all .h5 files in the directory
+            h5_files = sorted([os.path.join(target_dir, f)
+                              for f in os.listdir(target_dir)
+                              if f.lower().endswith('.h5')])
 
-                integrator = BatchIntegrator(poni_path, mask_path)
+            if not h5_files:
+                raise ValueError(f"No .h5 files found in directory: {target_dir}")
+
+            self.log(f"📁 Found {len(h5_files)} .h5 files in directory")
+
+            integrator = BatchIntegrator(poni_path, mask_path)
+
+            for i, h5_file in enumerate(h5_files, 1):
+                msg = f"\n🔄 Processing file {i}/{len(h5_files)}: {os.path.basename(h5_file)}"
+                self.log(msg)
+
                 integrator.batch_integrate(
-                    input_pattern=input_pattern,
+                    input_pattern=h5_file,
                     output_dir=output_dir,
                     npt=npt,
                     unit=unit,
                     dataset_path=dataset_path,
                     formats=formats,
-                    create_stacked_plot=create_stacked,
-                    stacked_plot_offset=offset
+                    create_stacked_plot=False
                 )
 
-                self.log("✅ Integration completed!")
-                self.show_success(self.root, "Integration completed!")
+            if create_stacked and len(h5_files) > 1:
+                self.log(f"\n📈 Creating combined stacked plot for all {len(h5_files)} files...")
+                self._create_combined_stacked_plot(output_dir, offset)
+
+            num_files = len(h5_files)
+            self.log("\n✅ All integrations completed!")
+            success_msg = f"Integration completed!\n{num_files} file(s) processed"
+            self.show_success(self.root, success_msg)
 
         except Exception as e:
             error_msg = str(e)
@@ -1177,37 +1166,93 @@ class PowderXRDModule(GUIBase):
         finally:
             self.root.after(0, self.progress.stop)
 
+    def _extract_pressure_from_filename(self, filename):
+        """Extract pressure value from filename"""
+        import re
+        # Try to find a number pattern in the filename (e.g., "sample_25.5GPa.xy" or "data_10_GPa.xy")
+        basename = os.path.basename(filename)
+        # Look for patterns like: number followed by optional GPa/gpa
+        matches = re.findall(r'(\d+\.?\d*)\s*(?:GPa|gpa|_GPa|_gpa)?', basename)
+        if matches:
+            try:
+                return float(matches[0])
+            except:
+                pass
+        return 0.0  # Default if no pressure found
+
     def _create_combined_stacked_plot(self, output_dir, offset):
-        """Create a stacked plot combining all integrated files"""
+        """Create a stacked plot combining all integrated files, sorted by pressure"""
         try:
-            xy_files = sorted(glob.glob(os.path.join(output_dir, "*.xy")))
+            xy_files = glob.glob(os.path.join(output_dir, "*.xy"))
 
             if not xy_files:
                 self.log("⚠️ No .xy files found for stacked plot")
                 return
 
-            fig, ax = plt.subplots(figsize=(10, 8))
+            # Extract pressures and sort files by pressure
+            file_pressure_pairs = []
+            for xy_file in xy_files:
+                pressure = self._extract_pressure_from_filename(xy_file)
+                file_pressure_pairs.append((xy_file, pressure))
 
+            # Sort by pressure (ascending)
+            file_pressure_pairs.sort(key=lambda x: x[1])
+            xy_files_sorted = [fp[0] for fp in file_pressure_pairs]
+            pressures = [fp[1] for fp in file_pressure_pairs]
+
+            self.log(f"📊 Sorted {len(xy_files_sorted)} files by pressure: {pressures}")
+
+            fig, ax = plt.subplots(figsize=(12, 10))
+
+            # Calculate offset
             if offset == 'auto':
                 max_intensities = []
-                for xy_file in xy_files:
+                for xy_file in xy_files_sorted:
                     data = np.loadtxt(xy_file)
                     max_intensities.append(np.max(data[:, 1]))
                 offset_value = np.mean(max_intensities) * 0.5
             else:
                 offset_value = float(offset)
 
-            for i, xy_file in enumerate(xy_files):
+            # Calculate x-axis range from all data
+            all_x_min = float('inf')
+            all_x_max = float('-inf')
+
+            for xy_file in xy_files_sorted:
+                data = np.loadtxt(xy_file)
+                all_x_min = min(all_x_min, np.min(data[:, 0]))
+                all_x_max = max(all_x_max, np.max(data[:, 0]))
+
+            # Set x-axis limits: ceil(min), floor(max)
+            x_min = np.ceil(all_x_min)
+            x_max = np.floor(all_x_max)
+
+            # Plot data with pressure labels
+            for i, (xy_file, pressure) in enumerate(zip(xy_files_sorted, pressures)):
                 data = np.loadtxt(xy_file)
                 x, y = data[:, 0], data[:, 1]
                 y_offset = y + i * offset_value
-                ax.plot(x, y_offset, label=os.path.basename(xy_file), linewidth=1)
 
-            ax.set_xlabel('Q (Å⁻¹)', fontsize=12)
-            ax.set_ylabel('Intensity (offset)', fontsize=12)
-            ax.set_title('Stacked XRD Patterns', fontsize=14, fontweight='bold')
-            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
-            ax.grid(True, alpha=0.3)
+                # Plot the curve
+                ax.plot(x, y_offset, linewidth=1.5, alpha=0.8)
+
+                # Add pressure label on the left side of the plot
+                # Position: slightly to the left of x_min, at the y_offset level
+                ax.text(x_min - 0.02 * (x_max - x_min),
+                       i * offset_value + np.mean(y[:10]),  # Use mean of first few points
+                       f'{pressure:.1f} GPa',
+                       fontsize=9,
+                       verticalalignment='center',
+                       horizontalalignment='right',
+                       bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
+                                edgecolor='gray', alpha=0.8))
+
+            ax.set_xlim(x_min, x_max)
+            ax.set_xlabel('Q (Å⁻¹)', fontsize=13, fontweight='bold')
+            ax.set_ylabel('Intensity (offset)', fontsize=13, fontweight='bold')
+            ax.set_title('Stacked XRD Patterns (Sorted by Pressure)',
+                        fontsize=14, fontweight='bold')
+            ax.grid(True, alpha=0.3, linestyle='--')
 
             plt.tight_layout()
 
@@ -1216,6 +1261,7 @@ class PowderXRDModule(GUIBase):
             plt.close(fig)
 
             self.log(f"💾 Combined stacked plot saved: {os.path.basename(stacked_plot_path)}")
+            self.log(f"📈 Pressure range: {min(pressures):.1f} - {max(pressures):.1f} GPa")
 
         except Exception as e:
             error_msg = f"⚠️ Failed to create combined stacked plot: {str(e)}"
@@ -1310,44 +1356,43 @@ class PowderXRDModule(GUIBase):
         try:
             self.root.after(0, self.progress.start)
 
+            # Determine the directory to process
             if os.path.isdir(input_pattern):
-                h5_files = sorted([os.path.join(input_pattern, f)
-                                  for f in os.listdir(input_pattern)
-                                  if f.lower().endswith('.h5')])
-
-                if not h5_files:
-                    raise ValueError(f"No .h5 files found in directory: {input_pattern}")
-
-                self.log(f"🔁 Step 1/2: Integration ({len(h5_files)} files)")
-
-                integrator = BatchIntegrator(poni_path, mask_path)
-                for i, h5_file in enumerate(h5_files, 1):
-                    self.log(f"Processing file {i}/{len(h5_files)}: {os.path.basename(h5_file)}")
-                    integrator.batch_integrate(
-                        input_pattern=h5_file,
-                        output_dir=output_dir,
-                        npt=npt,
-                        unit=unit,
-                        dataset_path=dataset_path,
-                        formats=formats,
-                        create_stacked_plot=False
-                    )
-
-                if create_stacked:
-                    self._create_combined_stacked_plot(output_dir, offset)
+                # If it's a directory, use it directly
+                target_dir = input_pattern
+            elif os.path.isfile(input_pattern) and input_pattern.lower().endswith('.h5'):
+                # If it's a single .h5 file, get its parent directory
+                target_dir = os.path.dirname(input_pattern)
+                self.log(f"📂 Input is a single .h5 file, processing entire directory: {target_dir}")
             else:
-                self.log("🔁 Step 1/2: Integration")
-                integrator = BatchIntegrator(poni_path, mask_path)
+                raise ValueError(f"Invalid input: {input_pattern}")
+
+            # Get all .h5 files in the directory
+            h5_files = sorted([os.path.join(target_dir, f)
+                              for f in os.listdir(target_dir)
+                              if f.lower().endswith('.h5')])
+
+            if not h5_files:
+                raise ValueError(f"No .h5 files found in directory: {target_dir}")
+
+            self.log(f"🔁 Step 1/2: Integration ({len(h5_files)} files)")
+
+            integrator = BatchIntegrator(poni_path, mask_path)
+            for i, h5_file in enumerate(h5_files, 1):
+                self.log(f"Processing file {i}/{len(h5_files)}: {os.path.basename(h5_file)}")
                 integrator.batch_integrate(
-                    input_pattern=input_pattern,
+                    input_pattern=h5_file,
                     output_dir=output_dir,
                     npt=npt,
                     unit=unit,
                     dataset_path=dataset_path,
                     formats=formats,
-                    create_stacked_plot=create_stacked,
-                    stacked_plot_offset=offset
+                    create_stacked_plot=False
                 )
+
+            if create_stacked and len(h5_files) > 1:
+                self.log(f"\n📈 Creating combined stacked plot for all {len(h5_files)} files...")
+                self._create_combined_stacked_plot(output_dir, offset)
 
             self.log("✅ Integration done")
 
