@@ -517,42 +517,21 @@ class PowderXRDModule(GUIBase):
                     values=['2th_deg', 'q_A^-1', 'q_nm^-1', 'r_mm'],
                     width=16, state='readonly', font=('Comic Sans MS', 9)).pack(anchor=tk.W)
 
-        # Output Formats and Stacked Plot Section - Single Line
-        formats_stacked_frame = tk.Frame(content1, bg=self.colors['card_bg'])
-        formats_stacked_frame.pack(fill=tk.X, pady=(10, 0))
+        # Stacked Plot Settings - Simplified
+        stacked_frame = tk.Frame(content1, bg=self.colors['card_bg'])
+        stacked_frame.pack(fill=tk.X, pady=(10, 0))
 
-        # Left side: Output Formats (all in one line)
-        formats_left = tk.Frame(formats_stacked_frame, bg=self.colors['card_bg'])
-        formats_left.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        tk.Label(stacked_frame, text="Stacked Plot Settings:", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 15))
 
-        tk.Label(formats_left, text="Output Formats:", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 10))
-
-        tk.Checkbutton(formats_left, text=".xy", variable=self.format_xy, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=5)
-        tk.Checkbutton(formats_left, text=".dat", variable=self.format_dat, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=5)
-        tk.Checkbutton(formats_left, text=".chi", variable=self.format_chi, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=5)
-        tk.Checkbutton(formats_left, text=".svg", variable=self.format_svg, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=5)
-        tk.Checkbutton(formats_left, text=".png", variable=self.format_png, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=5)
-        tk.Checkbutton(formats_left, text=".fxye", variable=self.format_fxye, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=5)
-
-        # Right side: Stacked Plot with Offset
-        stacked_right = tk.Frame(formats_stacked_frame, bg=self.colors['card_bg'])
-        stacked_right.pack(side=tk.RIGHT, padx=(20, 0))
-
-        tk.Checkbutton(stacked_right, text="Stacked Plot", variable=self.create_stacked_plot,
+        tk.Checkbutton(stacked_frame, text="Create Stacked Plot (PNG)", variable=self.create_stacked_plot,
                       bg=self.colors['card_bg'], font=('Comic Sans MS', 9, 'bold'),
-                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 10))
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
 
-        tk.Label(stacked_right, text="Offset:", bg=self.colors['card_bg'],
+        tk.Label(stacked_frame, text="Offset:", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9)).pack(side=tk.LEFT, padx=(0, 5))
 
-        offset_entry = tk.Entry(stacked_right, textvariable=self.stacked_plot_offset,
+        offset_entry = tk.Entry(stacked_frame, textvariable=self.stacked_plot_offset,
                                font=('Comic Sans MS', 9), width=8, bg='white',
                                relief='solid', borderwidth=1)
         offset_entry.pack(side=tk.LEFT, ipady=2)
@@ -1081,43 +1060,54 @@ class PowderXRDModule(GUIBase):
             self.start_progress()
             self.log("🔁 Starting Batch Integration & Stacked Plot Creation")
 
-            # Get selected formats
-            formats = self.get_selected_formats()
             create_stacked = self.create_stacked_plot.get()
             offset_value = self.stacked_plot_offset.get()
+            output_dir = self.output_dir.get()
 
-            self.log(f"Output formats: {', '.join(formats)}")
+            self.log(f"Mode: Stacked plot only (no individual files)")
             self.log(f"Stacked plot offset: {offset_value}")
 
-            # Step 1: Run integration
-            self.log("\n📊 Step 1/2: Running 1D Integration...")
+            # Step 1: Run integration (only save .xy for stacked plot)
+            self.log("\n📊 Step 1/2: Running 1D Integration on all files...")
             integrator = BatchIntegrator(self.poni_path.get(), self.mask_path.get())
             integrator.batch_integrate(
                 input_pattern=self.input_pattern.get(),
-                output_dir=self.output_dir.get(),
+                output_dir=output_dir,
                 npt=self.npt.get(),
                 unit=self.unit.get(),
                 dataset_path=self.dataset_path.get() or None,
-                formats=formats,
-                create_stacked_plot=False,  # Don't create in batch_integrate
-                stacked_plot_offset=offset_value
+                formats=['xy'],  # Only .xy for stacked plot
+                create_stacked_plot=False,
+                stacked_plot_offset=offset_value,
+                save_individual_files=False  # Don't clutter with individual files
             )
             self.log("✅ Integration completed!")
 
             # Step 2: Create stacked plot if enabled
             if create_stacked:
                 self.log("\n📈 Step 2/2: Creating Stacked Plot...")
-                output_dir = self.output_dir.get()
 
                 integrator.create_stacked_plot(
                     output_dir=output_dir,
                     offset=offset_value,
                     output_name='stacked_plot.png'
                 )
-                self.log("✅ Stacked plot created successfully!")
-                self.show_success_dialog("Integration & Stacked Plot completed successfully!")
+
+                # Step 3: Clean up temporary .xy files
+                self.log("\n🧹 Cleaning up temporary files...")
+                import glob
+                xy_files = glob.glob(os.path.join(output_dir, '*.xy'))
+                for xy_file in xy_files:
+                    try:
+                        os.remove(xy_file)
+                    except Exception as e:
+                        self.log(f"⚠️ Could not remove {os.path.basename(xy_file)}: {e}")
+
+                self.log(f"✅ Removed {len(xy_files)} temporary .xy files")
+                self.log(f"✅ Stacked plot saved: {os.path.join(output_dir, 'stacked_plot.png')}")
+                self.show_success_dialog(f"Stacked plot created successfully!\n\nOutput: {output_dir}/stacked_plot.png")
             else:
-                self.log("\n⏭️ Skipping stacked plot creation (checkbox not selected)")
+                self.log("\n⏭️ Stacked plot creation disabled (checkbox not selected)")
                 self.show_success_dialog("Integration completed successfully!")
 
         except Exception as e:

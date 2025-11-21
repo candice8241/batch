@@ -239,7 +239,7 @@ class BatchIntegrator:
     
     def batch_integrate(self, input_pattern, output_dir, npt=2000, unit="2th_deg",
                         dataset_path=None, formats=['xy'], create_stacked_plot=False,
-                        stacked_plot_offset='auto', **kwargs):
+                        stacked_plot_offset='auto', save_individual_files=True, **kwargs):
         """
         Batch integration for multiple HDF5 files
 
@@ -247,6 +247,7 @@ class BatchIntegrator:
             formats (list): Output formats ['xy', 'dat', 'chi', 'svg', 'png', 'fxye']
             create_stacked_plot (bool): Whether to create stacked plot
             stacked_plot_offset (str or float): Offset for stacked plot ('auto' or float value)
+            save_individual_files (bool): Whether to save individual integration files (default: True)
         """
         # Enhanced file search with multiple attempts
         h5_files = sorted(glob.glob(input_pattern, recursive=True))
@@ -260,6 +261,12 @@ class BatchIntegrator:
                 h5_files = sorted(glob.glob(recursive_pattern, recursive=True))
                 if h5_files:
                     print(f"ℹ Using recursive search pattern: {recursive_pattern}")
+            elif os.path.isfile(input_pattern):
+                # If input_pattern is a single file, use the directory
+                directory = os.path.dirname(input_pattern)
+                h5_files = sorted(glob.glob(os.path.join(directory, '*.h5')))
+                if h5_files:
+                    print(f"ℹ Found {len(h5_files)} files in directory: {directory}")
 
         if not h5_files:
             print(f"⚠ No matching files found: {input_pattern}")
@@ -269,7 +276,10 @@ class BatchIntegrator:
         print(f"\nFound {len(h5_files)} HDF5 files to process")
         print(f"Output directory: {output_dir}")
         print(f"Integration parameters: {npt} points, unit={unit}")
-        print(f"Output formats: {', '.join(formats)}\n")
+        if save_individual_files:
+            print(f"Output formats: {', '.join(formats)}")
+        else:
+            print(f"Mode: Stacked plot only (no individual files)\n")
 
         os.makedirs(output_dir, exist_ok=True)
 
@@ -280,13 +290,22 @@ class BatchIntegrator:
             basename = os.path.splitext(os.path.basename(h5_file))[0]
             output_base = os.path.join(output_dir, basename)
 
-            success, error_msg = self.integrate_single(
-                h5_file, output_base, npt, unit, dataset_path, formats=formats, **kwargs
-            )
+            if save_individual_files:
+                success, error_msg = self.integrate_single(
+                    h5_file, output_base, npt, unit, dataset_path, formats=formats, **kwargs
+                )
+            else:
+                # Only integrate and save minimal .xy file for stacked plot
+                success, error_msg = self.integrate_single(
+                    h5_file, output_base, npt, unit, dataset_path, formats=['xy'], **kwargs
+                )
 
             if success:
                 success_count += 1
-                print(f"✓ Success: {h5_file} -> {output_base}.[{','.join(formats)}]")
+                if save_individual_files:
+                    print(f"✓ Success: {h5_file} -> {output_base}.[{','.join(formats)}]")
+                else:
+                    print(f"✓ Integrated: {os.path.basename(h5_file)}")
             else:
                 failed_files.append((h5_file, error_msg))
                 print(f"✗ Failed: {h5_file}\n  Error: {error_msg}")
@@ -416,10 +435,9 @@ class BatchIntegrator:
         plt.title('Stacked Diffraction Patterns', fontsize=14, fontweight='bold')
         plt.grid(True, alpha=0.3)
 
-        # Save plot
+        # Save plot (PNG only)
         output_path = os.path.join(output_dir, output_name)
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
-        plt.savefig(output_path.replace('.png', '.svg'), format='svg', bbox_inches='tight')
         plt.close()
 
         print(f"✓ Stacked plot saved: {output_path}")
