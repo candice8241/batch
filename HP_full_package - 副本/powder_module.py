@@ -227,6 +227,17 @@ class PowderXRDModule(GUIBase):
         self.unit = tk.StringVar(value='2th_deg')
         self.fit_method = tk.StringVar(value='pseudo')
 
+        # Output format variables
+        self.format_xy = tk.BooleanVar(value=True)
+        self.format_dat = tk.BooleanVar(value=True)
+        self.format_chi = tk.BooleanVar(value=False)
+        self.format_svg = tk.BooleanVar(value=False)
+        self.format_png = tk.BooleanVar(value=False)
+        self.format_fxye = tk.BooleanVar(value=False)
+
+        # Stacked plot variable
+        self.create_stacked_plot = tk.BooleanVar(value=True)
+
         # Phase analysis variables
         self.phase_peak_csv = tk.StringVar()
         self.phase_volume_csv = tk.StringVar()
@@ -504,6 +515,45 @@ class PowderXRDModule(GUIBase):
         ttk.Combobox(unit_cont, textvariable=self.unit,
                     values=['2th_deg', 'q_A^-1', 'q_nm^-1', 'r_mm'],
                     width=16, state='readonly', font=('Comic Sans MS', 9)).pack(anchor=tk.W)
+
+        # Output Formats Section
+        formats_frame = tk.Frame(content1, bg=self.colors['card_bg'])
+        formats_frame.pack(fill=tk.X, pady=(10, 0))
+
+        tk.Label(formats_frame, text="Output Formats", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
+
+        # Create checkboxes in a grid layout
+        formats_checkboxes = tk.Frame(formats_frame, bg=self.colors['card_bg'])
+        formats_checkboxes.pack(fill=tk.X)
+
+        # Row 1: xy, dat, chi
+        row1 = tk.Frame(formats_checkboxes, bg=self.colors['card_bg'])
+        row1.pack(anchor=tk.W, pady=2)
+        tk.Checkbutton(row1, text=".xy", variable=self.format_xy, bg=self.colors['card_bg'],
+                      font=('Comic Sans MS', 9), activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
+        tk.Checkbutton(row1, text=".dat", variable=self.format_dat, bg=self.colors['card_bg'],
+                      font=('Comic Sans MS', 9), activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
+        tk.Checkbutton(row1, text=".chi", variable=self.format_chi, bg=self.colors['card_bg'],
+                      font=('Comic Sans MS', 9), activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
+
+        # Row 2: svg, png, fxye
+        row2 = tk.Frame(formats_checkboxes, bg=self.colors['card_bg'])
+        row2.pack(anchor=tk.W, pady=2)
+        tk.Checkbutton(row2, text=".svg", variable=self.format_svg, bg=self.colors['card_bg'],
+                      font=('Comic Sans MS', 9), activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
+        tk.Checkbutton(row2, text=".png", variable=self.format_png, bg=self.colors['card_bg'],
+                      font=('Comic Sans MS', 9), activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
+        tk.Checkbutton(row2, text=".fxye", variable=self.format_fxye, bg=self.colors['card_bg'],
+                      font=('Comic Sans MS', 9), activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
+
+        # Stacked Plot Option (on same line as format label intention)
+        stacked_frame = tk.Frame(content1, bg=self.colors['card_bg'])
+        stacked_frame.pack(fill=tk.X, pady=(5, 0))
+
+        tk.Checkbutton(stacked_frame, text="Create Stacked Plot", variable=self.create_stacked_plot,
+                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9, 'bold'),
+                      activebackground=self.colors['card_bg']).pack(anchor=tk.W)
 
         # Fitting Settings Card
         fitting_card = self.create_card_frame(parent_frame)
@@ -863,7 +913,23 @@ class PowderXRDModule(GUIBase):
                           width=250).pack()
 
     # ==================== Processing Functions ====================
-    # (All processing functions remain the same)
+
+    def get_selected_formats(self):
+        """Get list of selected output formats"""
+        formats = []
+        if self.format_xy.get():
+            formats.append('xy')
+        if self.format_dat.get():
+            formats.append('dat')
+        if self.format_chi.get():
+            formats.append('chi')
+        if self.format_svg.get():
+            formats.append('svg')
+        if self.format_png.get():
+            formats.append('png')
+        if self.format_fxye.get():
+            formats.append('fxye')
+        return formats if formats else ['xy']  # Default to xy if none selected
 
     def log(self, message):
         """Log message to the log text widget"""
@@ -983,13 +1049,24 @@ class PowderXRDModule(GUIBase):
         try:
             self.progress.start()
             self.log("🔁 Starting Batch Integration")
+
+            # Get selected formats
+            formats = self.get_selected_formats()
+            create_stacked = self.create_stacked_plot.get()
+
+            self.log(f"Output formats: {', '.join(formats)}")
+            self.log(f"Create stacked plot: {'Yes' if create_stacked else 'No'}")
+
             integrator = BatchIntegrator(self.poni_path.get(), self.mask_path.get())
             integrator.batch_integrate(
                 input_pattern=self.input_pattern.get(),
                 output_dir=self.output_dir.get(),
                 npt=self.npt.get(),
                 unit=self.unit.get(),
-                dataset_path=self.dataset_path.get() or None
+                dataset_path=self.dataset_path.get() or None,
+                formats=formats,
+                create_stacked_plot=create_stacked,
+                stacked_plot_offset='auto'
             )
             self.log("✅ Integration completed!")
             self.show_success(self.root, "Integration completed!")
@@ -1033,12 +1110,24 @@ class PowderXRDModule(GUIBase):
         try:
             self.progress.start()
             self.log("🔁 Step 1/2: Integration")
+
+            # Get selected formats
+            formats = self.get_selected_formats()
+            create_stacked = self.create_stacked_plot.get()
+
+            self.log(f"Output formats: {', '.join(formats)}")
+            self.log(f"Create stacked plot: {'Yes' if create_stacked else 'No'}")
+
             integrator = BatchIntegrator(self.poni_path.get(), self.mask_path.get())
             integrator.batch_integrate(
                 input_pattern=self.input_pattern.get(),
                 output_dir=self.output_dir.get(),
                 npt=self.npt.get(),
-                unit=self.unit.get()
+                unit=self.unit.get(),
+                dataset_path=self.dataset_path.get() or None,
+                formats=formats,
+                create_stacked_plot=create_stacked,
+                stacked_plot_offset='auto'
             )
             self.log("✅ Integration done")
 
