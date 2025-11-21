@@ -513,6 +513,29 @@ def main():
     print("Multiple Output Formats + Stacked Pressure Plot")
     print("=" * 80)
 
+    # ========================================
+    # 配置输出格式（根据需求选择）
+    # ========================================
+    # 可选格式: 'xy', 'dat', 'chi', 'fxye', 'svg', 'png'
+
+    # 选项1: 仅输出基本数据格式（推荐，节省空间）
+    output_formats = ['xy', 'dat']
+
+    # 选项2: 输出所有格式
+    # output_formats = ['xy', 'dat', 'chi', 'fxye', 'svg', 'png']
+
+    # 选项3: 仅数据文件（用于后续分析）
+    # output_formats = ['xy', 'dat', 'chi', 'fxye']
+
+    # 选项4: 仅图形文件（用于快速查看）
+    # output_formats = ['svg', 'png']
+
+    # 选项5: GSAS精修格式
+    # output_formats = ['chi', 'fxye']
+
+    # 选项6: 仅XY格式（最常用）
+    # output_formats = ['xy']
+
     run_batch_integration(
         poni_file=r'D:\HEPS\ID31\test\using.poni',
         mask_file=r'D:\HEPS\ID31\test\use.edf',
@@ -521,9 +544,9 @@ def main():
         dataset_path=None,
         npt=2000,
         unit='2th_deg',
-        formats=['xy', 'dat', 'chi', 'svg', 'png', 'fxye'],  # All formats
-        create_stacked_plot=True,  # Enable stacked plot
-        stacked_plot_offset='auto'  # Auto-calculate offset
+        formats=output_formats,  # 使用上面选择的格式
+        create_stacked_plot=True,  # 是否生成堆叠图
+        stacked_plot_offset='auto'  # 堆叠图偏移量：'auto' 或数值
     )
 
 
