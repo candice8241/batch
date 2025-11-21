@@ -239,7 +239,7 @@ class BatchIntegrator:
     
     def batch_integrate(self, input_pattern, output_dir, npt=2000, unit="2th_deg",
                         dataset_path=None, formats=['xy'], create_stacked_plot=False,
-                        stacked_plot_offset='auto', save_individual_files=True, **kwargs):
+                        stacked_plot_offset='auto', **kwargs):
         """
         Batch integration for multiple HDF5 files
 
@@ -247,7 +247,6 @@ class BatchIntegrator:
             formats (list): Output formats ['xy', 'dat', 'chi', 'svg', 'png', 'fxye']
             create_stacked_plot (bool): Whether to create stacked plot
             stacked_plot_offset (str or float): Offset for stacked plot ('auto' or float value)
-            save_individual_files (bool): Whether to save individual integration files (default: True)
         """
         # Enhanced file search with multiple attempts
         h5_files = []
@@ -280,10 +279,7 @@ class BatchIntegrator:
         print(f"\nFound {len(h5_files)} HDF5 files to process")
         print(f"Output directory: {output_dir}")
         print(f"Integration parameters: {npt} points, unit={unit}")
-        if save_individual_files:
-            print(f"Output formats: {', '.join(formats)}")
-        else:
-            print(f"Mode: Stacked plot only (no individual files)\n")
+        print(f"Output formats: {', '.join(formats)}")
 
         os.makedirs(output_dir, exist_ok=True)
 
@@ -294,22 +290,13 @@ class BatchIntegrator:
             basename = os.path.splitext(os.path.basename(h5_file))[0]
             output_base = os.path.join(output_dir, basename)
 
-            if save_individual_files:
-                success, error_msg = self.integrate_single(
-                    h5_file, output_base, npt, unit, dataset_path, formats=formats, **kwargs
-                )
-            else:
-                # Only integrate and save minimal .xy file for stacked plot
-                success, error_msg = self.integrate_single(
-                    h5_file, output_base, npt, unit, dataset_path, formats=['xy'], **kwargs
-                )
+            success, error_msg = self.integrate_single(
+                h5_file, output_base, npt, unit, dataset_path, formats=formats, **kwargs
+            )
 
             if success:
                 success_count += 1
-                if save_individual_files:
-                    print(f"✓ Success: {h5_file} -> {output_base}.[{','.join(formats)}]")
-                else:
-                    print(f"✓ Integrated: {os.path.basename(h5_file)}")
+                print(f"✓ Success: {h5_file} -> {output_base}.[{','.join(formats)}]")
             else:
                 failed_files.append((h5_file, error_msg))
                 print(f"✗ Failed: {h5_file}\n  Error: {error_msg}")

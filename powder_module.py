@@ -1096,8 +1096,7 @@ class PowderXRDModule(GUIBase):
                 dataset_path=self.dataset_path.get() or None,
                 formats=formats,
                 create_stacked_plot=False,
-                stacked_plot_offset=offset_value,
-                save_individual_files=True
+                stacked_plot_offset=offset_value
             )
             self.log("✅ Integration completed!")
 
