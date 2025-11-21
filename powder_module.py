@@ -1248,7 +1248,7 @@ class PowderXRDModule(GUIBase):
 
             if vars['create_stacked_plot'] and total_files > 1:
                 self.log(f"📈 Creating combined stacked plot for all {total_files} files...")
-                self._create_combined_stacked_plot(vars['output_dir'], vars['stacked_plot_offset'])
+                self._create_combined_stacked_plot(vars['output_dir'], vars['stacked_plot_offset'], vars['unit'])
 
             self.log(f"\n{'='*60}")
             self.log(f"✅ All integrations completed!")
@@ -1285,8 +1285,17 @@ class PowderXRDModule(GUIBase):
                 pass
         return 0.0
 
-    def _create_combined_stacked_plot(self, output_dir, offset):
+    def _create_combined_stacked_plot(self, output_dir, offset, unit='2th_deg'):
         """Create a stacked plot combining all integrated files, sorted by pressure"""
+        # Map unit to axis label
+        unit_labels = {
+            '2th_deg': '2θ (°)',
+            'q_A^-1': 'Q (Å⁻¹)',
+            'q_nm^-1': 'Q (nm⁻¹)',
+            'r_mm': 'r (mm)'
+        }
+        xlabel = unit_labels.get(unit, unit)
+
         try:
             xy_files = glob.glob(os.path.join(output_dir, "*.xy"))
 
@@ -1340,8 +1349,16 @@ class PowderXRDModule(GUIBase):
 
                 ax.plot(x, y_offset, linewidth=1.5, alpha=0.8, color=curve_color)
 
+                # Position label between current and next curve (or below for last curve)
+                if i == 0:
+                    # For first curve, place label below the baseline
+                    label_y = -offset_value * 0.2
+                else:
+                    # For other curves, place label between previous and current curve
+                    label_y = (i - 0.5) * offset_value
+
                 ax.text(x_min + 0.02 * (x_max - x_min),
-                       i * offset_value + np.mean(y[:10]),
+                       label_y,
                        f'{pressure:.1f} GPa',
                        fontsize=9,
                        verticalalignment='center',
@@ -1350,7 +1367,7 @@ class PowderXRDModule(GUIBase):
                                 edgecolor='gray', alpha=0.8))
 
             ax.set_xlim(x_min, x_max)
-            ax.set_xlabel('Q (Å⁻¹)', fontsize=13, fontweight='bold')
+            ax.set_xlabel(xlabel, fontsize=13, fontweight='bold')
             ax.set_ylabel('Intensity (offset)', fontsize=13, fontweight='bold')
             ax.set_title('Stacked XRD Patterns (Sorted by Pressure)',
                         fontsize=14, fontweight='bold')
@@ -1476,7 +1493,7 @@ class PowderXRDModule(GUIBase):
 
             if vars['create_stacked_plot'] and total_files > 1:
                 self.log(f"📈 Creating combined stacked plot...")
-                self._create_combined_stacked_plot(vars['output_dir'], vars['stacked_plot_offset'])
+                self._create_combined_stacked_plot(vars['output_dir'], vars['stacked_plot_offset'], vars['unit'])
 
             self.log(f"✅ Step 1/2 completed: All {total_files} files integrated\n")
 
