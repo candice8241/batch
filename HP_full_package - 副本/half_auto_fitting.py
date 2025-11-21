@@ -552,15 +552,15 @@ class PeakFittingGUI:
         self.undo_stack = []
 
         # Fitting settings
-        self.fit_method = tk.StringVar(value="pseudo_voigt")
+        self.fit_method = tk.StringVar(master=self.master, value="pseudo_voigt")
         self.overlap_mode = False
         self.group_distance_threshold = 2.5
 
         # Smoothing settings
-        self.smoothing_enabled = tk.BooleanVar(value=False)
-        self.smoothing_method = tk.StringVar(value="gaussian")
-        self.smoothing_sigma = tk.DoubleVar(value=2.0)
-        self.smoothing_window = tk.IntVar(value=11)
+        self.smoothing_enabled = tk.BooleanVar(master=self.master, value=False)
+        self.smoothing_method = tk.StringVar(master=self.master, value="gaussian")
+        self.smoothing_sigma = tk.DoubleVar(master=self.master, value=2.0)
+        self.smoothing_window = tk.IntVar(master=self.master, value=11)
         self.y_smoothed = None
 
         # Initialize GUI components

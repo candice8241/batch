@@ -245,29 +245,29 @@ class AzimuthalIntegrationModule(GUIBase):
     def _init_variables(self):
         """Initialize all tkinter variables with thread safety"""
         try:
-            self.poni_path = tk.StringVar()
-            self.mask_path = tk.StringVar()
-            self.input_pattern = tk.StringVar()
-            self.output_dir = tk.StringVar()
-            self.dataset_path = tk.StringVar(value="entry/data/data")
-            self.npt = tk.IntVar(value=4000)
-            self.unit = tk.StringVar(value='2th_deg')
-            self.azimuth_start = tk.DoubleVar(value=0.0)
-            self.azimuth_end = tk.DoubleVar(value=90.0)
-            self.sector_label = tk.StringVar(value="Sector_1")
-            self.preset = tk.StringVar(value='quadrants')
-            self.mode = tk.StringVar(value='single')
-            self.multiple_mode = tk.StringVar(value='custom')
-            self.output_csv = tk.BooleanVar(value=True)
+            self.poni_path = tk.StringVar(master=self.root)
+            self.mask_path = tk.StringVar(master=self.root)
+            self.input_pattern = tk.StringVar(master=self.root)
+            self.output_dir = tk.StringVar(master=self.root)
+            self.dataset_path = tk.StringVar(master=self.root, value="entry/data/data")
+            self.npt = tk.IntVar(master=self.root, value=4000)
+            self.unit = tk.StringVar(master=self.root, value='2th_deg')
+            self.azimuth_start = tk.DoubleVar(master=self.root, value=0.0)
+            self.azimuth_end = tk.DoubleVar(master=self.root, value=90.0)
+            self.sector_label = tk.StringVar(master=self.root, value="Sector_1")
+            self.preset = tk.StringVar(master=self.root, value='quadrants')
+            self.mode = tk.StringVar(master=self.root, value='single')
+            self.multiple_mode = tk.StringVar(master=self.root, value='custom')
+            self.output_csv = tk.BooleanVar(master=self.root, value=True)
 
             # Bin mode variables
-            self.bin_mode = tk.BooleanVar(value=False)
-            self.bin_start = tk.DoubleVar(value=0.0)
-            self.bin_end = tk.DoubleVar(value=360.0)
-            self.bin_step = tk.DoubleVar(value=10.0)
+            self.bin_mode = tk.BooleanVar(master=self.root, value=False)
+            self.bin_start = tk.DoubleVar(master=self.root, value=0.0)
+            self.bin_end = tk.DoubleVar(master=self.root, value=360.0)
+            self.bin_step = tk.DoubleVar(master=self.root, value=10.0)
 
             # Multi bin mode
-            self.multi_bin_mode = tk.BooleanVar(value=False)
+            self.multi_bin_mode = tk.BooleanVar(master=self.root, value=False)
         except Exception as e:
             print(f"Warning: Error initializing variables: {e}")
 
