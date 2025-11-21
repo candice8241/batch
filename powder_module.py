@@ -943,12 +943,15 @@ class PowderXRDModule(GUIBase):
         return formats if formats else ['xy']  # Default to xy if none selected
 
     def log(self, message):
-        """Log message to the log text widget"""
-        self.log_text.config(state='normal')
-        self.log_text.insert(tk.END, message + "\n")
-        self.log_text.see(tk.END)
-        self.log_text.config(state='disabled')
-        self.root.update()
+        """Log message to the log text widget - THREAD SAFE"""
+        def _log_update():
+            self.log_text.config(state='normal')
+            self.log_text.insert(tk.END, message + "\n")
+            self.log_text.see(tk.END)
+            self.log_text.config(state='disabled')
+
+        # Use after() to ensure GUI updates happen in the main thread
+        self.root.after(0, _log_update)
 
     def separate_peaks(self):
         """Separate original and new peaks from input CSV"""
