@@ -866,12 +866,46 @@ class PowderXRDModule(GUIBase):
     # (All processing functions remain the same)
 
     def log(self, message):
-        """Log message to the log text widget"""
-        self.log_text.config(state='normal')
-        self.log_text.insert(tk.END, message + "\n")
-        self.log_text.see(tk.END)
-        self.log_text.config(state='disabled')
-        self.root.update()
+        """Log message to the log text widget (thread-safe)"""
+        def _log():
+            self.log_text.config(state='normal')
+            self.log_text.insert(tk.END, message + "\n")
+            self.log_text.see(tk.END)
+            self.log_text.config(state='disabled')
+
+        # Schedule GUI operation on main thread
+        if threading.current_thread() == threading.main_thread():
+            _log()
+        else:
+            self.root.after(0, _log)
+
+    def safe_progress_start(self):
+        """Start progress bar (thread-safe)"""
+        if threading.current_thread() == threading.main_thread():
+            self.progress.start()
+        else:
+            self.root.after(0, self.progress.start)
+
+    def safe_progress_stop(self):
+        """Stop progress bar (thread-safe)"""
+        if threading.current_thread() == threading.main_thread():
+            self.progress.stop()
+        else:
+            self.root.after(0, self.progress.stop)
+
+    def safe_messagebox_error(self, title, message):
+        """Show error messagebox (thread-safe)"""
+        if threading.current_thread() == threading.main_thread():
+            messagebox.showerror(title, message)
+        else:
+            self.root.after(0, lambda: messagebox.showerror(title, message))
+
+    def safe_show_success(self, message):
+        """Show success message (thread-safe)"""
+        if threading.current_thread() == threading.main_thread():
+            self.show_success(self.root, message)
+        else:
+            self.root.after(0, lambda: self.show_success(self.root, message))
 
     def separate_peaks(self):
         """Separate original and new peaks from input CSV"""
@@ -883,7 +917,7 @@ class PowderXRDModule(GUIBase):
     def _separate_peaks_thread(self):
         """Background thread for peak separation"""
         try:
-            self.progress.start()
+            self.safe_progress_start()
             self.log("🔀 Starting peak separation process...")
 
             csv_path = self.phase_peak_csv.get()
@@ -905,7 +939,7 @@ class PowderXRDModule(GUIBase):
 
             if transition_pressure is None:
                 self.log("⚠️ No phase transition detected")
-                messagebox.showwarning("Warning", "No phase transition detected in the data")
+                self.root.after(0, lambda: messagebox.showwarning("Warning", "No phase transition detected in the data"))
                 return
 
             self.log(f"✓ Phase transition detected at {transition_pressure:.2f} GPa")
@@ -961,15 +995,15 @@ class PowderXRDModule(GUIBase):
             self.log(f"📊 Original peaks CSV: {os.path.basename(original_peaks_dataset_csv)}")
             self.log("="*60 + "\n")
 
-            self.show_success(self.root, f"Peak separation completed!\n\n"
+            self.safe_show_success(f"Peak separation completed!\n\n"
                             f"Transition at {transition_pressure:.2f} GPa\n"
                             f"Files saved to input directory")
 
         except Exception as e:
             self.log(f"❌ Error during peak separation: {str(e)}")
-            messagebox.showerror("Error", f"Peak separation failed:\n{str(e)}")
+            self.safe_messagebox_error("Error", f"Peak separation failed:\n{str(e)}")
         finally:
-            self.progress.stop()
+            self.safe_progress_stop()
 
     def run_integration(self):
         """Run 1D integration"""
@@ -981,7 +1015,7 @@ class PowderXRDModule(GUIBase):
     def _run_integration_thread(self):
         """Background thread for integration"""
         try:
-            self.progress.start()
+            self.safe_progress_start()
             self.log("🔁 Starting Batch Integration")
             integrator = BatchIntegrator(self.poni_path.get(), self.mask_path.get())
             integrator.batch_integrate(
@@ -992,12 +1026,12 @@ class PowderXRDModule(GUIBase):
                 dataset_path=self.dataset_path.get() or None
             )
             self.log("✅ Integration completed!")
-            self.show_success(self.root, "Integration completed!")
+            self.safe_show_success("Integration completed!")
         except Exception as e:
             self.log(f"❌ Error: {str(e)}")
-            messagebox.showerror("Error", str(e))
+            self.safe_messagebox_error("Error", str(e))
         finally:
-            self.progress.stop()
+            self.safe_progress_stop()
 
     def run_fitting(self):
         """Run peak fitting"""
@@ -1009,17 +1043,17 @@ class PowderXRDModule(GUIBase):
     def _run_fitting_thread(self):
         """Background thread for peak fitting"""
         try:
-            self.progress.start()
+            self.safe_progress_start()
             self.log("📈 Starting Batch Fitting")
             fitter = DataProcessor(folder=self.output_dir.get(), fit_method=self.fit_method.get())
             fitter.run_batch_fitting()
             self.log("✅ Fitting completed!")
-            self.show_success(self.root, "Fitting completed!")
+            self.safe_show_success("Fitting completed!")
         except Exception as e:
             self.log(f"❌ Error: {str(e)}")
-            messagebox.showerror("Error", str(e))
+            self.safe_messagebox_error("Error", str(e))
         finally:
-            self.progress.stop()
+            self.safe_progress_stop()
 
     def run_full_pipeline(self):
         """Run full integration and fitting pipeline"""
@@ -1031,7 +1065,7 @@ class PowderXRDModule(GUIBase):
     def _run_full_pipeline_thread(self):
         """Background thread for full pipeline"""
         try:
-            self.progress.start()
+            self.safe_progress_start()
             self.log("🔁 Step 1/2: Integration")
             integrator = BatchIntegrator(self.poni_path.get(), self.mask_path.get())
             integrator.batch_integrate(
@@ -1046,12 +1080,12 @@ class PowderXRDModule(GUIBase):
             fitter = DataProcessor(folder=self.output_dir.get(), fit_method=self.fit_method.get())
             fitter.run_batch_fitting()
             self.log("✅ Pipeline completed!")
-            self.show_success(self.root, "Full pipeline completed!")
+            self.safe_show_success("Full pipeline completed!")
         except Exception as e:
             self.log(f"❌ Error: {str(e)}")
-            messagebox.showerror("Error", str(e))
+            self.safe_messagebox_error("Error", str(e))
         finally:
-            self.progress.stop()
+            self.safe_progress_stop()
 
     def run_phase_analysis(self):
         """Run volume calculation and lattice parameter fitting"""
@@ -1063,7 +1097,7 @@ class PowderXRDModule(GUIBase):
     def _run_phase_analysis_thread(self):
         """Background thread for phase analysis and volume calculation"""
         try:
-            self.progress.start()
+            self.safe_progress_start()
             self.log("🐶 Starting Volume Calculation & Lattice Parameter Fitting")
 
             csv_path = self.phase_volume_csv.get()
@@ -1110,7 +1144,7 @@ class PowderXRDModule(GUIBase):
 
             if results is None:
                 self.log("❌ Analysis failed - no results returned")
-                messagebox.showerror("Error", "Analysis failed to complete")
+                self.safe_messagebox_error("Error", "Analysis failed to complete")
                 return
 
             input_dir = os.path.dirname(csv_path)
@@ -1154,16 +1188,16 @@ class PowderXRDModule(GUIBase):
                 success_msg += f"Transition at {results['transition_pressure']:.2f} GPa\n"
             success_msg += f"{len(generated_files)} file(s) saved to output directory"
 
-            self.show_success(self.root, success_msg)
+            self.safe_show_success(success_msg)
 
         except Exception as e:
             import traceback
             error_details = traceback.format_exc()
             self.log(f"❌ Error during analysis: {str(e)}")
             self.log(f"Details:\n{error_details}")
-            messagebox.showerror("Error", f"Volume calculation failed:\n{str(e)}")
+            self.safe_messagebox_error("Error", f"Volume calculation failed:\n{str(e)}")
         finally:
-            self.progress.stop()
+            self.safe_progress_stop()
 
     def run_birch_murnaghan(self):
         """Run Birch-Murnaghan equation of state fitting"""
@@ -1175,7 +1209,7 @@ class PowderXRDModule(GUIBase):
     def _run_birch_murnaghan_thread(self):
         """Background thread for Birch-Murnaghan fitting"""
         try:
-            self.progress.start()
+            self.safe_progress_start()
             order = int(self.bm_order.get())
             order_str = f"{order}rd order" if order == 3 else "2nd order"
             self.log(f"⚗️ Starting {order_str} Single-Phase BM Fitting")
@@ -1302,13 +1336,13 @@ class PowderXRDModule(GUIBase):
             success_msg += f"R² = {fit_results['R_squared']:.6f}\n\n"
             success_msg += "Results saved to output directory"
 
-            self.show_success(self.root, success_msg)
+            self.safe_show_success(success_msg)
 
         except Exception as e:
             import traceback
             error_details = traceback.format_exc()
             self.log(f"❌ Error during BM fitting: {str(e)}")
             self.log(f"\nDetails:\n{error_details}")
-            messagebox.showerror("Error", f"BM fitting failed:\n\n{str(e)}")
+            self.safe_messagebox_error("Error", f"BM fitting failed:\n\n{str(e)}")
         finally:
-            self.progress.stop()
+            self.safe_progress_stop()
