@@ -24,12 +24,14 @@ hiddenimports = [
     'scipy.interpolate',
     'scipy.signal',
     'scipy.special',
+    'scipy.ndimage',
     'pandas',
 
     # Plotting
     'matplotlib',
     'matplotlib.pyplot',
     'matplotlib.backends.backend_tkagg',
+    'matplotlib.figure',
 
     # Image processing
     'PIL',
@@ -44,10 +46,62 @@ hiddenimports = [
     'xlrd',
     'xlsxwriter',
 
-    # XRD specific
+    # XRD specific - pyFAI modules
     'pyFAI',
     'pyFAI.azimuthalIntegrator',
+    'pyFAI.geometry',
+    'pyFAI.detectors',
+    'pyFAI.calibrant',
+    'pyFAI.units',
+    'pyFAI.io',
+    'pyFAI.utils',
+    'pyFAI.utils.decorators',
+    'pyFAI.utils.mathutil',
+    'pyFAI.utils.stringutil',
+    'pyFAI.ext',
+    'pyFAI.method_registry',
+    'pyFAI.engines',
+    'pyFAI.engines.preproc',
+
+    # fabio - main module
     'fabio',
+    'fabio.fabioimage',
+    'fabio.openimage',
+
+    # fabio - all image format modules (CRITICAL - these are dynamically imported)
+    'fabio.pilatusimage',      # Pilatus detector
+    'fabio.edfimage',          # EDF format
+    'fabio.tifimage',          # TIFF format
+    'fabio.marccdimage',       # MarCCD detector
+    'fabio.cbfimage',          # CBF format
+    'fabio.brukerimage',       # Bruker format
+    'fabio.bruker100image',
+    'fabio.mar345image',       # MAR345 detector
+    'fabio.fit2dmaskimage',    # Fit2D mask
+    'fabio.kcdimage',          # KCD format
+    'fabio.dm3image',          # Digital Micrograph
+    'fabio.OXDimage',          # Oxford Diffraction
+    'fabio.adscimage',         # ADSC detector
+    'fabio.raxisimage',        # Rigaku R-Axis
+    'fabio.numpyimage',        # NumPy arrays
+    'fabio.fit2dspreadsheetimage',
+    'fabio.hdf5image',         # HDF5 format
+    'fabio.jpeg2kimage',       # JPEG2000
+    'fabio.mrcimage',          # MRC format
+    'fabio.pnmimage',          # PNM format
+    'fabio.limaimage',
+    'fabio.speimage',          # SPE format
+    'fabio.xsdimage',          # XSD format
+    'fabio.binaryimage',
+    'fabio.pixiimage',
+    'fabio.dtrekimage',
+    'fabio.esperantoimage',
+    'fabio.eigerimage',        # Dectris Eiger
+    'fabio.mpaimage',
+    'fabio.gfrimage',
+    'fabio.eigerimage',
+    'fabio.fabioformats',      # Format registry
+    'fabio.compression',       # Compression support
 
     # Peak fitting
     'lmfit',
@@ -85,7 +139,7 @@ a = Analysis(
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
-    hookspath=[],
+    hookspath=['hooks'],            # Custom hooks for fabio and pyFAI
     hooksconfig={},
     runtime_hooks=[],
     excludes=[

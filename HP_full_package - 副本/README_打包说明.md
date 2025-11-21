@@ -32,7 +32,10 @@ bash build.sh
 ├── build.bat                 # Windows 打包脚本
 ├── build.sh                  # Linux/Mac 打包脚本
 ├── requirements_gui.txt      # Python 依赖列表
-└── check_dependencies.py     # 依赖检查工具
+├── check_dependencies.py     # 依赖检查工具
+└── hooks/                    # PyInstaller hook 文件（重要！）
+    ├── hook-fabio.py         # fabio 动态导入处理
+    └── hook-pyFAI.py         # pyFAI 动态导入处理
 
 资源文件:
 ├── ChatGPT Image.ico         # 应用图标
@@ -125,31 +128,44 @@ dist/
 
 ## 🐛 常见问题
 
-### 问题 1: PyInstaller 找不到
+### ⚠️ 问题 1: ModuleNotFoundError: No module named 'fabio.pilatusimage'
+
+**这是最常见的错误！**
+
+**原因**: fabio 库动态导入图像格式模块，PyInstaller 无法自动检测。
+
+**解决方案**:
+- ✅ 已在 `xrd_app.spec` 中添加所有 fabio 格式模块
+- ✅ 已创建 `hooks/hook-fabio.py` 自动处理
+- 🔧 使用更新后的配置重新打包即可
+
+详细说明请查看：**`常见打包错误解决方案.md`**
+
+### 问题 2: PyInstaller 找不到
 
 ```bash
 pip install pyinstaller
 ```
 
-### 问题 2: 打包后运行报错
+### 问题 3: 打包后运行报错
 
 1. 修改 `xrd_app.spec`，将 `console=False` 改为 `console=True`
 2. 重新打包查看错误信息
 3. 通常是缺少隐藏导入，在 `hiddenimports` 中添加
 
-### 问题 3: 图标不显示
+### 问题 4: 图标不显示
 
 原因：`main.py` 中使用了硬编码的绝对路径
 
 解决：修改 `main.py`，使用 `get_resource_path()` 函数（见详细文档）
 
-### 问题 4: EXE 过大
+### 问题 5: EXE 过大
 
 1. 使用虚拟环境打包（只包含必需的库）
 2. 启用 UPX 压缩（spec 文件中 `upx=True`）
 3. 排除不必要的包（修改 `excludes` 列表）
 
-### 问题 5: pyFAI/fabio 安装失败
+### 问题 6: pyFAI/fabio 安装失败
 
 Windows 用户可能需要：
 
@@ -166,6 +182,7 @@ conda install -c conda-forge pyfai fabio
 
 更多信息请参考：
 - **完整指南**: `EXE打包指南.md`
+- **错误解决**: `常见打包错误解决方案.md` ⭐ 强烈推荐
 - **配置详解**: `xrd_app.spec` 文件注释
 
 ## 📧 技术支持
