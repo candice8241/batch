@@ -515,78 +515,65 @@ class PowderXRDModule(GUIBase):
                     values=['2th_deg', 'q_A^-1', 'q_nm^-1', 'r_mm'],
                     width=16, state='readonly', font=('Comic Sans MS', 9)).pack(anchor=tk.W)
 
-        # Output Format Settings Card
-        format_card = self.create_card_frame(parent_frame)
-        format_card.pack(fill=tk.X, pady=(0, 15))
+        # Output Formats - in one line
+        format_label_frame = tk.Frame(content1, bg=self.colors['card_bg'])
+        format_label_frame.pack(fill=tk.X, pady=(10, 2))
+        tk.Label(format_label_frame, text="Output Formats", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W)
 
-        content_format = tk.Frame(format_card, bg=self.colors['card_bg'], padx=20, pady=12)
-        content_format.pack(fill=tk.BOTH, expand=True)
+        format_frame = tk.Frame(content1, bg=self.colors['card_bg'])
+        format_frame.pack(fill=tk.X, pady=(0, 5))
 
-        header_format = tk.Frame(content_format, bg=self.colors['card_bg'])
-        header_format.pack(anchor=tk.W, pady=(0, 8))
-
-        tk.Label(header_format, text="📊", bg=self.colors['card_bg'],
-                font=('Segoe UI Emoji', 14)).pack(side=tk.LEFT, padx=(0, 6))
-
-        tk.Label(header_format, text="Output Formats & Stacked Plot",
-                bg=self.colors['card_bg'], fg=self.colors['primary'],
-                font=('Comic Sans MS', 11, 'bold')).pack(side=tk.LEFT)
-
-        # Format checkboxes in two rows
-        format_frame1 = tk.Frame(content_format, bg=self.colors['card_bg'])
-        format_frame1.pack(fill=tk.X, pady=(0, 5))
-
-        tk.Checkbutton(format_frame1, text="XY", variable=self.format_xy,
+        tk.Checkbutton(format_frame, text="XY", variable=self.format_xy,
                       bg=self.colors['card_bg'], fg=self.colors['text_dark'],
                       font=('Comic Sans MS', 9), activebackground=self.colors['card_bg'],
-                      selectcolor='white').pack(side=tk.LEFT, padx=(0, 15))
+                      selectcolor='white').pack(side=tk.LEFT, padx=(0, 10))
 
-        tk.Checkbutton(format_frame1, text="DAT", variable=self.format_dat,
+        tk.Checkbutton(format_frame, text="DAT", variable=self.format_dat,
                       bg=self.colors['card_bg'], fg=self.colors['text_dark'],
                       font=('Comic Sans MS', 9), activebackground=self.colors['card_bg'],
-                      selectcolor='white').pack(side=tk.LEFT, padx=(0, 15))
+                      selectcolor='white').pack(side=tk.LEFT, padx=(0, 10))
 
-        tk.Checkbutton(format_frame1, text="CHI", variable=self.format_chi,
+        tk.Checkbutton(format_frame, text="CHI", variable=self.format_chi,
                       bg=self.colors['card_bg'], fg=self.colors['text_dark'],
                       font=('Comic Sans MS', 9), activebackground=self.colors['card_bg'],
-                      selectcolor='white').pack(side=tk.LEFT, padx=(0, 15))
+                      selectcolor='white').pack(side=tk.LEFT, padx=(0, 10))
 
-        format_frame2 = tk.Frame(content_format, bg=self.colors['card_bg'])
-        format_frame2.pack(fill=tk.X, pady=(0, 10))
-
-        tk.Checkbutton(format_frame2, text="FXYE", variable=self.format_fxye,
+        tk.Checkbutton(format_frame, text="FXYE", variable=self.format_fxye,
                       bg=self.colors['card_bg'], fg=self.colors['text_dark'],
                       font=('Comic Sans MS', 9), activebackground=self.colors['card_bg'],
-                      selectcolor='white').pack(side=tk.LEFT, padx=(0, 15))
+                      selectcolor='white').pack(side=tk.LEFT, padx=(0, 10))
 
-        tk.Checkbutton(format_frame2, text="SVG", variable=self.format_svg,
+        tk.Checkbutton(format_frame, text="SVG", variable=self.format_svg,
                       bg=self.colors['card_bg'], fg=self.colors['text_dark'],
                       font=('Comic Sans MS', 9), activebackground=self.colors['card_bg'],
-                      selectcolor='white').pack(side=tk.LEFT, padx=(0, 15))
+                      selectcolor='white').pack(side=tk.LEFT, padx=(0, 10))
 
-        tk.Checkbutton(format_frame2, text="PNG", variable=self.format_png,
+        tk.Checkbutton(format_frame, text="PNG", variable=self.format_png,
                       bg=self.colors['card_bg'], fg=self.colors['text_dark'],
                       font=('Comic Sans MS', 9), activebackground=self.colors['card_bg'],
-                      selectcolor='white').pack(side=tk.LEFT, padx=(0, 15))
+                      selectcolor='white').pack(side=tk.LEFT, padx=(0, 10))
 
         # Stacked plot options
-        stacked_frame = tk.Frame(content_format, bg=self.colors['card_bg'])
-        stacked_frame.pack(fill=tk.X, pady=(5, 0))
+        stacked_plot_frame = tk.Frame(content1, bg=self.colors['card_bg'])
+        stacked_plot_frame.pack(fill=tk.X, pady=(5, 0))
 
-        tk.Checkbutton(stacked_frame, text="Create Stacked Plot", variable=self.create_stacked_plot,
+        tk.Checkbutton(stacked_plot_frame, text="Create Stacked Plot", variable=self.create_stacked_plot,
                       bg=self.colors['card_bg'], fg=self.colors['text_dark'],
                       font=('Comic Sans MS', 9, 'bold'), activebackground=self.colors['card_bg'],
-                      selectcolor='white').pack(anchor=tk.W)
+                      selectcolor='white').pack(side=tk.LEFT, padx=(0, 15))
 
-        offset_frame = tk.Frame(content_format, bg=self.colors['card_bg'])
-        offset_frame.pack(fill=tk.X, pady=(5, 0))
-
-        tk.Label(offset_frame, text="Offset:", bg=self.colors['card_bg'],
+        tk.Label(stacked_plot_frame, text="Offset:", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9)).pack(side=tk.LEFT, padx=(0, 5))
 
-        ttk.Combobox(offset_frame, textvariable=self.stacked_plot_offset,
-                    values=['auto', '1000', '2000', '3000', '5000', '10000'],
-                    width=12, font=('Comic Sans MS', 9)).pack(side=tk.LEFT)
+        # Use Entry instead of Combobox for custom offset
+        tk.Entry(stacked_plot_frame, textvariable=self.stacked_plot_offset,
+                font=('Comic Sans MS', 9), bg='white', relief='solid',
+                borderwidth=1, width=12).pack(side=tk.LEFT)
+
+        tk.Label(stacked_plot_frame, text="(auto or number)", bg=self.colors['card_bg'],
+                fg=self.colors['text_light'], font=('Comic Sans MS', 8),
+                ).pack(side=tk.LEFT, padx=(5, 0))
 
         # Fitting Settings Card
         fitting_card = self.create_card_frame(parent_frame)

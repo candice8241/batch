@@ -378,6 +378,11 @@ class BatchIntegrator:
         # Create color map (change color every 10 GPa)
         colors = plt.cm.tab10(np.arange(10))
 
+        # Calculate x-axis range (round to integers)
+        all_x_data = np.concatenate([data[:, 0] for data in data_list])
+        x_min = np.ceil(all_x_data.min())   # 最小值往大取整
+        x_max = np.floor(all_x_data.max())  # 最大值往小取整
+
         # Create plot
         plt.figure(figsize=(12, 10))
 
@@ -391,14 +396,17 @@ class BatchIntegrator:
                     color=colors[color_idx], linewidth=1.2, label=f'{pressure:.1f} GPa')
 
             # Add pressure label on the left side
-            # Position it above the baseline of current curve
-            x_pos = data[0, 0] + (data[-1, 0] - data[0, 0]) * 0.02
-            y_pos = y_offset + np.max(data[:, 1]) * 0.3
+            # Position it relative to the offset baseline
+            x_pos = x_min + (x_max - x_min) * 0.02
+            y_pos = y_offset + offset * 0.1  # 位置随offset移动
 
             plt.text(x_pos, y_pos, f'{pressure:.1f} GPa',
                     fontsize=9, verticalalignment='bottom',
-                    bbox=dict(boxstyle='round,pad=0.3', facecolor=colors[color_idx], alpha=0.3))
+                    bbox=dict(boxstyle='round,pad=0.3', edgecolor='black',
+                             facecolor='white', linewidth=1))
 
+        # Set x-axis limits to rounded values
+        plt.xlim(x_min, x_max)
         plt.xlabel('2θ (degrees)', fontsize=12)
         plt.ylabel('Intensity (offset)', fontsize=12)
         plt.title('Stacked Diffraction Patterns', fontsize=14, fontweight='bold')
