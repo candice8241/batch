@@ -129,60 +129,13 @@ class CuteSheepProgressBar(tk.Canvas):
         self.frame_count = 0
 
     def draw_adorable_sheep(self, x, y, jump_phase):
-        """Draw an adorable animated sheep character"""
-        jump = -abs(math.sin(jump_phase) * 20)
-        y = y + jump
+        """Draw a cute sheep emoji with bounce animation"""
+        jump = -abs(math.sin(jump_phase) * 15)
+        y_pos = y + jump
 
-        # Shadow
-        self.create_oval(x-15, y+25, x+15, y+28, fill="#E8E4F3", outline="")
-
-        # Body - fluffy cloud-like
-        self.create_oval(x-20, y-15, x+20, y+15, fill="#FFFFFF", outline="#FFB6D9", width=3)
-        self.create_oval(x-18, y-10, x-10, y-2, fill="#FFF5FF", outline="")
-        self.create_oval(x+10, y-8, x+18, y, fill="#FFF5FF", outline="")
-        self.create_oval(x-5, y+8, x+5, y+15, fill="#FFF5FF", outline="")
-
-        # Head
-        self.create_oval(x+15, y-12, x+35, y+8, fill="#FFE4F0", outline="#FFB6D9", width=3)
-
-        # Ears
-        self.create_polygon(x+17, y-10, x+20, y-18, x+23, y-10,
-                           fill="#FFB6D9", outline="#FF6B9D", width=2, smooth=True)
-        self.create_polygon(x+27, y-10, x+30, y-18, x+33, y-10,
-                           fill="#FFB6D9", outline="#FF6B9D", width=2, smooth=True)
-
-        # Eyes - sparkly and cute
-        self.create_oval(x+19, y-6, x+24, y-1, fill="#FFFFFF")
-        self.create_oval(x+20, y-5, x+23, y-2, fill="#2B2D42")
-        self.create_oval(x+21, y-4, x+22, y-3, fill="#FFFFFF")
-        self.create_oval(x+26, y-6, x+31, y-1, fill="#FFFFFF")
-        self.create_oval(x+27, y-5, x+30, y-2, fill="#2B2D42")
-        self.create_oval(x+28, y-4, x+29, y-3, fill="#FFFFFF")
-
-        # Nose and mouth
-        self.create_oval(x+23, y+2, x+27, y+6, fill="#FFB6D9", outline="#FF6B9D", width=2)
-        self.create_arc(x+20, y+3, x+30, y+9, start=0, extent=-180,
-                       outline="#FF6B9D", width=3, style="arc")
-
-        # Rosy cheeks
-        self.create_oval(x+16, y+1, x+19, y+4, fill="#FFD4E5", outline="")
-        self.create_oval(x+31, y+1, x+34, y+4, fill="#FFD4E5", outline="")
-
-        # Legs with walking animation
-        leg_offset = abs(math.sin(jump_phase) * 3)
-        self.create_line(x-12, y+15, x-12, y+24-leg_offset, fill="#FFB6D9", width=5, capstyle="round")
-        self.create_line(x-4, y+15, x-4, y+24+leg_offset, fill="#FFB6D9", width=5, capstyle="round")
-        self.create_line(x+6, y+15, x+6, y+24-leg_offset, fill="#FFB6D9", width=5, capstyle="round")
-        self.create_line(x+14, y+15, x+14, y+24+leg_offset, fill="#FFB6D9", width=5, capstyle="round")
-
-        # Hooves
-        self.create_oval(x-14, y+22-leg_offset, x-10, y+25-leg_offset, fill="#D4BBFF")
-        self.create_oval(x-6, y+22+leg_offset, x-2, y+25+leg_offset, fill="#D4BBFF")
-        self.create_oval(x+4, y+22-leg_offset, x+8, y+25-leg_offset, fill="#D4BBFF")
-        self.create_oval(x+12, y+22+leg_offset, x+16, y+25+leg_offset, fill="#D4BBFF")
-
-        # Fluffy tail
-        self.create_oval(x-22, y+5, x-16, y+11, fill="#FFFFFF", outline="#FFB6D9", width=2)
+        # Draw large animated sheep emoji 🐑
+        # Use text to draw emoji with larger font size
+        self.create_text(x, y_pos, text="🐑", font=("Segoe UI Emoji", 48), anchor="center")
 
     def start(self):
         """Start the animation"""

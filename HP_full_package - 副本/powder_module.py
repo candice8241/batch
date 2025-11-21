@@ -69,6 +69,50 @@ class SpinboxStyleButton(tk.Frame):
         self.configure(bg='#E8D5F0')
 
 
+class SpecialInteractiveFittingButton(tk.Frame):
+    """Special styled button for Interactive Fitting with gradient-like effect and animation"""
+
+    def __init__(self, parent, text, command, width=200, **kwargs):
+        super().__init__(parent, bg='#9D4EDD', **kwargs)
+
+        self.command = command
+        self.text = text
+
+        # Configure frame with special styling
+        self.configure(relief='raised', borderwidth=3, highlightbackground='#FFD700',
+                      highlightthickness=2)
+
+        # Create button with gradient-like colors
+        self.button = tk.Button(
+            self,
+            text=text,
+            command=command,
+            bg='#9D4EDD',  # Purple gradient
+            fg='white',
+            font=('Comic Sans MS', 11, 'bold'),
+            relief='flat',
+            borderwidth=0,
+            activebackground='#C77DFF',
+            activeforeground='white',
+            cursor='hand2',
+            padx=20,
+            pady=8
+        )
+        self.button.pack(fill=tk.BOTH, expand=True)
+
+        # Hover effects with color changes
+        self.button.bind('<Enter>', self._on_enter)
+        self.button.bind('<Leave>', self._on_leave)
+
+    def _on_enter(self, event):
+        self.button.config(bg='#C77DFF')
+        self.configure(bg='#C77DFF', highlightbackground='#FFD700', relief='sunken')
+
+    def _on_leave(self, event):
+        self.button.config(bg='#9D4EDD')
+        self.configure(bg='#9D4EDD', highlightbackground='#FFD700', relief='raised')
+
+
 class CustomSpinbox(tk.Frame):
     """Custom spinbox with left/right arrow buttons for value adjustment"""
 
@@ -505,6 +549,16 @@ class PowderXRDModule(GUIBase):
                     values=['2th_deg', 'q_A^-1', 'q_nm^-1', 'r_mm'],
                     width=16, state='readonly', font=('Comic Sans MS', 9)).pack(anchor=tk.W)
 
+        # Run Integration Button (moved here - before Fitting Settings)
+        integration_btn_frame = tk.Frame(parent_frame, bg=self.colors['bg'])
+        integration_btn_frame.pack(fill=tk.X, pady=(15, 15))
+
+        integration_btn_cont = tk.Frame(integration_btn_frame, bg=self.colors['bg'])
+        integration_btn_cont.pack(expand=True)
+
+        SpinboxStyleButton(integration_btn_cont, "🐿️ Run Integration", self.run_integration,
+                          width=200).pack()
+
         # Fitting Settings Card
         fitting_card = self.create_card_frame(parent_frame)
         fitting_card.pack(fill=tk.X, pady=(0, 15))
@@ -530,7 +584,7 @@ class PowderXRDModule(GUIBase):
                     values=['pseudo', 'voigt'], width=22, state='readonly',
                     font=('Comic Sans MS', 9)).pack(anchor=tk.W)
 
-        # Action Buttons
+        # Action Buttons (Run Fitting and Interactive Fitting only)
         btn_frame = tk.Frame(parent_frame, bg=self.colors['bg'])
         btn_frame.pack(fill=tk.X, pady=(0, 15))
 
@@ -540,18 +594,13 @@ class PowderXRDModule(GUIBase):
         btns = tk.Frame(btn_cont, bg=self.colors['bg'])
         btns.pack()
 
-        SpinboxStyleButton(btns, "🐿️ Run Integration", self.run_integration,
-                          width=180).pack(side=tk.LEFT, padx=6)
-
         SpinboxStyleButton(btns, "🐻 Run Fitting", self.run_fitting,
                           width=180).pack(side=tk.LEFT, padx=6)
 
-        SpinboxStyleButton(btns, "🦔 Full Pipeline", self.run_full_pipeline,
-                          width=180).pack(side=tk.LEFT, padx=6)
-
-        # NEW: Interactive Peak Fitting Button
-        SpinboxStyleButton(btns, "✨ Interactive Fitting", self.open_interactive_fitting,
-                          width=180).pack(side=tk.LEFT, padx=6)
+        # Interactive Peak Fitting Button - with special styling!
+        SpecialInteractiveFittingButton(btns, "✨ Interactive Fitting ✨",
+                                       self.open_interactive_fitting,
+                                       width=200).pack(side=tk.LEFT, padx=6)
 
     def browse_dataset_path(self):
         """Browse for dataset path (allows manual text entry or file selection)"""
@@ -604,7 +653,7 @@ class PowderXRDModule(GUIBase):
                     return
             except:
                 # Window was closed, create new one
-                pass
+                self.interactive_fitting_window = None
 
         # Create new toplevel window
         self.interactive_fitting_window = tk.Toplevel(self.root)
@@ -629,16 +678,39 @@ class PowderXRDModule(GUIBase):
         fitting_app = PeakFittingGUI(self.interactive_fitting_window)
         fitting_app.setup_ui()
 
+        # Store reference to fitting_app to prevent premature garbage collection
+        self.current_fitting_app = fitting_app
+
         # Log the action
         self.log("✨ Interactive peak fitting GUI opened in new window")
 
         # Handle window close event
         def on_closing():
-            if messagebox.askokcancel("Close Interactive Fitting",
-                                     "Are you sure you want to close the interactive fitting window?"):
-                self.interactive_fitting_window.destroy()
+            try:
+                if messagebox.askokcancel("Close Interactive Fitting",
+                                         "Are you sure you want to close the interactive fitting window?"):
+                    # Clean up the fitting app first
+                    if hasattr(self, 'current_fitting_app'):
+                        try:
+                            # Clear any matplotlib figures
+                            if hasattr(self.current_fitting_app, 'fig'):
+                                import matplotlib.pyplot as plt
+                                plt.close(self.current_fitting_app.fig)
+                        except:
+                            pass
+                        self.current_fitting_app = None
+
+                    # Destroy the window
+                    self.interactive_fitting_window.destroy()
+                    self.interactive_fitting_window = None
+                    self.log("📊 Interactive fitting window closed")
+            except:
+                # Force close if there's any error
+                try:
+                    self.interactive_fitting_window.destroy()
+                except:
+                    pass
                 self.interactive_fitting_window = None
-                self.log("📊 Interactive fitting window closed")
 
         self.interactive_fitting_window.protocol("WM_DELETE_WINDOW", on_closing)
 
@@ -980,22 +1052,32 @@ class PowderXRDModule(GUIBase):
 
     def _run_integration_thread(self):
         """Background thread for integration"""
+        # Get all Tkinter variable values at the start (thread-safe)
+        poni_path = self.poni_path.get()
+        mask_path = self.mask_path.get()
+        input_pattern = self.input_pattern.get()
+        output_dir = self.output_dir.get()
+        npt = self.npt.get()
+        unit = self.unit.get()
+        dataset_path = self.dataset_path.get() or None
+
         try:
             self.progress.start()
             self.log("🔁 Starting Batch Integration")
-            integrator = BatchIntegrator(self.poni_path.get(), self.mask_path.get())
+            integrator = BatchIntegrator(poni_path, mask_path)
             integrator.batch_integrate(
-                input_pattern=self.input_pattern.get(),
-                output_dir=self.output_dir.get(),
-                npt=self.npt.get(),
-                unit=self.unit.get(),
-                dataset_path=self.dataset_path.get() or None
+                input_pattern=input_pattern,
+                output_dir=output_dir,
+                npt=npt,
+                unit=unit,
+                dataset_path=dataset_path
             )
             self.log("✅ Integration completed!")
-            self.show_success(self.root, "Integration completed!")
+            self.root.after(0, lambda: self.show_success(self.root, "Integration completed!"))
         except Exception as e:
-            self.log(f"❌ Error: {str(e)}")
-            messagebox.showerror("Error", str(e))
+            error_msg = str(e)
+            self.log(f"❌ Error: {error_msg}")
+            self.root.after(0, lambda: messagebox.showerror("Error", error_msg))
         finally:
             self.progress.stop()
 
@@ -1008,16 +1090,21 @@ class PowderXRDModule(GUIBase):
 
     def _run_fitting_thread(self):
         """Background thread for peak fitting"""
+        # Get all Tkinter variable values at the start (thread-safe)
+        output_dir = self.output_dir.get()
+        fit_method = self.fit_method.get()
+
         try:
             self.progress.start()
             self.log("📈 Starting Batch Fitting")
-            fitter = DataProcessor(folder=self.output_dir.get(), fit_method=self.fit_method.get())
+            fitter = DataProcessor(folder=output_dir, fit_method=fit_method)
             fitter.run_batch_fitting()
             self.log("✅ Fitting completed!")
-            self.show_success(self.root, "Fitting completed!")
+            self.root.after(0, lambda: self.show_success(self.root, "Fitting completed!"))
         except Exception as e:
-            self.log(f"❌ Error: {str(e)}")
-            messagebox.showerror("Error", str(e))
+            error_msg = str(e)
+            self.log(f"❌ Error: {error_msg}")
+            self.root.after(0, lambda: messagebox.showerror("Error", error_msg))
         finally:
             self.progress.stop()
 
@@ -1030,26 +1117,36 @@ class PowderXRDModule(GUIBase):
 
     def _run_full_pipeline_thread(self):
         """Background thread for full pipeline"""
+        # Get all Tkinter variable values at the start (thread-safe)
+        poni_path = self.poni_path.get()
+        mask_path = self.mask_path.get()
+        input_pattern = self.input_pattern.get()
+        output_dir = self.output_dir.get()
+        npt = self.npt.get()
+        unit = self.unit.get()
+        fit_method = self.fit_method.get()
+
         try:
             self.progress.start()
             self.log("🔁 Step 1/2: Integration")
-            integrator = BatchIntegrator(self.poni_path.get(), self.mask_path.get())
+            integrator = BatchIntegrator(poni_path, mask_path)
             integrator.batch_integrate(
-                input_pattern=self.input_pattern.get(),
-                output_dir=self.output_dir.get(),
-                npt=self.npt.get(),
-                unit=self.unit.get()
+                input_pattern=input_pattern,
+                output_dir=output_dir,
+                npt=npt,
+                unit=unit
             )
             self.log("✅ Integration done")
 
             self.log("📈 Step 2/2: Fitting")
-            fitter = DataProcessor(folder=self.output_dir.get(), fit_method=self.fit_method.get())
+            fitter = DataProcessor(folder=output_dir, fit_method=fit_method)
             fitter.run_batch_fitting()
             self.log("✅ Pipeline completed!")
-            self.show_success(self.root, "Full pipeline completed!")
+            self.root.after(0, lambda: self.show_success(self.root, "Full pipeline completed!"))
         except Exception as e:
-            self.log(f"❌ Error: {str(e)}")
-            messagebox.showerror("Error", str(e))
+            error_msg = str(e)
+            self.log(f"❌ Error: {error_msg}")
+            self.root.after(0, lambda: messagebox.showerror("Error", error_msg))
         finally:
             self.progress.stop()
 
