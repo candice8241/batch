@@ -404,7 +404,7 @@ class PowderXRDModule(GUIBase):
 
         if pattern:
             btn = SpinboxStyleButton(input_frame, "Browse",
-                                    lambda: self.browse_file(var, filetypes, pattern=True),
+                                    lambda: self.browse_pattern(var, filetypes),
                                     width=75)
         else:
             btn = SpinboxStyleButton(input_frame, "Browse",
