@@ -527,9 +527,8 @@ def main():
         dataset_path=None,
         npt=2000,
         unit='2th_deg',
-        formats=output_formats,  # 
-        create_stacked_plot=True,  # 
-        stacked_plot_offset='auto'  # 
+        formats=output_formats, create_stacked_plot=True,  #
+        stacked_plot_offset='auto'  #
     )
 
 
