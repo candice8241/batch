@@ -997,18 +997,24 @@ class PowderXRDModule(GUIBase):
 
     def _separate_peaks_thread(self):
         """Background thread for peak separation"""
+        # Get all Tkinter variable values immediately
+        csv_path = self.phase_peak_csv.get()
+        wavelength = self.phase_wavelength.get()
+        tolerance_1 = self.phase_tolerance_1.get()
+        tolerance_2 = self.phase_tolerance_2.get()
+        tolerance_3 = self.phase_tolerance_3.get()
+        n_points = self.phase_n_points.get()
+
         try:
             self.progress.start()
             self.log("🔀 Starting peak separation process...")
 
-            csv_path = self.phase_peak_csv.get()
-
             analyzer = XRDAnalyzer(
-                wavelength=self.phase_wavelength.get(),
-                peak_tolerance_1=self.phase_tolerance_1.get(),
-                peak_tolerance_2=self.phase_tolerance_2.get(),
-                peak_tolerance_3=self.phase_tolerance_3.get(),
-                n_pressure_points=self.phase_n_points.get()
+                wavelength=wavelength,
+                peak_tolerance_1=tolerance_1,
+                peak_tolerance_2=tolerance_2,
+                peak_tolerance_3=tolerance_3,
+                n_pressure_points=n_points
             )
 
             self.log(f"📄 Reading data from: {os.path.basename(csv_path)}")
@@ -1095,28 +1101,52 @@ class PowderXRDModule(GUIBase):
 
     def _run_integration_thread(self):
         """Background thread for integration"""
+        # Get all Tkinter variable values immediately at thread start
+        # to avoid accessing them during thread execution
+        poni_path = self.poni_path.get()
+        mask_path = self.mask_path.get()
+        input_pattern = self.input_pattern.get()
+        output_dir = self.output_dir.get()
+        npt = self.npt.get()
+        unit = self.unit.get()
+        dataset_path = self.dataset_path.get() or None
+
+        # Get format selections
+        formats = []
+        if self.format_xy.get():
+            formats.append('xy')
+        if self.format_dat.get():
+            formats.append('dat')
+        if self.format_chi.get():
+            formats.append('chi')
+        if self.format_fxye.get():
+            formats.append('fxye')
+        if self.format_svg.get():
+            formats.append('svg')
+        if self.format_png.get():
+            formats.append('png')
+        if not formats:
+            formats = ['xy']
+
+        # Get stacked plot settings
+        create_stacked = self.create_stacked_plot.get()
+        offset = self.stacked_plot_offset.get()
+
         try:
             self.progress.start()
             self.log("🔁 Starting Batch Integration")
-
-            # Get selected formats
-            formats = self._get_selected_formats()
             self.log(f"📊 Output formats: {', '.join(formats)}")
-
-            # Get stacked plot settings
-            create_stacked = self.create_stacked_plot.get()
-            offset = self.stacked_plot_offset.get()
 
             if create_stacked:
                 self.log(f"📈 Stacked plot will be created with offset: {offset}")
 
-            integrator = BatchIntegrator(self.poni_path.get(), self.mask_path.get())
+            integrator = BatchIntegrator(poni_path, mask_path)
             integrator.batch_integrate(
-                input_pattern=self.input_pattern.get(),
-                output_dir=self.output_dir.get(),
-                npt=self.npt.get(),
-                unit=self.unit.get(),
-                dataset_path=self.dataset_path.get() or None,
+                input_pattern=input_pattern,
+                output_dir=output_dir,
+                npt=npt,
+                unit=unit,
+                dataset_path=dataset_path,
                 formats=formats,
                 create_stacked_plot=create_stacked,
                 stacked_plot_offset=offset
@@ -1138,10 +1168,14 @@ class PowderXRDModule(GUIBase):
 
     def _run_fitting_thread(self):
         """Background thread for peak fitting"""
+        # Get all Tkinter variable values immediately
+        output_dir = self.output_dir.get()
+        fit_method = self.fit_method.get()
+
         try:
             self.progress.start()
             self.log("📈 Starting Batch Fitting")
-            fitter = DataProcessor(folder=self.output_dir.get(), fit_method=self.fit_method.get())
+            fitter = DataProcessor(folder=output_dir, fit_method=fit_method)
             fitter.run_batch_fitting()
             self.log("✅ Fitting completed!")
             self.show_success(self.root, "Fitting completed!")
@@ -1160,28 +1194,52 @@ class PowderXRDModule(GUIBase):
 
     def _run_full_pipeline_thread(self):
         """Background thread for full pipeline"""
+        # Get all Tkinter variable values immediately at thread start
+        poni_path = self.poni_path.get()
+        mask_path = self.mask_path.get()
+        input_pattern = self.input_pattern.get()
+        output_dir = self.output_dir.get()
+        npt = self.npt.get()
+        unit = self.unit.get()
+        dataset_path = self.dataset_path.get() or None
+        fit_method = self.fit_method.get()
+
+        # Get format selections
+        formats = []
+        if self.format_xy.get():
+            formats.append('xy')
+        if self.format_dat.get():
+            formats.append('dat')
+        if self.format_chi.get():
+            formats.append('chi')
+        if self.format_fxye.get():
+            formats.append('fxye')
+        if self.format_svg.get():
+            formats.append('svg')
+        if self.format_png.get():
+            formats.append('png')
+        if not formats:
+            formats = ['xy']
+
+        # Get stacked plot settings
+        create_stacked = self.create_stacked_plot.get()
+        offset = self.stacked_plot_offset.get()
+
         try:
             self.progress.start()
             self.log("🔁 Step 1/2: Integration")
-
-            # Get selected formats
-            formats = self._get_selected_formats()
             self.log(f"📊 Output formats: {', '.join(formats)}")
-
-            # Get stacked plot settings
-            create_stacked = self.create_stacked_plot.get()
-            offset = self.stacked_plot_offset.get()
 
             if create_stacked:
                 self.log(f"📈 Stacked plot will be created with offset: {offset}")
 
-            integrator = BatchIntegrator(self.poni_path.get(), self.mask_path.get())
+            integrator = BatchIntegrator(poni_path, mask_path)
             integrator.batch_integrate(
-                input_pattern=self.input_pattern.get(),
-                output_dir=self.output_dir.get(),
-                npt=self.npt.get(),
-                unit=self.unit.get(),
-                dataset_path=self.dataset_path.get() or None,
+                input_pattern=input_pattern,
+                output_dir=output_dir,
+                npt=npt,
+                unit=unit,
+                dataset_path=dataset_path,
                 formats=formats,
                 create_stacked_plot=create_stacked,
                 stacked_plot_offset=offset
@@ -1189,7 +1247,7 @@ class PowderXRDModule(GUIBase):
             self.log("✅ Integration done")
 
             self.log("📈 Step 2/2: Fitting")
-            fitter = DataProcessor(folder=self.output_dir.get(), fit_method=self.fit_method.get())
+            fitter = DataProcessor(folder=output_dir, fit_method=fit_method)
             fitter.run_batch_fitting()
             self.log("✅ Pipeline completed!")
             self.show_success(self.root, "Full pipeline completed!")
@@ -1208,12 +1266,19 @@ class PowderXRDModule(GUIBase):
 
     def _run_phase_analysis_thread(self):
         """Background thread for phase analysis and volume calculation"""
+        # Get all Tkinter variable values immediately
+        csv_path = self.phase_volume_csv.get()
+        output_dir = self.phase_volume_output.get()
+        volume_system = self.phase_volume_system.get()
+        wavelength = self.phase_wavelength.get()
+        tolerance_1 = self.phase_tolerance_1.get()
+        tolerance_2 = self.phase_tolerance_2.get()
+        tolerance_3 = self.phase_tolerance_3.get()
+        n_points = self.phase_n_points.get()
+
         try:
             self.progress.start()
             self.log("🐶 Starting Volume Calculation & Lattice Parameter Fitting")
-
-            csv_path = self.phase_volume_csv.get()
-            output_dir = self.phase_volume_output.get()
 
             os.makedirs(output_dir, exist_ok=True)
 
@@ -1228,19 +1293,19 @@ class PowderXRDModule(GUIBase):
                 'Triclinic': 'Triclinic'
             }
 
-            crystal_system = system_mapping.get(self.phase_volume_system.get(), 'cubic_FCC')
+            crystal_system = system_mapping.get(volume_system, 'cubic_FCC')
 
             self.log(f"📄 Input CSV: {os.path.basename(csv_path)}")
-            self.log(f"🔷 Crystal system: {self.phase_volume_system.get()}")
-            self.log(f"📏 Wavelength: {self.phase_wavelength.get()} Å")
+            self.log(f"🔷 Crystal system: {volume_system}")
+            self.log(f"📏 Wavelength: {wavelength} Å")
             self.log(f"📁 Output directory: {output_dir}")
 
             analyzer = XRDAnalyzer(
-                wavelength=self.phase_wavelength.get(),
-                peak_tolerance_1=self.phase_tolerance_1.get(),
-                peak_tolerance_2=self.phase_tolerance_2.get(),
-                peak_tolerance_3=self.phase_tolerance_3.get(),
-                n_pressure_points=self.phase_n_points.get()
+                wavelength=wavelength,
+                peak_tolerance_1=tolerance_1,
+                peak_tolerance_2=tolerance_2,
+                peak_tolerance_3=tolerance_3,
+                n_pressure_points=n_points
             )
 
             self.log("\n" + "="*60)
@@ -1320,14 +1385,15 @@ class PowderXRDModule(GUIBase):
 
     def _run_birch_murnaghan_thread(self):
         """Background thread for Birch-Murnaghan fitting"""
+        # Get all Tkinter variable values immediately
+        bm_order = int(self.bm_order.get())
+        input_file_path = self.bm_input_file.get()
+        output_directory = self.bm_output_dir.get()
+
         try:
             self.progress.start()
-            order = int(self.bm_order.get())
-            order_str = f"{order}rd order" if order == 3 else "2nd order"
+            order_str = f"{bm_order}rd order" if bm_order == 3 else "2nd order"
             self.log(f"⚗️ Starting {order_str} Single-Phase BM Fitting")
-
-            input_file_path = self.bm_input_file.get()
-            output_directory = self.bm_output_dir.get()
 
             os.makedirs(output_directory, exist_ok=True)
 
@@ -1359,7 +1425,7 @@ class PowderXRDModule(GUIBase):
 
             results = fitter.fit_single_phase(V_data, P_data, phase_name="Single Phase")
 
-            if order == 2:
+            if bm_order == 2:
                 if results['2nd_order'] is None:
                     raise ValueError("2nd order fitting failed")
                 fit_results = results['2nd_order']
@@ -1385,7 +1451,7 @@ class PowderXRDModule(GUIBase):
                        label='Experimental Data', alpha=0.7, edgecolors='black', linewidths=1.5)
 
             V_fit = np.linspace(V_data.min()*0.95, V_data.max()*1.05, 200)
-            if order == 2:
+            if bm_order == 2:
                 P_fit = fitter.birch_murnaghan_2nd(V_fit, fit_results['V0'], fit_results['B0'])
                 color = 'red'
             else:
@@ -1429,7 +1495,7 @@ class PowderXRDModule(GUIBase):
 
             plt.tight_layout()
 
-            fig_path = os.path.join(output_directory, f'BM_{order}rd_order_single_phase_fit.png')
+            fig_path = os.path.join(output_directory, f'BM_{bm_order}rd_order_single_phase_fit.png')
             plt.savefig(fig_path, dpi=300, bbox_inches='tight')
             plt.close()
             self.log(f"💾 Plot saved: {os.path.basename(fig_path)}")
