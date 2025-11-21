@@ -248,10 +248,22 @@ class BatchIntegrator:
             create_stacked_plot (bool): Whether to create stacked plot
             stacked_plot_offset (str or float): Offset for stacked plot ('auto' or float value)
         """
+        # Enhanced file search with multiple attempts
         h5_files = sorted(glob.glob(input_pattern, recursive=True))
+
+        # If no files found and pattern doesn't use **, try adding ** for recursive search
+        if not h5_files and '**' not in input_pattern:
+            # Try to construct a recursive pattern
+            if input_pattern.endswith('*.h5'):
+                # Replace *.h5 with **/*.h5 for recursive search
+                recursive_pattern = input_pattern.replace('*.h5', '**/*.h5')
+                h5_files = sorted(glob.glob(recursive_pattern, recursive=True))
+                if h5_files:
+                    print(f"ℹ Using recursive search pattern: {recursive_pattern}")
 
         if not h5_files:
             print(f"⚠ No matching files found: {input_pattern}")
+            print(f"  Tip: Use '**/*.h5' pattern for recursive directory search")
             return
 
         print(f"\nFound {len(h5_files)} HDF5 files to process")

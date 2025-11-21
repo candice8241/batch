@@ -104,20 +104,24 @@ class GUIBase:
                         borderwidth=1)
         entry.pack(fill=tk.X, ipady=3)
 
-    def browse_file(self, variable, filetypes):
+    def browse_file(self, variable, filetypes, pattern=False):
         """Open file browser dialog"""
-        filename = filedialog.askopenfilename(filetypes=filetypes)
-        if filename:
-            variable.set(filename)
+        if pattern:
+            self.browse_pattern(variable, filetypes)
+        else:
+            filename = filedialog.askopenfilename(filetypes=filetypes)
+            if filename:
+                variable.set(filename)
 
     def browse_pattern(self, variable, filetypes):
-        """Open file browser and create pattern from selected file"""
+        """Open file browser and create recursive pattern from selected file"""
         import os
         filename = filedialog.askopenfilename(filetypes=filetypes)
         if filename:
             folder = os.path.dirname(filename)
             ext = os.path.splitext(filename)[1]
-            pattern = os.path.join(folder, f"*{ext}")
+            # Use **/*ext for recursive search in all subdirectories
+            pattern = os.path.join(folder, f"**/*{ext}")
             variable.set(pattern)
 
     def browse_folder(self, variable):
