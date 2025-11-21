@@ -958,7 +958,7 @@ class PowderXRDModule(GUIBase):
 
     def _separate_peaks_thread(self):
         """Background thread for peak separation - FIXED"""
-        # Capture all variables at start of thread
+        # Capture all variables at start of thread to avoid RuntimeError
         try:
             csv_path = str(self.phase_peak_csv.get())
             wavelength = float(self.phase_wavelength.get())
@@ -969,7 +969,10 @@ class PowderXRDModule(GUIBase):
         except Exception as e:
             error_msg = f"Failed to read settings: {str(e)}"
             self.log(f"❌ {error_msg}")
-            self.show_error("Error", error_msg)
+            try:
+                self.root.after(0, lambda: self.show_error("Error", error_msg))
+            except:
+                pass
             return
 
         try:
@@ -994,7 +997,10 @@ class PowderXRDModule(GUIBase):
             if transition_pressure is None:
                 self.log("⚠️ No phase transition detected")
                 msg = "No phase transition detected in the data"
-                self.root.after(0, lambda: messagebox.showwarning("Warning", msg))
+                try:
+                    self.root.after(0, lambda: messagebox.showwarning("Warning", msg))
+                except:
+                    pass
                 return
 
             self.log(f"✓ Phase transition detected at {transition_pressure:.2f} GPa")
@@ -1051,14 +1057,23 @@ class PowderXRDModule(GUIBase):
             self.log("="*60 + "\n")
 
             msg = f"Peak separation completed!\n\nTransition at {transition_pressure:.2f} GPa\nFiles saved to input directory"
-            self.show_success(self.root, msg)
+            try:
+                self.root.after(0, lambda m=msg: self.show_success(self.root, m))
+            except:
+                pass
 
         except Exception as e:
             error_msg = str(e)
             self.log(f"❌ Error during peak separation: {error_msg}")
-            self.show_error("Error", f"Peak separation failed:\n{error_msg}")
+            try:
+                self.root.after(0, lambda m=error_msg: self.show_error("Error", f"Peak separation failed:\n{m}"))
+            except:
+                pass
         finally:
-            self.root.after(0, self.progress.stop)
+            try:
+                self.root.after(0, self.progress.stop)
+            except:
+                pass
 
     def run_integration(self):
         """Run 1D integration"""
@@ -1069,7 +1084,7 @@ class PowderXRDModule(GUIBase):
 
     def _run_integration_thread(self):
         """Background thread for integration - COMPLETELY FIXED"""
-        # Capture all variables at start of thread
+        # Capture all variables at start of thread to avoid RuntimeError
         try:
             poni_path = str(self.poni_path.get())
             mask_path = str(self.mask_path.get())
@@ -1091,7 +1106,10 @@ class PowderXRDModule(GUIBase):
         except Exception as e:
             error_msg = f"Failed to read settings: {str(e)}"
             self.log(f"❌ {error_msg}")
-            self.show_error("Error", error_msg)
+            try:
+                self.root.after(0, lambda: self.show_error("Error", error_msg))
+            except:
+                pass
             return
 
         formats = []
@@ -1120,7 +1138,6 @@ class PowderXRDModule(GUIBase):
             elif os.path.isfile(input_pattern) and input_pattern.lower().endswith('.h5'):
                 # If it's a single .h5 file, get its parent directory
                 target_dir = os.path.dirname(input_pattern)
-                self.log(f"📂 Input is a single .h5 file, processing entire directory: {target_dir}")
             else:
                 raise ValueError(f"Invalid input: {input_pattern}")
 
@@ -1132,13 +1149,22 @@ class PowderXRDModule(GUIBase):
             if not h5_files:
                 raise ValueError(f"No .h5 files found in directory: {target_dir}")
 
-            self.log(f"📁 Found {len(h5_files)} .h5 files in directory")
+            # Log total count at the beginning
+            total_files = len(h5_files)
+            self.log(f"\n{'='*60}")
+            self.log(f"🔁 Starting Batch Integration")
+            self.log(f"📁 Directory: {target_dir}")
+            self.log(f"📊 Total files to process: {total_files}")
+            self.log(f"📈 Output formats: {', '.join(formats)}")
+            self.log(f"📉 Number of points: {npt}")
+            self.log(f"📏 Unit: {unit}")
+            self.log(f"{'='*60}\n")
 
             integrator = BatchIntegrator(poni_path, mask_path)
 
             for i, h5_file in enumerate(h5_files, 1):
-                msg = f"\n🔄 Processing file {i}/{len(h5_files)}: {os.path.basename(h5_file)}"
-                self.log(msg)
+                # Show progress with file index
+                self.log(f"[{i}/{total_files}] Processing: {os.path.basename(h5_file)}")
 
                 integrator.batch_integrate(
                     input_pattern=h5_file,
@@ -1150,21 +1176,36 @@ class PowderXRDModule(GUIBase):
                     create_stacked_plot=False
                 )
 
-            if create_stacked and len(h5_files) > 1:
-                self.log(f"\n📈 Creating combined stacked plot for all {len(h5_files)} files...")
+                self.log(f"[{i}/{total_files}] ✓ Completed: {os.path.basename(h5_file)}\n")
+
+            if create_stacked and total_files > 1:
+                self.log(f"📈 Creating combined stacked plot for all {total_files} files...")
                 self._create_combined_stacked_plot(output_dir, offset)
 
-            num_files = len(h5_files)
-            self.log("\n✅ All integrations completed!")
-            success_msg = f"Integration completed!\n{num_files} file(s) processed"
-            self.show_success(self.root, success_msg)
+            self.log(f"\n{'='*60}")
+            self.log(f"✅ All integrations completed!")
+            self.log(f"📊 Total processed: {total_files}/{total_files}")
+            self.log(f"💾 Output directory: {output_dir}")
+            self.log(f"{'='*60}\n")
+
+            success_msg = f"Integration completed!\n{total_files} file(s) processed successfully"
+            try:
+                self.root.after(0, lambda msg=success_msg: self.show_success(self.root, msg))
+            except:
+                pass
 
         except Exception as e:
             error_msg = str(e)
             self.log(f"❌ Error: {error_msg}")
-            self.show_error("Error", error_msg)
+            try:
+                self.root.after(0, lambda msg=error_msg: self.show_error("Error", msg))
+            except:
+                pass
         finally:
-            self.root.after(0, self.progress.stop)
+            try:
+                self.root.after(0, self.progress.stop)
+            except:
+                pass
 
     def _extract_pressure_from_filename(self, filename):
         """Extract pressure value from filename"""
@@ -1227,23 +1268,31 @@ class PowderXRDModule(GUIBase):
             x_min = np.ceil(all_x_min)
             x_max = np.floor(all_x_max)
 
+            # Define color cycle - change color every 10 GPa
+            color_palette = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+                           '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+
             # Plot data with pressure labels
             for i, (xy_file, pressure) in enumerate(zip(xy_files_sorted, pressures)):
                 data = np.loadtxt(xy_file)
                 x, y = data[:, 0], data[:, 1]
                 y_offset = y + i * offset_value
 
-                # Plot the curve
-                ax.plot(x, y_offset, linewidth=1.5, alpha=0.8)
+                # Determine color based on pressure (change every 10 GPa)
+                color_idx = int(pressure / 10) % len(color_palette)
+                curve_color = color_palette[color_idx]
 
-                # Add pressure label on the left side of the plot
-                # Position: slightly to the left of x_min, at the y_offset level
-                ax.text(x_min - 0.02 * (x_max - x_min),
+                # Plot the curve with color
+                ax.plot(x, y_offset, linewidth=1.5, alpha=0.8, color=curve_color)
+
+                # Add pressure label INSIDE the plot (left side)
+                # Position: slightly to the right of x_min, at the y_offset level
+                ax.text(x_min + 0.02 * (x_max - x_min),
                        i * offset_value + np.mean(y[:10]),  # Use mean of first few points
                        f'{pressure:.1f} GPa',
                        fontsize=9,
                        verticalalignment='center',
-                       horizontalalignment='right',
+                       horizontalalignment='left',
                        bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
                                 edgecolor='gray', alpha=0.8))
 
@@ -1262,6 +1311,7 @@ class PowderXRDModule(GUIBase):
 
             self.log(f"💾 Combined stacked plot saved: {os.path.basename(stacked_plot_path)}")
             self.log(f"📈 Pressure range: {min(pressures):.1f} - {max(pressures):.1f} GPa")
+            self.log(f"🎨 Colors change every 10 GPa")
 
         except Exception as e:
             error_msg = f"⚠️ Failed to create combined stacked plot: {str(e)}"
@@ -1276,14 +1326,17 @@ class PowderXRDModule(GUIBase):
 
     def _run_fitting_thread(self):
         """Background thread for peak fitting - FIXED"""
-        # Capture variables at start
+        # Capture variables at start to avoid RuntimeError
         try:
             output_dir = str(self.output_dir.get())
             fit_method = str(self.fit_method.get())
         except Exception as e:
             error_msg = f"Failed to read settings: {str(e)}"
             self.log(f"❌ {error_msg}")
-            self.show_error("Error", error_msg)
+            try:
+                self.root.after(0, lambda: self.show_error("Error", error_msg))
+            except:
+                pass
             return
 
         try:
@@ -1294,13 +1347,22 @@ class PowderXRDModule(GUIBase):
             fitter.run_batch_fitting()
 
             self.log("✅ Fitting completed!")
-            self.show_success(self.root, "Fitting completed!")
+            try:
+                self.root.after(0, lambda: self.show_success(self.root, "Fitting completed!"))
+            except:
+                pass
         except Exception as e:
             error_msg = str(e)
             self.log(f"❌ Error: {error_msg}")
-            self.show_error("Error", error_msg)
+            try:
+                self.root.after(0, lambda msg=error_msg: self.show_error("Error", msg))
+            except:
+                pass
         finally:
-            self.root.after(0, self.progress.stop)
+            try:
+                self.root.after(0, self.progress.stop)
+            except:
+                pass
 
     def run_full_pipeline(self):
         """Run full integration and fitting pipeline"""
@@ -1311,7 +1373,7 @@ class PowderXRDModule(GUIBase):
 
     def _run_full_pipeline_thread(self):
         """Background thread for full pipeline - FIXED"""
-        # Capture all variables at start
+        # Capture all variables at start to avoid RuntimeError
         try:
             poni_path = str(self.poni_path.get())
             mask_path = str(self.mask_path.get())
@@ -1334,7 +1396,10 @@ class PowderXRDModule(GUIBase):
         except Exception as e:
             error_msg = f"Failed to read settings: {str(e)}"
             self.log(f"❌ {error_msg}")
-            self.show_error("Error", error_msg)
+            try:
+                self.root.after(0, lambda: self.show_error("Error", error_msg))
+            except:
+                pass
             return
 
         formats = []
@@ -1363,7 +1428,6 @@ class PowderXRDModule(GUIBase):
             elif os.path.isfile(input_pattern) and input_pattern.lower().endswith('.h5'):
                 # If it's a single .h5 file, get its parent directory
                 target_dir = os.path.dirname(input_pattern)
-                self.log(f"📂 Input is a single .h5 file, processing entire directory: {target_dir}")
             else:
                 raise ValueError(f"Invalid input: {input_pattern}")
 
@@ -1375,11 +1439,19 @@ class PowderXRDModule(GUIBase):
             if not h5_files:
                 raise ValueError(f"No .h5 files found in directory: {target_dir}")
 
-            self.log(f"🔁 Step 1/2: Integration ({len(h5_files)} files)")
+            total_files = len(h5_files)
+            self.log(f"\n{'='*60}")
+            self.log(f"🔁 Starting Full Pipeline (Integration + Fitting)")
+            self.log(f"📁 Directory: {target_dir}")
+            self.log(f"📊 Total files to process: {total_files}")
+            self.log(f"{'='*60}\n")
 
+            # Step 1: Integration
+            self.log(f"📊 Step 1/2: Integration")
             integrator = BatchIntegrator(poni_path, mask_path)
+
             for i, h5_file in enumerate(h5_files, 1):
-                self.log(f"Processing file {i}/{len(h5_files)}: {os.path.basename(h5_file)}")
+                self.log(f"[{i}/{total_files}] Integrating: {os.path.basename(h5_file)}")
                 integrator.batch_integrate(
                     input_pattern=h5_file,
                     output_dir=output_dir,
@@ -1389,25 +1461,44 @@ class PowderXRDModule(GUIBase):
                     formats=formats,
                     create_stacked_plot=False
                 )
+                self.log(f"[{i}/{total_files}] ✓ Integration complete\n")
 
-            if create_stacked and len(h5_files) > 1:
-                self.log(f"\n📈 Creating combined stacked plot for all {len(h5_files)} files...")
+            if create_stacked and total_files > 1:
+                self.log(f"📈 Creating combined stacked plot...")
                 self._create_combined_stacked_plot(output_dir, offset)
 
-            self.log("✅ Integration done")
+            self.log(f"✅ Step 1/2 completed: All {total_files} files integrated\n")
 
-            self.log("📈 Step 2/2: Fitting")
+            # Step 2: Fitting
+            self.log(f"📈 Step 2/2: Peak Fitting")
             fitter = DataProcessor(folder=output_dir, fit_method=fit_method)
             fitter.run_batch_fitting()
-            self.log("✅ Pipeline completed!")
+            self.log(f"✅ Step 2/2 completed: Peak fitting finished\n")
 
-            self.show_success(self.root, "Full pipeline completed!")
+            self.log(f"{'='*60}")
+            self.log(f"✅ Full Pipeline Completed!")
+            self.log(f"📊 Total processed: {total_files} files")
+            self.log(f"💾 Output directory: {output_dir}")
+            self.log(f"{'='*60}\n")
+
+            success_msg = f"Full pipeline completed!\n{total_files} file(s) processed successfully"
+            try:
+                self.root.after(0, lambda msg=success_msg: self.show_success(self.root, msg))
+            except:
+                pass
+
         except Exception as e:
             error_msg = str(e)
             self.log(f"❌ Error: {error_msg}")
-            self.show_error("Error", error_msg)
+            try:
+                self.root.after(0, lambda msg=error_msg: self.show_error("Error", msg))
+            except:
+                pass
         finally:
-            self.root.after(0, self.progress.stop)
+            try:
+                self.root.after(0, self.progress.stop)
+            except:
+                pass
 
     def run_phase_analysis(self):
         """Run volume calculation and lattice parameter fitting"""
