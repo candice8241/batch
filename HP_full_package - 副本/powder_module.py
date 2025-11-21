@@ -951,44 +951,88 @@ class PowderXRDModule(GUIBase):
     def log(self, message):
         """Log message to the log text widget (thread-safe)"""
         def _log():
-            self.log_text.config(state='normal')
-            self.log_text.insert(tk.END, message + "\n")
-            self.log_text.see(tk.END)
-            self.log_text.config(state='disabled')
+            try:
+                self.log_text.config(state='normal')
+                self.log_text.insert(tk.END, message + "\n")
+                self.log_text.see(tk.END)
+                self.log_text.config(state='disabled')
+            except (RuntimeError, tk.TclError):
+                # GUI may be destroyed, ignore
+                pass
 
         # Schedule GUI operation on main thread
-        if threading.current_thread() == threading.main_thread():
-            _log()
-        else:
-            self.root.after(0, _log)
+        try:
+            if threading.current_thread() == threading.main_thread():
+                _log()
+            else:
+                self.root.after(0, _log)
+        except (RuntimeError, tk.TclError):
+            # Main loop may have exited, ignore
+            pass
 
     def safe_progress_start(self):
         """Start progress bar (thread-safe)"""
-        if threading.current_thread() == threading.main_thread():
-            self.progress.start()
-        else:
-            self.root.after(0, self.progress.start)
+        def _start():
+            try:
+                self.progress.start()
+            except (RuntimeError, tk.TclError):
+                pass
+
+        try:
+            if threading.current_thread() == threading.main_thread():
+                _start()
+            else:
+                self.root.after(0, _start)
+        except (RuntimeError, tk.TclError):
+            pass
 
     def safe_progress_stop(self):
         """Stop progress bar (thread-safe)"""
-        if threading.current_thread() == threading.main_thread():
-            self.progress.stop()
-        else:
-            self.root.after(0, self.progress.stop)
+        def _stop():
+            try:
+                self.progress.stop()
+            except (RuntimeError, tk.TclError):
+                pass
+
+        try:
+            if threading.current_thread() == threading.main_thread():
+                _stop()
+            else:
+                self.root.after(0, _stop)
+        except (RuntimeError, tk.TclError):
+            pass
 
     def safe_messagebox_error(self, title, message):
         """Show error messagebox (thread-safe)"""
-        if threading.current_thread() == threading.main_thread():
-            messagebox.showerror(title, message)
-        else:
-            self.root.after(0, lambda: messagebox.showerror(title, message))
+        def _show():
+            try:
+                messagebox.showerror(title, message)
+            except (RuntimeError, tk.TclError):
+                pass
+
+        try:
+            if threading.current_thread() == threading.main_thread():
+                _show()
+            else:
+                self.root.after(0, _show)
+        except (RuntimeError, tk.TclError):
+            pass
 
     def safe_show_success(self, message):
         """Show success message (thread-safe)"""
-        if threading.current_thread() == threading.main_thread():
-            self.show_success(self.root, message)
-        else:
-            self.root.after(0, lambda: self.show_success(self.root, message))
+        def _show():
+            try:
+                self.show_success(self.root, message)
+            except (RuntimeError, tk.TclError):
+                pass
+
+        try:
+            if threading.current_thread() == threading.main_thread():
+                _show()
+            else:
+                self.root.after(0, _show)
+        except (RuntimeError, tk.TclError):
+            pass
 
     def separate_peaks(self):
         """Separate original and new peaks from input CSV"""
