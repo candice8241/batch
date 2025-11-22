@@ -998,7 +998,7 @@ class PowderXRDModule(GUIBase):
                 fg='#4A4A4A', font=('Comic Sans MS', 9,'bold')).pack(side=tk.LEFT)
 
         wl_entry = tk.Entry(wl_container, textvariable=self.phase_wavelength,
-                           font=('Arial', 10), width=12, justify='center',
+                           font=('Arial', 10), width=9, justify='center',
                            bg='white', relief='solid', borderwidth=1)
         wl_entry.pack()
 
@@ -1016,7 +1016,7 @@ class PowderXRDModule(GUIBase):
         tk.Label(tol1_row, text="Tolerance 1:", bg='#F0E6FA',
                 font=('Comic Sans MS', 8), anchor='w').pack(side=tk.LEFT)
         tk.Entry(tol1_row, textvariable=self.phase_tolerance_1,
-                font=('Arial', 9), width=12, justify='center',
+                font=('Arial', 9), width=8, justify='center',
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.RIGHT, padx=(0, 0))
 
         tol2_row = tk.Frame(right_col, bg='#F0E6FA')
@@ -1024,7 +1024,7 @@ class PowderXRDModule(GUIBase):
         tk.Label(tol2_row, text="Tolerance 2:", bg='#F0E6FA',
                 font=('Comic Sans MS', 8), anchor='w').pack(side=tk.LEFT)
         tk.Entry(tol2_row, textvariable=self.phase_tolerance_2,
-                font=('Arial', 9), width=12, justify='center',
+                font=('Arial', 9), width=8, justify='center',
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.RIGHT, padx=(0, 0))
 
         tol3_row = tk.Frame(right_col, bg='#F0E6FA')
@@ -1032,7 +1032,7 @@ class PowderXRDModule(GUIBase):
         tk.Label(tol3_row, text="Tolerance 3:", bg='#F0E6FA',
                 font=('Comic Sans MS', 8), anchor='w').pack(side=tk.LEFT)
         tk.Entry(tol3_row, textvariable=self.phase_tolerance_3,
-                font=('Arial', 9), width=12, justify='center',
+                font=('Arial', 9), width=8, justify='center',
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.RIGHT, padx=(0, 0))
 
         n_row = tk.Frame(right_col, bg='#F0E6FA')
@@ -1042,7 +1042,7 @@ class PowderXRDModule(GUIBase):
                 font=('Comic Sans MS', 8), anchor='w').pack(side=tk.LEFT)
 
         tk.Entry(n_row, textvariable=self.phase_n_points,
-                font=('Arial', 9), width=12, justify='center',
+                font=('Arial', 9), width=8, justify='center',
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.RIGHT)
 
         # Birch-Murnaghan Section
