@@ -1153,7 +1153,7 @@ class AzimuthalIntegrationModule(GUIBase):
 
         # ========== LEFT SECTION: Output Formats ==========
         left_section = tk.Frame(main_container, bg=self.colors['card_bg'])
-        left_section.pack(side=tk.LEFT, padx=(0, 20))
+        left_section.pack(side=tk.LEFT, padx=(0, 50))
 
         # Output Formats title
         tk.Label(left_section, text="Select Output Formats:", bg=self.colors['card_bg'],
