@@ -31,36 +31,46 @@ class _TkinterWarningFilter:
         self.suppressed_patterns = [
             "RuntimeError: main thread is not in main loop",
             "Exception ignored in: <function Variable.__del__",
+            "Tcl_AsyncDelete: async handler deleted by the wrong thread",
+            "The kernel died, restarting",
             "File \"",  # Part of traceback we want to suppress
             "Traceback (most recent call last):",
         ]
         self.in_tkinter_error = False
+        self.in_tcl_error = False
 
     def write(self, message):
         message_str = str(message)
 
-        # Check if this is a Tkinter error start
+        # Check if this is a Tkinter Variable.__del__ error start
         if "Exception ignored in: <function Variable.__del__" in message_str:
             self.in_tkinter_error = True
             return  # Suppress
 
+        # Check if this is a Tcl_AsyncDelete error
+        if "Tcl_AsyncDelete: async handler deleted by the wrong thread" in message_str:
+            self.in_tcl_error = True
+            return  # Suppress
+
         # If we're in a Tkinter error block, suppress everything until we see a blank line
-        if self.in_tkinter_error:
+        if self.in_tkinter_error or self.in_tcl_error:
             # Check if this is end of error (blank line or new non-traceback content)
             if message_str.strip() == "" or (
                 not message_str.startswith("  ") and
                 "Traceback" not in message_str and
                 "File " not in message_str and
-                "RuntimeError" not in message_str
+                "RuntimeError" not in message_str and
+                "Tcl_" not in message_str
             ):
                 self.in_tkinter_error = False
+                self.in_tcl_error = False
                 # Only write if it's not blank
                 if message_str.strip():
                     self.original.write(message)
             return  # Suppress everything in error block
 
-        # Check for RuntimeError patterns
-        if any(pattern in message_str for pattern in self.suppressed_patterns[:2]):
+        # Check for all suppressed patterns
+        if any(pattern in message_str for pattern in self.suppressed_patterns):
             return  # Suppress
 
         # Write everything else
@@ -268,7 +278,11 @@ class CustomSpinbox(tk.Frame):
 
 
 class PowderXRDModule(GUIBase):
-    """Powder XRD processing module - COMPLETELY THREAD-SAFE VERSION"""
+    """Powder XRD processing module - COMPLETELY THREAD-SAFE VERSION
+
+    IMPORTANT: Call cleanup() from the main thread before destroying this module.
+    Do NOT rely on __del__ for cleanup as it may be called from any thread.
+    """
 
     def __init__(self, parent, root):
         """
@@ -301,13 +315,6 @@ class PowderXRDModule(GUIBase):
         self._is_shutting_down = False
         self._cleanup_lock = threading.Lock()
 
-    def __del__(self):
-        """Destructor to ensure proper cleanup"""
-        try:
-            if hasattr(self, '_is_shutting_down') and not self._is_shutting_down:
-                self.cleanup()
-        except:
-            pass
 
     def _init_variables(self):
         """Initialize all Tkinter variables - THREAD SAFE with explicit master binding"""
@@ -368,15 +375,19 @@ class PowderXRDModule(GUIBase):
         return thread
 
     def cleanup(self):
-        """Clean up resources before shutdown - COMPLETELY FIXED VERSION"""
+        """Clean up resources before shutdown - THREAD SAFE VERSION
+
+        This method MUST only be called from the main thread.
+        Do NOT call from __del__ or background threads.
+        """
         with self._cleanup_lock:
+            if self._is_shutting_down:
+                return  # Already cleaning up
             self._is_shutting_down = True
 
         # Wait for running threads to complete (with timeout)
         import time
-        import gc
-        import os
-        timeout = 3  # Reduced timeout
+        timeout = 2  # Short timeout
         start_time = time.time()
 
         with self._cleanup_lock:
@@ -388,10 +399,10 @@ class PowderXRDModule(GUIBase):
                 if remaining_time > 0:
                     thread.join(timeout=remaining_time)
 
-        # Clear Tkinter variables safely - COMPLETELY SUPPRESSED VERSION
-        # Suppress ALL stderr output during cleanup to prevent any error messages
+        # Simple cleanup: just set all Tkinter variables to None
+        # Let Python's garbage collector handle the rest
+        # Our stderr filter will suppress any warnings
         try:
-            # Store variable names to avoid dict change during iteration
             var_names = [
                 'poni_path', 'mask_path', 'input_pattern', 'output_dir',
                 'dataset_path', 'npt', 'unit', 'fit_method',
@@ -403,60 +414,14 @@ class PowderXRDModule(GUIBase):
                 'bm_input_file', 'bm_output_dir', 'bm_order'
             ]
 
-            # Collect all Tkinter variable objects
-            tk_vars = []
-            for var_name in var_names:
-                if hasattr(self, var_name):
-                    var = getattr(self, var_name)
-                    if var is not None and hasattr(var, '_name') and hasattr(var, '_tk'):
-                        tk_vars.append(var)
-
-            # Set all instance attributes to None first
+            # Simply set all variables to None
+            # Do NOT try to delete Tcl variables manually - that causes thread issues
             for var_name in var_names:
                 if hasattr(self, var_name):
                     try:
                         setattr(self, var_name, None)
                     except:
                         pass
-
-            # Explicitly delete Tcl variables with complete stderr suppression
-            def _cleanup_tk_vars():
-                # Temporarily redirect stderr to devnull during cleanup
-                import sys
-                old_stderr = sys.stderr
-
-                try:
-                    # Redirect to devnull
-                    sys.stderr = open(os.devnull, 'w')
-
-                    for var in tk_vars:
-                        try:
-                            if hasattr(var, '_name') and hasattr(var, '_tk'):
-                                # Unset the Tcl variable to prevent __del__ from trying to access it
-                                var._tk.globalunsetvar(var._name)
-                        except:
-                            pass
-
-                    # Force garbage collection after cleanup
-                    gc.collect()
-
-                finally:
-                    # Restore stderr
-                    try:
-                        sys.stderr.close()
-                    except:
-                        pass
-                    sys.stderr = old_stderr
-
-            # Schedule cleanup in main thread
-            if hasattr(self, 'root') and self.root:
-                try:
-                    self.root.after(0, _cleanup_tk_vars)
-                except:
-                    # If root.after fails, just do it directly
-                    _cleanup_tk_vars()
-            else:
-                _cleanup_tk_vars()
 
         except:
             pass
