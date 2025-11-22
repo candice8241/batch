@@ -973,7 +973,7 @@ class PowderXRDModule(GUIBase):
                           self.run_phase_analysis,
                           width=300).pack(pady=(15, 0))
 
-        right_col = tk.Frame(main_content, bg=self.colors['card_bg'], padx=10, pady=10)
+        right_col = tk.Frame(main_content, bg=self.colors['card_bg'], relief='solid', borderwidth=1, padx=6, pady=6)
         right_col.pack(side=tk.LEFT, fill=tk.Y)
 
         param_header = tk.Frame(right_col, bg=self.colors['card_bg'])
@@ -1068,7 +1068,7 @@ class PowderXRDModule(GUIBase):
 
         # Left section: File pickers (manually created to align with phase analysis)
         bm_left_section = tk.Frame(bm_main_container, bg=self.colors['card_bg'])
-        bm_left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 30))
+        bm_left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 15))
 
         tk.Label(bm_left_section, text="Input CSV (P-V Data)", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
