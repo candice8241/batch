@@ -946,12 +946,29 @@ class AzimuthalIntegrationModule(GUIBase):
         center_container = tk.Frame(self.parent, bg=self.colors['bg'])
         center_container.pack(fill=tk.X, pady=(0, 10))
 
-        self.run_btn = tk.Button(center_container, text="🌸 Run Azimuthal Integration",
+        # Button container for all buttons in one row
+        btn_container = tk.Frame(center_container, bg=self.colors['bg'])
+        btn_container.pack()
+
+        # Add Sector button
+        tk.Button(btn_container, text="🐾 Add Sector", command=self._add_sector,
+                 bg='#D8A7D8', fg='white',
+                 font=('Arial', 8, 'bold'), relief='flat',
+                 padx=5, pady=5, cursor='hand2').pack(side=tk.LEFT, padx=10)
+
+        # Run Integration button (center)
+        self.run_btn = tk.Button(btn_container, text="🌸 Run Azimuthal Integration",
                            command=self.run_integration,
                            bg='#E89FE9', fg='white',
                            font=('Arial', 10, 'bold'), relief='flat',
                            padx=12, pady=5, cursor='hand2')
-        self.run_btn.pack()
+        self.run_btn.pack(side=tk.LEFT, padx=10)
+
+        # Clear All button
+        tk.Button(btn_container, text="🍉 Clear All", command=self._clear_all_sectors,
+                 bg='#FF9FB5', fg='white',
+                 font=('Arial', 8, 'bold'), relief='flat',
+                 padx=5, pady=5, cursor='hand2').pack(side=tk.LEFT, padx=10)
 
     def _create_progress_section(self):
         prog_frame = tk.Frame(self.parent, bg=self.colors['bg'])
@@ -1219,20 +1236,6 @@ class AzimuthalIntegrationModule(GUIBase):
 
         self.sectors_container = tk.Frame(sectors_outer_frame, bg=self.colors['card_bg'])
         self.sectors_container.pack(side=tk.LEFT, anchor='center')
-
-        # Buttons for add/clear sectors
-        btn_frame = tk.Frame(self.custom_center_all, bg=self.colors['card_bg'])
-        btn_frame.pack(anchor='center', pady=(10, 0))
-
-        tk.Button(btn_frame, text="🐾 Add Sector", command=self._add_sector,
-                 bg='#D8A7D8', fg='white',
-                 font=('Arial', 8, 'bold'), relief='flat',
-                 padx=5, pady=5, cursor='hand2').pack(side=tk.LEFT, padx=10)
-
-        tk.Button(btn_frame, text="🍉 Clear All", command=self._clear_all_sectors,
-                 bg='#FF9FB5', fg='white',
-                 font=('Arial', 8, 'bold'), relief='flat',
-                 padx=5, pady=5, cursor='hand2').pack(side=tk.LEFT, padx=10)
 
         for idx in range(len(self.custom_sectors)):
             self._create_sector_row(idx)
