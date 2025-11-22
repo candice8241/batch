@@ -299,7 +299,7 @@ class AzimuthalIntegrationModule(GUIBase):
         self._create_title_section()
         self._create_reference_section()
         self._create_io_section()
-        self._create_azimuthal_section()
+        # self._create_azimuthal_section()  # 隐藏 azimuthal integration 设置部分
         self._create_run_button_section()
         self._create_progress_section()
         self._create_log_section()
