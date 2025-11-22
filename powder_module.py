@@ -16,6 +16,7 @@ matplotlib.use('Agg')  # Use non-interactive backend for thread safety
 import matplotlib.pyplot as plt
 import shutil
 import glob
+import weakref
 
 from batch_integration import BatchIntegrator
 from half_auto_fitting import DataProcessor
@@ -207,7 +208,10 @@ class PowderXRDModule(GUIBase):
         self.root = root
         self.current_module = "integration"
 
-        # Initialize variables
+        # Use weak references to avoid circular references
+        self._root_ref = weakref.ref(root)
+        
+        # Initialize variables BEFORE any other setup
         self._init_variables()
 
         # Pre-create module frames
@@ -216,6 +220,11 @@ class PowderXRDModule(GUIBase):
 
         # Track interactive fitting window
         self.interactive_fitting_window = None
+
+        # Track running threads for cleanup
+        self.running_threads = []
+        self._is_shutting_down = False
+        self._cleanup_lock = threading.Lock()
 
     def _init_variables(self):
         """Initialize all Tkinter variables - THREAD SAFE with explicit master binding"""
@@ -257,8 +266,78 @@ class PowderXRDModule(GUIBase):
         self.bm_output_dir = tk.StringVar(master=self.root)
         self.bm_order = tk.StringVar(master=self.root, value='3')
 
+    def _start_thread(self, target, name=None):
+        """Start a thread and track it for cleanup"""
+        if self._is_shutting_down:
+            return None
+
+        thread = threading.Thread(target=target, daemon=True, name=name)
+        
+        with self._cleanup_lock:
+            self.running_threads.append(thread)
+        
+        thread.start()
+
+        # Clean up finished threads from list
+        with self._cleanup_lock:
+            self.running_threads = [t for t in self.running_threads if t.is_alive()]
+
+        return thread
+
+    def cleanup(self):
+        """Clean up resources before shutdown - IMPROVED VERSION"""
+        with self._cleanup_lock:
+            self._is_shutting_down = True
+
+        # Wait for running threads to complete (with timeout)
+        import time
+        timeout = 3  # Reduced timeout
+        start_time = time.time()
+
+        with self._cleanup_lock:
+            threads_to_wait = list(self.running_threads)
+
+        for thread in threads_to_wait:
+            if thread.is_alive():
+                remaining_time = timeout - (time.time() - start_time)
+                if remaining_time > 0:
+                    thread.join(timeout=remaining_time)
+
+        # Destroy Tkinter variables safely
+        try:
+            # Store variable names to avoid dict change during iteration
+            var_names = [
+                'poni_path', 'mask_path', 'input_pattern', 'output_dir',
+                'dataset_path', 'npt', 'unit', 'fit_method',
+                'format_xy', 'format_dat', 'format_chi', 'format_fxye',
+                'format_svg', 'format_png', 'create_stacked_plot', 'stacked_plot_offset',
+                'phase_peak_csv', 'phase_volume_csv', 'phase_volume_system',
+                'phase_volume_output', 'phase_wavelength', 'phase_tolerance_1',
+                'phase_tolerance_2', 'phase_tolerance_3', 'phase_n_points',
+                'bm_input_file', 'bm_output_dir', 'bm_order'
+            ]
+
+            for var_name in var_names:
+                if hasattr(self, var_name):
+                    try:
+                        var = getattr(self, var_name)
+                        # Explicitly delete the Tcl variable
+                        if hasattr(var, '_name') and hasattr(var, '_tk'):
+                            try:
+                                var._tk.globalunsetvar(var._name)
+                            except:
+                                pass
+                        delattr(self, var_name)
+                    except:
+                        pass
+        except:
+            pass
+
     def capture_variables(self):
         """THREAD-SAFE: Capture all Tkinter variables at once"""
+        if self._is_shutting_down:
+            return None
+
         try:
             return {
                 'poni_path': str(self.poni_path.get()),
@@ -585,28 +664,21 @@ class PowderXRDModule(GUIBase):
                       font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
 
-        # RIGHT SECTION: Stacked Plot Options
-        right_section = tk.Frame(main_container, bg='#F0E6FA', relief='solid',
-                                borderwidth=2, padx=15, pady=12)
+        # RIGHT SECTION: Stacked Plot Options (Same style as Output Formats)
+        right_section = tk.Frame(main_container, bg=self.colors['card_bg'])
         right_section.pack(side=tk.LEFT, fill=tk.Y)
 
-        stacked_header = tk.Frame(right_section, bg='#F0E6FA')
-        stacked_header.pack(pady=(0, 10))
-
-        tk.Label(stacked_header, text="📈", bg='#F0E6FA',
-                font=('Segoe UI Emoji', 12)).pack(side=tk.LEFT, padx=(0, 5))
-
-        tk.Label(stacked_header, text="Stacked Plot", bg='#F0E6FA',
-                fg='#9966CC', font=('Comic Sans MS', 10, 'bold')).pack(side=tk.LEFT)
+        tk.Label(right_section, text="Stacked Plot Options:", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
         tk.Checkbutton(right_section, text="Create Stacked Plot",
                       variable=self.create_stacked_plot,
-                      bg='#F0E6FA', font=('Comic Sans MS', 9),
-                      fg='#4A4A4A', selectcolor='#E8D5F0',
-                      activebackground='#F0E6FA').pack(anchor=tk.W, pady=(0, 10))
+                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(anchor=tk.W, pady=(0, 10))
 
-        tk.Label(right_section, text="Offset Value:", bg='#F0E6FA',
-                fg='#4A4A4A', font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
+        tk.Label(right_section, text="Offset Value:", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
 
         offset_entry = tk.Entry(right_section, textvariable=self.stacked_plot_offset,
                                font=('Arial', 10), width=15, justify='center',
@@ -614,8 +686,18 @@ class PowderXRDModule(GUIBase):
         offset_entry.pack(ipady=3)
 
         tk.Label(right_section, text="(use 'auto' or number)",
-                bg='#F0E6FA', fg='#888888',
+                bg=self.colors['card_bg'], fg='#888888',
                 font=('Comic Sans MS', 8, 'italic')).pack(pady=(5, 0))
+
+        # ===== Run Integration Button (Moved above Peak Fitting Settings) =====
+        btn_frame_top = tk.Frame(parent_frame, bg=self.colors['bg'])
+        btn_frame_top.pack(fill=tk.X, pady=(10, 15))
+
+        btn_cont_top = tk.Frame(btn_frame_top, bg=self.colors['bg'])
+        btn_cont_top.pack(expand=True)
+
+        SpinboxStyleButton(btn_cont_top, "🐿️ Run Integration", self.run_integration,
+                          width=200).pack()
 
         # Fitting Settings Card
         fitting_card = self.create_card_frame(parent_frame)
@@ -642,7 +724,7 @@ class PowderXRDModule(GUIBase):
                     values=['pseudo', 'voigt'], width=22, state='readonly',
                     font=('Comic Sans MS', 9)).pack(anchor=tk.W)
 
-        # Action Buttons
+        # Action Buttons (Removed Full Pipeline)
         btn_frame = tk.Frame(parent_frame, bg=self.colors['bg'])
         btn_frame.pack(fill=tk.X, pady=(0, 15))
 
@@ -652,17 +734,11 @@ class PowderXRDModule(GUIBase):
         btns = tk.Frame(btn_cont, bg=self.colors['bg'])
         btns.pack()
 
-        SpinboxStyleButton(btns, "🐿️ Run Integration", self.run_integration,
-                          width=180).pack(side=tk.LEFT, padx=6)
-
         SpinboxStyleButton(btns, "🐻 Run Fitting", self.run_fitting,
-                          width=180).pack(side=tk.LEFT, padx=6)
-
-        SpinboxStyleButton(btns, "🦔 Full Pipeline", self.run_full_pipeline,
-                          width=180).pack(side=tk.LEFT, padx=6)
+                          width=180).pack(side=tk.LEFT, padx=8)
 
         SpinboxStyleButton(btns, "✨ Interactive Fitting", self.open_interactive_fitting,
-                          width=180).pack(side=tk.LEFT, padx=6)
+                          width=180).pack(side=tk.LEFT, padx=8)
 
     def browse_dataset_path(self):
         """Browse for dataset path - FIXED: Using simpledialog instead of creating Toplevel"""
@@ -929,12 +1005,16 @@ class PowderXRDModule(GUIBase):
 
     def log(self, message):
         """Thread-safe log message - NO CONSOLE OUTPUT"""
+        if self._is_shutting_down:
+            return
+
         def _log():
             try:
-                self.log_text.config(state='normal')
-                self.log_text.insert(tk.END, message + "\n")
-                self.log_text.see(tk.END)
-                self.log_text.config(state='disabled')
+                if not self._is_shutting_down and hasattr(self, 'log_text'):
+                    self.log_text.config(state='normal')
+                    self.log_text.insert(tk.END, message + "\n")
+                    self.log_text.see(tk.END)
+                    self.log_text.config(state='disabled')
             except:
                 pass
 
@@ -942,23 +1022,37 @@ class PowderXRDModule(GUIBase):
             _log()
         else:
             try:
-                self.root.after(0, _log)
+                if not self._is_shutting_down:
+                    self.root.after(0, _log)
             except:
                 pass
 
     def show_error(self, title, message):
         """Thread-safe error message"""
+        if self._is_shutting_down:
+            return
+
         def _show():
-            messagebox.showerror(title, message)
+            try:
+                if not self._is_shutting_down:
+                    messagebox.showerror(title, message)
+            except:
+                pass
 
         try:
-            self.root.after(0, _show)
+            if not self._is_shutting_down:
+                self.root.after(0, _show)
         except:
             pass
 
     def show_success_dialog(self, title, message, details=None):
         """Beautiful success dialog with improved UI"""
+        if self._is_shutting_down:
+            return
+
         def _show():
+            if self._is_shutting_down:
+                return
             dialog = tk.Toplevel(self.root)
             dialog.title(title)
             dialog.configure(bg='#F0E6FA')
@@ -1043,9 +1137,10 @@ class PowderXRDModule(GUIBase):
             
             dialog.bind('<Return>', lambda e: dialog.destroy())
             ok_btn.focus()
-        
+
         try:
-            self.root.after(0, _show)
+            if not self._is_shutting_down:
+                self.root.after(0, _show)
         except:
             pass
 
@@ -1072,7 +1167,7 @@ class PowderXRDModule(GUIBase):
         if not self.phase_peak_csv.get():
             self.show_error("Error", "Please select peak CSV file first")
             return
-        threading.Thread(target=self._separate_peaks_thread, daemon=True).start()
+        self._start_thread(self._separate_peaks_thread, name="SeparatePeaks")
 
     def _separate_peaks_thread(self):
         """Background thread for peak separation - THREAD SAFE"""
@@ -1184,7 +1279,7 @@ class PowderXRDModule(GUIBase):
         if not self.poni_path.get() or not self.mask_path.get() or not self.input_pattern.get() or not self.output_dir.get():
             self.show_error("Error", "Please fill all required fields")
             return
-        threading.Thread(target=self._run_integration_thread, daemon=True).start()
+        self._start_thread(self._run_integration_thread, name="Integration")
 
     def _run_integration_thread(self):
         """Background thread for integration - THREAD SAFE"""
@@ -1248,7 +1343,7 @@ class PowderXRDModule(GUIBase):
 
             if vars['create_stacked_plot'] and total_files > 1:
                 self.log(f"📈 Creating combined stacked plot for all {total_files} files...")
-                self._create_combined_stacked_plot(vars['output_dir'], vars['stacked_plot_offset'])
+                self._create_combined_stacked_plot(vars['output_dir'], vars['stacked_plot_offset'], vars['unit'])
 
             self.log(f"\n{'='*60}")
             self.log(f"✅ All integrations completed!")
@@ -1285,8 +1380,17 @@ class PowderXRDModule(GUIBase):
                 pass
         return 0.0
 
-    def _create_combined_stacked_plot(self, output_dir, offset):
-        """Create a stacked plot combining all integrated files, sorted by pressure"""
+    def _create_combined_stacked_plot(self, output_dir, offset, unit='2th_deg'):
+        """Create a stacked plot combining all integrated files, sorted by pressure - FIXED LABEL POSITIONING"""
+        # Map unit to axis label
+        unit_labels = {
+            '2th_deg': '2θ (°)',
+            'q_A^-1': 'Q (Å⁻¹)',
+            'q_nm^-1': 'Q (nm⁻¹)',
+            'r_mm': 'r (mm)'
+        }
+        xlabel = unit_labels.get(unit, unit)
+
         try:
             xy_files = glob.glob(os.path.join(output_dir, "*.xy"))
 
@@ -1307,6 +1411,7 @@ class PowderXRDModule(GUIBase):
 
             fig, ax = plt.subplots(figsize=(12, 10))
 
+            # Calculate offset value
             if offset == 'auto':
                 max_intensities = []
                 for xy_file in xy_files_sorted:
@@ -1314,7 +1419,10 @@ class PowderXRDModule(GUIBase):
                     max_intensities.append(np.max(data[:, 1]))
                 offset_value = np.mean(max_intensities) * 0.5
             else:
-                offset_value = float(offset)
+                try:
+                    offset_value = float(offset)
+                except:
+                    offset_value = 1000  # Default fallback
 
             all_x_min = float('inf')
             all_x_max = float('-inf')
@@ -1340,8 +1448,12 @@ class PowderXRDModule(GUIBase):
 
                 ax.plot(x, y_offset, linewidth=1.5, alpha=0.8, color=curve_color)
 
+                # FIXED: Position label correctly based on actual offset
+                # Place label at the baseline of the current curve
+                baseline_y = i * offset_value
+                
                 ax.text(x_min + 0.02 * (x_max - x_min),
-                       i * offset_value + np.mean(y[:10]),
+                       baseline_y,
                        f'{pressure:.1f} GPa',
                        fontsize=9,
                        verticalalignment='center',
@@ -1350,7 +1462,7 @@ class PowderXRDModule(GUIBase):
                                 edgecolor='gray', alpha=0.8))
 
             ax.set_xlim(x_min, x_max)
-            ax.set_xlabel('Q (Å⁻¹)', fontsize=13, fontweight='bold')
+            ax.set_xlabel(xlabel, fontsize=13, fontweight='bold')
             ax.set_ylabel('Intensity (offset)', fontsize=13, fontweight='bold')
             ax.set_title('Stacked XRD Patterns (Sorted by Pressure)',
                         fontsize=14, fontweight='bold')
@@ -1364,6 +1476,7 @@ class PowderXRDModule(GUIBase):
 
             self.log(f"💾 Combined stacked plot saved: {os.path.basename(stacked_plot_path)}")
             self.log(f"📈 Pressure range: {min(pressures):.1f} - {max(pressures):.1f} GPa")
+            self.log(f"📏 Offset value used: {offset_value:.2f}")
             self.log(f"🎨 Colors change every 10 GPa")
 
         except Exception as e:
@@ -1375,7 +1488,7 @@ class PowderXRDModule(GUIBase):
         if not self.output_dir.get():
             self.show_error("Error", "Please specify output directory")
             return
-        threading.Thread(target=self._run_fitting_thread, daemon=True).start()
+        self._start_thread(self._run_fitting_thread, name="Fitting")
 
     def _run_fitting_thread(self):
         """Background thread for peak fitting - THREAD SAFE"""
@@ -1410,111 +1523,12 @@ class PowderXRDModule(GUIBase):
             except:
                 pass
 
-    def run_full_pipeline(self):
-        """Run full integration and fitting pipeline"""
-        if not self.poni_path.get() or not self.mask_path.get() or not self.input_pattern.get() or not self.output_dir.get():
-            self.show_error("Error", "Please fill all required fields")
-            return
-        threading.Thread(target=self._run_full_pipeline_thread, daemon=True).start()
-
-    def _run_full_pipeline_thread(self):
-        """Background thread for full pipeline - THREAD SAFE"""
-        vars = self.capture_variables()
-        if vars is None:
-            self.log("❌ Failed to read settings")
-            return
-
-        formats = []
-        if vars['format_xy']: formats.append('xy')
-        if vars['format_dat']: formats.append('dat')
-        if vars['format_chi']: formats.append('chi')
-        if vars['format_fxye']: formats.append('fxye')
-        if vars['format_svg']: formats.append('svg')
-        if vars['format_png']: formats.append('png')
-        if not formats: formats = ['xy']
-
-        try:
-            self.root.after(0, self.progress.start)
-
-            if os.path.isdir(vars['input_pattern']):
-                target_dir = vars['input_pattern']
-            elif os.path.isfile(vars['input_pattern']) and vars['input_pattern'].lower().endswith('.h5'):
-                target_dir = os.path.dirname(vars['input_pattern'])
-            else:
-                raise ValueError(f"Invalid input: {vars['input_pattern']}")
-
-            h5_files = sorted([os.path.join(target_dir, f)
-                              for f in os.listdir(target_dir)
-                              if f.lower().endswith('.h5')])
-
-            if not h5_files:
-                raise ValueError(f"No .h5 files found in directory: {target_dir}")
-
-            total_files = len(h5_files)
-            self.log(f"\n{'='*60}")
-            self.log(f"🔁 Starting Full Pipeline (Integration + Fitting)")
-            self.log(f"📁 Directory: {target_dir}")
-            self.log(f"📊 Total files to process: {total_files}")
-            self.log(f"{'='*60}\n")
-
-            # Step 1: Integration
-            self.log(f"📊 Step 1/2: Integration")
-            integrator = BatchIntegrator(vars['poni_path'], vars['mask_path'])
-
-            for i, h5_file in enumerate(h5_files, 1):
-                self.log(f"[{i}/{total_files}] Integrating: {os.path.basename(h5_file)}")
-                integrator.batch_integrate(
-                    input_pattern=h5_file,
-                    output_dir=vars['output_dir'],
-                    npt=vars['npt'],
-                    unit=vars['unit'],
-                    dataset_path=vars['dataset_path'],
-                    formats=formats,
-                    create_stacked_plot=False
-                )
-                self.log(f"[{i}/{total_files}] ✓ Integration complete\n")
-
-            if vars['create_stacked_plot'] and total_files > 1:
-                self.log(f"📈 Creating combined stacked plot...")
-                self._create_combined_stacked_plot(vars['output_dir'], vars['stacked_plot_offset'])
-
-            self.log(f"✅ Step 1/2 completed: All {total_files} files integrated\n")
-
-            # Step 2: Fitting
-            self.log(f"📈 Step 2/2: Peak Fitting")
-            fitter = DataProcessor(folder=vars['output_dir'], fit_method=vars['fit_method'])
-            fitter.run_batch_fitting()
-            self.log(f"✅ Step 2/2 completed: Peak fitting finished\n")
-
-            self.log(f"{'='*60}")
-            self.log(f"✅ Full Pipeline Completed!")
-            self.log(f"📊 Total processed: {total_files} files")
-            self.log(f"💾 Output directory: {vars['output_dir']}")
-            self.log(f"{'='*60}\n")
-
-            msg = "Full pipeline completed successfully!"
-            details = f"{total_files} file(s) integrated and fitted\nMethod: {vars['fit_method']}"
-            self.show_success_dialog("Pipeline Complete", msg, details)
-
-        except Exception as e:
-            error_msg = str(e)
-            self.log(f"❌ Error: {error_msg}")
-            try:
-                self.root.after(0, lambda msg=error_msg: self.show_error("Error", msg))
-            except:
-                pass
-        finally:
-            try:
-                self.root.after(0, self.progress.stop)
-            except:
-                pass
-
     def run_phase_analysis(self):
         """Run volume calculation and lattice parameter fitting"""
         if not self.phase_volume_csv.get() or not self.phase_volume_output.get():
             self.show_error("Error", "Please fill all required fields (Input CSV and Output Directory)")
             return
-        threading.Thread(target=self._run_phase_analysis_thread, daemon=True).start()
+        self._start_thread(self._run_phase_analysis_thread, name="PhaseAnalysis")
 
     def _run_phase_analysis_thread(self):
         """Background thread for phase analysis - THREAD SAFE"""
@@ -1630,7 +1644,7 @@ class PowderXRDModule(GUIBase):
         if not self.bm_input_file.get() or not self.bm_output_dir.get():
             self.show_error("Error", "Please fill all required fields")
             return
-        threading.Thread(target=self._run_birch_murnaghan_thread, daemon=True).start()
+        self._start_thread(self._run_birch_murnaghan_thread, name="BirchMurnaghan")
 
     def _run_birch_murnaghan_thread(self):
         """Background thread for Birch-Murnaghan fitting - THREAD SAFE"""
