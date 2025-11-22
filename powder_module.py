@@ -564,7 +564,7 @@ class PowderXRDModule(GUIBase):
 
         # ========== LEFT SECTION: Integration Settings ==========
         left_section = tk.Frame(main_container, bg=self.colors['card_bg'])
-        left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 20))
+        left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 40))
 
         tk.Label(left_section, text="Integration Settings", bg=self.colors['card_bg'],
                 fg=self.colors['primary'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
@@ -617,6 +617,9 @@ class PowderXRDModule(GUIBase):
                     values=['2θ (°)', 'Q (Å⁻¹)', 'r (mm)'],
                     width=16, state='readonly', font=('Comic Sans MS', 9)).pack(anchor=tk.W)
 
+        # Add padding at bottom to make left section taller
+        tk.Frame(left_section, bg=self.colors['card_bg'], height=50).pack(fill=tk.X, pady=(10, 0))
+
         # ========== RIGHT SECTION: Output Formats & Stacked Plot ==========
         right_section = tk.Frame(main_container, bg=self.colors['card_bg'])
         right_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -631,6 +634,7 @@ class PowderXRDModule(GUIBase):
         formats_grid = tk.Frame(right_section, bg=self.colors['card_bg'])
         formats_grid.pack(fill=tk.X)
 
+        # First row of formats (3 checkboxes)
         row1 = tk.Frame(formats_grid, bg=self.colors['card_bg'])
         row1.pack(fill=tk.X, pady=3)
 
@@ -647,43 +651,41 @@ class PowderXRDModule(GUIBase):
         tk.Checkbutton(row1, text=".chi", variable=self.format_chi, bg=self.colors['card_bg'],
                       font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
-                      ).pack(side=tk.LEFT, padx=(0, 15))
+                      ).pack(side=tk.LEFT)
 
-        tk.Checkbutton(row1, text=".fxye", variable=self.format_fxye, bg=self.colors['card_bg'],
+        # Second row of formats (3 checkboxes)
+        row2 = tk.Frame(formats_grid, bg=self.colors['card_bg'])
+        row2.pack(fill=tk.X, pady=3)
+
+        tk.Checkbutton(row2, text=".fxye", variable=self.format_fxye, bg=self.colors['card_bg'],
                       font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
                       ).pack(side=tk.LEFT, padx=(0, 15))
 
-        tk.Checkbutton(row1, text=".svg", variable=self.format_svg, bg=self.colors['card_bg'],
+        tk.Checkbutton(row2, text=".svg", variable=self.format_svg, bg=self.colors['card_bg'],
                       font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
                       ).pack(side=tk.LEFT, padx=(0, 15))
 
-        tk.Checkbutton(row1, text=".png", variable=self.format_png, bg=self.colors['card_bg'],
+        tk.Checkbutton(row2, text=".png", variable=self.format_png, bg=self.colors['card_bg'],
                       font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
                       ).pack(side=tk.LEFT)
 
-        # Separator between output formats and stacked plot options
-        tk.Frame(right_section, bg='#E8D5F0', height=2).pack(fill=tk.X, pady=15)
-
         # Stacked Plot Options
         tk.Label(right_section, text="Stacked Plot Options:", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(15, 8))
 
-        # Horizontal layout for checkbox and offset
-        stacked_options_row = tk.Frame(right_section, bg=self.colors['card_bg'])
-        stacked_options_row.pack(fill=tk.X, pady=(0, 5))
-
-        tk.Checkbutton(stacked_options_row, text="Create Stacked Plot",
+        # Checkbox on first line
+        tk.Checkbutton(right_section, text="Create Stacked Plot",
                       variable=self.create_stacked_plot,
                       bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
-                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 20))
+                      activebackground=self.colors['card_bg']).pack(anchor=tk.W, pady=(0, 8))
 
-        # Offset section in the same row
-        offset_container = tk.Frame(stacked_options_row, bg=self.colors['card_bg'])
-        offset_container.pack(side=tk.LEFT)
+        # Offset section on second line
+        offset_container = tk.Frame(right_section, bg=self.colors['card_bg'])
+        offset_container.pack(anchor=tk.W, fill=tk.X)
 
         tk.Label(offset_container, text="Offset:", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 5))
