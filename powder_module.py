@@ -562,7 +562,7 @@ class PowderXRDModule(GUIBase):
         main_container = tk.Frame(content_merged, bg=self.colors['card_bg'])
         main_container.pack(fill=tk.BOTH, expand=True, pady=5)
 
-        # ========== LEFT SECTION: Integration Settings (占更多空间) ==========
+        # ========== LEFT SECTION: Integration Settings (takes more space) ==========
         left_section = tk.Frame(main_container, bg=self.colors['card_bg'])
         left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 30))
 
@@ -602,7 +602,7 @@ class PowderXRDModule(GUIBase):
         param_frame = tk.Frame(left_section, bg=self.colors['card_bg'])
         param_frame.pack(fill=tk.X, pady=(10, 0))
 
-        # Number of Points (左侧)
+        # Number of Points (left side)
         npt_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
         npt_cont.pack(side=tk.LEFT, padx=(0, 30))
         tk.Label(npt_cont, text="Number of Points", bg=self.colors['card_bg'],
@@ -610,7 +610,7 @@ class PowderXRDModule(GUIBase):
         CustomSpinbox(npt_cont, from_=500, to=10000, textvariable=self.npt,
                      increment=100, is_float=False).pack(anchor=tk.W)
 
-        # Unit (右侧，改为单选按钮形式)
+        # Unit (right side, using radio button format)
         unit_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
         unit_cont.pack(side=tk.LEFT)
 
@@ -640,38 +640,38 @@ class PowderXRDModule(GUIBase):
         right_outer.pack(side=tk.LEFT, fill=tk.Y)
         right_outer.pack_propagate(False)
 
-        # 创建垂直居中容器
+        # Create vertical centering container
         center_container = tk.Frame(right_outer, bg=self.colors['card_bg'])
         center_container.pack(fill=tk.BOTH, expand=True)
 
-        # 上方填充
+        # Top padding
         tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
 
-        # 内容区域（水平居中，垂直居中）
+        # Content area (horizontally and vertically centered)
         right_section = tk.Frame(center_container, bg=self.colors['card_bg'])
         right_section.pack()
 
-        # Output Options 外层边框容器
+        # Output Options outer border frame
         output_options_border = tk.Frame(right_section, bg=self.colors['card_bg'],
                                          relief='solid', borderwidth=1)
         output_options_border.pack(fill=tk.X)
 
-        # Output Options 内容区域（带内边距）
+        # Output Options content area (with padding)
         output_options_content = tk.Frame(output_options_border, bg=self.colors['card_bg'])
         output_options_content.pack(fill=tk.X, padx=10, pady=10)
 
-        # 右侧标题（与下方内容左对齐）
+        # Right side title (aligned left with content below)
         tk.Label(output_options_content, text="Output Options", bg=self.colors['card_bg'],
                 fg=self.colors['primary'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
-        # 下方填充
+        # Bottom padding
         tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
 
-        # Output Formats 标题（在边框外）
+        # Output Formats title (outside border)
         tk.Label(output_options_content, text="Select Output Formats:", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
-        # Output Formats with border（只框住六个格式复选框）
+        # Output Formats with border (only frames the six format checkboxes)
         formats_border_frame = tk.Frame(output_options_content, bg=self.colors['card_bg'],
                                        relief='solid', borderwidth=1, highlightbackground='#CCCCCC')
         formats_border_frame.pack(fill=tk.X, pady=(0, 10))
@@ -912,9 +912,16 @@ class PowderXRDModule(GUIBase):
                           lambda: self.browse_file(self.phase_peak_csv, [("CSV files", "*.csv")]),
                           width=75).pack(side=tk.LEFT, padx=(5, 0))
 
-        SpinboxStyleButton(left_col, "🐶 Separate Original & New Peaks",
+        # Center the button container
+        separate_btn_frame = tk.Frame(left_col, bg=self.colors['card_bg'])
+        separate_btn_frame.pack(fill=tk.X, pady=(0, 15))
+
+        separate_btn_container = tk.Frame(separate_btn_frame, bg=self.colors['card_bg'])
+        separate_btn_container.pack(expand=True)
+
+        SpinboxStyleButton(separate_btn_container, "🐶 Separate Original & New Peaks",
                           self.separate_peaks,
-                          width=280).pack(pady=(0, 15))
+                          width=280).pack()
 
         tk.Label(left_col, text="Input CSV (Volume Calculation)", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
@@ -987,22 +994,29 @@ class PowderXRDModule(GUIBase):
                           lambda: self.browse_folder(self.phase_volume_output),
                           width=75).pack(side=tk.LEFT, padx=(5, 0))
 
-        SpinboxStyleButton(left_col, "🦊 Calculate Volume & Fit Lattice Parameters",
-                          self.run_phase_analysis,
-                          width=300).pack(pady=(15, 0))
+        # Center the button container
+        calc_btn_frame = tk.Frame(left_col, bg=self.colors['card_bg'])
+        calc_btn_frame.pack(fill=tk.X, pady=(15, 0))
 
-        # 创建右侧外层容器以实现居中
+        calc_btn_container = tk.Frame(calc_btn_frame, bg=self.colors['card_bg'])
+        calc_btn_container.pack(expand=True)
+
+        SpinboxStyleButton(calc_btn_container, "🦊 Calculate Volume & Fit Lattice Parameters",
+                          self.run_phase_analysis,
+                          width=300).pack()
+
+        # Create right outer container for centering
         right_outer = tk.Frame(main_content, bg=self.colors['card_bg'])
         right_outer.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # 创建垂直居中容器
+        # Create vertical centering container
         center_container = tk.Frame(right_outer, bg=self.colors['card_bg'])
         center_container.pack(fill=tk.BOTH, expand=True)
 
-        # 上方填充
+        # Top padding
         tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
 
-        # 实际内容区域（水平和垂直居中）
+        # Actual content area (horizontally and vertically centered)
         right_col = tk.Frame(
             center_container,
             bg=self.colors['card_bg'],
@@ -1014,7 +1028,7 @@ class PowderXRDModule(GUIBase):
         )
         right_col.pack()
 
-        # 下方填充
+        # Bottom padding
         tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
 
         param_header = tk.Frame(right_col, bg=self.colors['card_bg'])
@@ -1145,10 +1159,19 @@ class PowderXRDModule(GUIBase):
         bm_right_center = tk.Frame(bm_right_outer, bg=self.colors['card_bg'])
         bm_right_center.pack(expand=True)
 
-        tk.Label(bm_right_center, text="BM Order", bg=self.colors['card_bg'],
+        # BM Order with border frame
+        bm_order_border = tk.Frame(bm_right_center, bg=self.colors['card_bg'],
+                                   relief='solid', borderwidth=1)
+        bm_order_border.pack()
+
+        # Inner content with padding
+        bm_order_content = tk.Frame(bm_order_border, bg=self.colors['card_bg'])
+        bm_order_content.pack(padx=10, pady=10)
+
+        tk.Label(bm_order_content, text="BM Order", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(pady=(0, 8))
 
-        bm_order_frame = tk.Frame(bm_right_center, bg=self.colors['card_bg'])
+        bm_order_frame = tk.Frame(bm_order_content, bg=self.colors['card_bg'])
         bm_order_frame.pack()
 
         tk.Radiobutton(bm_order_frame, text="2nd Order", variable=self.bm_order, value='2',
@@ -1161,6 +1184,7 @@ class PowderXRDModule(GUIBase):
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
 
+        # Center the BM fitting button
         btn_frame3 = tk.Frame(parent_frame, bg=self.colors['bg'])
         btn_frame3.pack(fill=tk.X, pady=(10, 0))
 
