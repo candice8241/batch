@@ -407,6 +407,18 @@ class AzimuthalIntegrationModule(GUIBase):
 
             # Multi bin mode
             self.multi_bin_mode = tk.BooleanVar(value=False)
+
+            # Output format options (6 formats)
+            self.format_xy = tk.BooleanVar(value=True)
+            self.format_dat = tk.BooleanVar(value=False)
+            self.format_chi = tk.BooleanVar(value=False)
+            self.format_fxye = tk.BooleanVar(value=False)
+            self.format_svg = tk.BooleanVar(value=False)
+            self.format_png = tk.BooleanVar(value=False)
+
+            # Stacked plot options
+            self.create_stacked_plot = tk.BooleanVar(value=False)
+            self.stacked_plot_offset = tk.StringVar(value='auto')
         except Exception as e:
             print(f"Warning: Error initializing variables: {e}")
 
@@ -437,7 +449,7 @@ class AzimuthalIntegrationModule(GUIBase):
 
         self._create_reference_section()
         self._create_separated_settings_sections()
-        self._create_run_button_section()
+        self._create_output_options_section()
         self._create_progress_section()
         self._create_log_section()
 
@@ -1109,6 +1121,145 @@ class AzimuthalIntegrationModule(GUIBase):
         self.dynamic_frame.pack(fill=tk.BOTH, expand=True)
 
         self.update_mode()
+
+    def _create_output_options_section(self):
+        """Output format and stacked plot options section with Run button on the right"""
+        # Main container for both sections
+        sections_frame = tk.Frame(self.parent, bg=self.colors['bg'])
+        sections_frame.pack(fill=tk.X, padx=0, pady=(0, 10))
+
+        # Container for left-right layout
+        layout_container = tk.Frame(sections_frame, bg=self.colors['bg'])
+        layout_container.pack(fill=tk.BOTH, expand=True)
+
+        # ========== LEFT MODULE: Output Options ==========
+        left_module = tk.Frame(layout_container, bg=self.colors['bg'], height=200)
+        left_module.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
+        left_module.pack_propagate(False)
+
+        left_card = self.create_card_frame(left_module)
+        left_card.pack(fill=tk.BOTH, expand=True)
+
+        content = tk.Frame(left_card, bg=self.colors['card_bg'], padx=20, pady=12)
+        content.pack(fill=tk.BOTH, expand=True)
+
+        # Header
+        header = tk.Frame(content, bg=self.colors['card_bg'])
+        header.pack(anchor=tk.W, pady=(0, 8))
+
+        tk.Label(header, text="🎨", bg=self.colors['card_bg'],
+                font=('Segoe UI Emoji', 14)).pack(side=tk.LEFT, padx=(0, 6))
+
+        tk.Label(header, text="Output Options",
+                bg=self.colors['card_bg'], fg=self.colors['primary'],
+                font=('Arial', 11, 'bold')).pack(side=tk.LEFT)
+
+        # Main horizontal container for left-right layout (centered)
+        main_container = tk.Frame(content, bg=self.colors['card_bg'])
+        main_container.pack(expand=True)
+
+        # ========== LEFT SECTION: Output Formats ==========
+        left_section = tk.Frame(main_container, bg=self.colors['card_bg'])
+        left_section.pack(side=tk.LEFT, padx=(0, 50))
+
+        # Output Formats title
+        tk.Label(left_section, text="Select Output Formats:", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
+
+        # Output Formats with border (only frames the six format checkboxes)
+        formats_border_frame = tk.Frame(left_section, bg=self.colors['card_bg'],
+                                       relief='solid', borderwidth=1, highlightbackground='#CCCCCC')
+        formats_border_frame.pack()
+
+        # Inner padding frame
+        formats_content = tk.Frame(formats_border_frame, bg=self.colors['card_bg'])
+        formats_content.pack(padx=8, pady=8)
+
+        # First row of formats (3 checkboxes)
+        row1 = tk.Frame(formats_content, bg=self.colors['card_bg'])
+        row1.pack(pady=3)
+
+        tk.Checkbutton(row1, text=".xy", variable=self.format_xy, bg=self.colors['card_bg'],
+                      font=('Arial', 9), fg=self.colors['text_dark'],
+                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
+                      ).pack(side=tk.LEFT, padx=(0, 15))
+
+        tk.Checkbutton(row1, text=".dat", variable=self.format_dat, bg=self.colors['card_bg'],
+                      font=('Arial', 9), fg=self.colors['text_dark'],
+                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
+                      ).pack(side=tk.LEFT, padx=(0, 15))
+
+        tk.Checkbutton(row1, text=".chi", variable=self.format_chi, bg=self.colors['card_bg'],
+                      font=('Arial', 9), fg=self.colors['text_dark'],
+                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
+                      ).pack(side=tk.LEFT)
+
+        # Second row of formats (3 checkboxes)
+        row2 = tk.Frame(formats_content, bg=self.colors['card_bg'])
+        row2.pack(pady=3)
+
+        tk.Checkbutton(row2, text=".fxye", variable=self.format_fxye, bg=self.colors['card_bg'],
+                      font=('Arial', 9), fg=self.colors['text_dark'],
+                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
+                      ).pack(side=tk.LEFT, padx=(0, 15))
+
+        tk.Checkbutton(row2, text=".svg", variable=self.format_svg, bg=self.colors['card_bg'],
+                      font=('Arial', 9), fg=self.colors['text_dark'],
+                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
+                      ).pack(side=tk.LEFT, padx=(0, 15))
+
+        tk.Checkbutton(row2, text=".png", variable=self.format_png, bg=self.colors['card_bg'],
+                      font=('Arial', 9), fg=self.colors['text_dark'],
+                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
+                      ).pack(side=tk.LEFT)
+
+        # ========== RIGHT SECTION: Stacked Plot Options ==========
+        right_section = tk.Frame(main_container, bg=self.colors['card_bg'])
+        right_section.pack(side=tk.LEFT)
+
+        # Stacked Plot Options title
+        tk.Label(right_section, text="Stacked Plot Options:", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
+
+        # Checkbox on first line
+        tk.Checkbutton(right_section, text="Create Stacked Plot",
+                      variable=self.create_stacked_plot,
+                      bg=self.colors['card_bg'], font=('Arial', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(anchor=tk.W, pady=(0, 8))
+
+        # Offset section on second line
+        offset_container = tk.Frame(right_section, bg=self.colors['card_bg'])
+        offset_container.pack(anchor=tk.W)
+
+        tk.Label(offset_container, text="Offset:", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 5))
+
+        offset_entry = tk.Entry(offset_container, textvariable=self.stacked_plot_offset,
+                               font=('Arial', 10), width=12, justify='center',
+                               bg='white', relief='solid', borderwidth=1)
+        offset_entry.pack(side=tk.LEFT, ipady=2)
+
+        # Help text below
+        tk.Label(right_section, text="(use 'auto' or number for offset)",
+                bg=self.colors['card_bg'], fg='#888888',
+                font=('Arial', 8, 'italic')).pack(anchor=tk.W, pady=(2, 0))
+
+        # ========== RIGHT MODULE: Run Button ==========
+        right_module = tk.Frame(layout_container, bg=self.colors['bg'], height=200)
+        right_module.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
+        right_module.pack_propagate(False)
+
+        # Vertical centering container for run button
+        center_container = tk.Frame(right_module, bg=self.colors['bg'])
+        center_container.pack(expand=True)
+
+        self.run_btn = tk.Button(center_container, text="🌸 Run Azimuthal Integration",
+                           command=self.run_integration,
+                           bg='#E89FE9', fg='white',
+                           font=('Arial', 10, 'bold'), relief='flat',
+                           padx=12, pady=5, cursor='hand2')
+        self.run_btn.pack()
 
     def _create_run_button_section(self):
         """Run button directly on background"""
