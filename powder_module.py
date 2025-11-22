@@ -602,6 +602,7 @@ class PowderXRDModule(GUIBase):
         param_frame = tk.Frame(left_section, bg=self.colors['card_bg'])
         param_frame.pack(fill=tk.X, pady=(10, 0))
 
+        # Number of Points
         npt_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
         npt_cont.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
         tk.Label(npt_cont, text="Number of Points", bg=self.colors['card_bg'],
@@ -609,31 +610,46 @@ class PowderXRDModule(GUIBase):
         CustomSpinbox(npt_cont, from_=500, to=10000, textvariable=self.npt,
                      increment=100, is_float=False).pack(anchor=tk.W)
 
-        unit_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
-        unit_cont.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        tk.Label(unit_cont, text="Unit", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
-        ttk.Combobox(unit_cont, textvariable=self.unit,
-                    values=['2θ (°)', 'Q (Å⁻¹)', 'r (mm)'],
-                    width=16, state='readonly', font=('Comic Sans MS', 9)).pack(anchor=tk.W)
+        # Unit (改为单选按钮形式)
+        unit_frame = tk.Frame(left_section, bg=self.colors['card_bg'])
+        unit_frame.pack(fill=tk.X, pady=(10, 0))
 
-        # Add padding at bottom to make left section taller
-        tk.Frame(left_section, bg=self.colors['card_bg'], height=50).pack(fill=tk.X, pady=(10, 0))
+        tk.Label(unit_frame, text="Unit", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
-        # ========== RIGHT SECTION: Output Formats & Stacked Plot (固定宽度，居中显示) ==========
+        unit_options_frame = tk.Frame(unit_frame, bg=self.colors['card_bg'])
+        unit_options_frame.pack(fill=tk.X)
+
+        tk.Radiobutton(unit_options_frame, text="2θ (°)", variable=self.unit, value='2θ (°)',
+                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
+
+        tk.Radiobutton(unit_options_frame, text="Q (Å⁻¹)", variable=self.unit, value='Q (Å⁻¹)',
+                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
+
+        tk.Radiobutton(unit_options_frame, text="r (mm)", variable=self.unit, value='r (mm)',
+                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
+
+        # ========== RIGHT SECTION: Output Formats & Stacked Plot ==========
         right_outer = tk.Frame(main_container, bg=self.colors['card_bg'], width=350)
         right_outer.pack(side=tk.LEFT, fill=tk.Y)
-        right_outer.pack_propagate(False)  # 防止子组件改变容器大小
+        right_outer.pack_propagate(False)
 
-        # 创建一个居中容器
-        right_center_container = tk.Frame(right_outer, bg=self.colors['card_bg'])
-        right_center_container.place(relx=0.5, rely=0.5, anchor='center')
+        # 右侧标题（和左侧标题对齐）
+        tk.Label(right_outer, text="Output Options", bg=self.colors['card_bg'],
+                fg=self.colors['primary'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 20))
 
-        right_section = tk.Frame(right_center_container, bg=self.colors['card_bg'])
+        # 创建一个容器来放置内容，使其相对于左侧文件选择器部分垂直居中
+        right_content_container = tk.Frame(right_outer, bg=self.colors['card_bg'])
+        right_content_container.pack(expand=True)
+
+        right_section = tk.Frame(right_content_container, bg=self.colors['card_bg'])
         right_section.pack()
-
-        tk.Label(right_section, text="Output Options", bg=self.colors['card_bg'],
-                fg=self.colors['primary'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
         # Output Formats
         tk.Label(right_section, text="Select Output Formats:", bg=self.colors['card_bg'],
