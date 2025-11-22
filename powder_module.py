@@ -977,33 +977,23 @@ class PowderXRDModule(GUIBase):
             main_content,
             bg=self.colors['card_bg'],
             padx=6,
-            pady=0,
+            pady=5,
             highlightbackground="#8B7BB8",  # Border color (matching your purple theme)
             highlightthickness=2,             # Border width
             relief=tk.SOLID                   # Border style
         )
         right_col_outer.pack(side=tk.LEFT, fill=tk.Y, anchor=tk.N)
 
-        # 创建垂直居中容器
-        vertical_center = tk.Frame(right_col_outer, bg=self.colors['card_bg'])
-        vertical_center.pack(fill=tk.BOTH, expand=True)
-
-        # 上方填充
-        tk.Frame(vertical_center, bg=self.colors['card_bg']).pack(expand=True)
-
         # 水平居中容器
-        horizontal_center = tk.Frame(vertical_center, bg=self.colors['card_bg'])
+        horizontal_center = tk.Frame(right_col_outer, bg=self.colors['card_bg'])
         horizontal_center.pack()
 
-        # 内容区域（水平、垂直居中）
+        # 内容区域（水平居中）
         right_col = tk.Frame(horizontal_center, bg=self.colors['card_bg'])
         right_col.pack()
 
-        # 下方填充
-        tk.Frame(vertical_center, bg=self.colors['card_bg']).pack(expand=True)
-
         param_header = tk.Frame(right_col, bg=self.colors['card_bg'])
-        param_header.pack(pady=(5, 15))
+        param_header.pack(pady=(0, 15))
 
         tk.Label(param_header, text="🎀", bg=self.colors['card_bg'],
                 font=('Segoe UI Emoji', 12)).pack(side=tk.LEFT, padx=(0, 5))
