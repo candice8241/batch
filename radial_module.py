@@ -436,8 +436,7 @@ class AzimuthalIntegrationModule(GUIBase):
             pass
 
         self._create_reference_section()
-        self._create_io_section()
-        self._create_azimuthal_section()
+        self._create_merged_settings_section()
         self._create_run_button_section()
         self._create_progress_section()
         self._create_log_section()
@@ -468,6 +467,173 @@ class AzimuthalIntegrationModule(GUIBase):
         tk.Label(center_container, text="Counter-clockwise rotation from right horizontal",
                 bg=self.colors['card_bg'], fg=self.colors['text_light'],
                 font=('Arial', 9, 'italic')).pack()
+
+    def _create_merged_settings_section(self):
+        """Merged card with Integration Settings (left) and Azimuthal Angle Settings (right)"""
+        merged_frame = tk.Frame(self.parent, bg=self.colors['bg'])
+        merged_frame.pack(fill=tk.X, padx=0, pady=(0, 10))
+
+        # Card frame
+        card = self.create_card_frame(merged_frame)
+        card.pack(fill=tk.X)
+
+        content = tk.Frame(card, bg=self.colors['card_bg'], padx=20, pady=12)
+        content.pack(fill=tk.BOTH, expand=True)
+
+        # Header
+        header = tk.Frame(content, bg=self.colors['card_bg'])
+        header.pack(anchor=tk.W, pady=(0, 8))
+
+        tk.Label(header, text="🦊", bg=self.colors['card_bg'],
+                font=('Segoe UI Emoji', 14)).pack(side=tk.LEFT, padx=(0, 6))
+
+        tk.Label(header, text="Integration Settings & Azimuthal Angle Settings",
+                bg=self.colors['card_bg'], fg=self.colors['primary'],
+                font=('Arial', 11, 'bold')).pack(side=tk.LEFT)
+
+        # Container for left-right layout
+        main_container = tk.Frame(content, bg=self.colors['card_bg'])
+        main_container.pack(fill=tk.BOTH, expand=True, pady=5)
+
+        # ========== LEFT SECTION: Integration Settings ==========
+        left_section = tk.Frame(main_container, bg=self.colors['card_bg'])
+        left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 30))
+
+        tk.Label(left_section, text="Integration Settings", bg=self.colors['card_bg'],
+                fg=self.colors['primary'], font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
+
+        # File pickers
+        self.create_file_picker_with_spinbox_btn(left_section, "PONI File", self.poni_path,
+                               [("PONI files", "*.poni"), ("All files", "*.*")])
+        self.create_file_picker_with_spinbox_btn(left_section, "Mask File", self.mask_path,
+                               [("Mask files", "*.npy *.h5 *.edf"), ("All files", "*.*")])
+        self.create_file_picker_with_spinbox_btn(left_section, "Input .h5 File",
+                               self.input_pattern, [("HDF5 files", "*.h5"), ("All files", "*.*")])
+        self.create_folder_picker_with_spinbox_btn(left_section, "Output Directory", self.output_dir)
+
+        # Dataset Path
+        dataset_container = tk.Frame(left_section, bg=self.colors['card_bg'])
+        dataset_container.pack(fill=tk.X, pady=(5, 0))
+
+        tk.Label(dataset_container, text="Dataset Path", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
+
+        dataset_input_frame = tk.Frame(dataset_container, bg=self.colors['card_bg'])
+        dataset_input_frame.pack(fill=tk.X)
+
+        tk.Entry(dataset_input_frame, textvariable=self.dataset_path, font=('Arial', 9),
+                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=5)
+
+        dataset_browse_btn = SpinboxStyleButton(
+            dataset_input_frame,
+            "Browse",
+            lambda: self.browse_dataset_path(),
+            width=75
+        )
+        dataset_browse_btn.pack(side=tk.LEFT, padx=(5, 0))
+
+        # Parameters - Number of Points and Unit in same row
+        param_frame = tk.Frame(left_section, bg=self.colors['card_bg'])
+        param_frame.pack(fill=tk.X, pady=(10, 0))
+
+        # Number of Points (left side with expand for distributed centering)
+        npt_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
+        npt_cont.pack(side=tk.LEFT, expand=True)
+        tk.Label(npt_cont, text="Number of Points", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
+        CustomSpinbox(npt_cont, from_=500, to=10000, textvariable=self.npt,
+                     increment=100, is_float=False).pack(anchor=tk.W)
+
+        # Unit (right side with expand for distributed centering)
+        unit_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
+        unit_cont.pack(side=tk.LEFT, expand=True)
+
+        tk.Label(unit_cont, text="Unit", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(pady=(0, 8))
+
+        unit_options_frame = tk.Frame(unit_cont, bg=self.colors['card_bg'])
+        unit_options_frame.pack()
+
+        tk.Radiobutton(unit_options_frame, text="2θ (°)", variable=self.unit, value='2th_deg',
+                      bg=self.colors['card_bg'], font=('Arial', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
+
+        tk.Radiobutton(unit_options_frame, text="Q (Å⁻¹)", variable=self.unit, value='q_A^-1',
+                      bg=self.colors['card_bg'], font=('Arial', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
+
+        tk.Radiobutton(unit_options_frame, text="r (mm)", variable=self.unit, value='r_mm',
+                      bg=self.colors['card_bg'], font=('Arial', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
+
+        # ========== RIGHT SECTION: Azimuthal Angle Settings ==========
+        right_outer = tk.Frame(main_container, bg=self.colors['card_bg'], width=450)
+        right_outer.pack(side=tk.LEFT, fill=tk.Y)
+        right_outer.pack_propagate(False)
+
+        # Create vertical centering container
+        center_container = tk.Frame(right_outer, bg=self.colors['card_bg'])
+        center_container.pack(fill=tk.BOTH, expand=True)
+
+        # Top padding
+        tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
+
+        # Content area (horizontally and vertically centered)
+        right_section = tk.Frame(center_container, bg=self.colors['card_bg'])
+        right_section.pack()
+
+        # Azimuthal settings outer border frame
+        azimuthal_border = tk.Frame(right_section, bg=self.colors['card_bg'],
+                                     relief='solid', borderwidth=1)
+        azimuthal_border.pack(fill=tk.BOTH)
+
+        # Azimuthal settings content area (with padding)
+        azimuthal_content = tk.Frame(azimuthal_border, bg=self.colors['card_bg'])
+        azimuthal_content.pack(fill=tk.BOTH, padx=10, pady=10)
+
+        # Right side title
+        tk.Label(azimuthal_content, text="Azimuthal Angle Settings", bg=self.colors['card_bg'],
+                fg=self.colors['primary'], font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
+
+        # Mode selection with warning box
+        mode_container = tk.Frame(azimuthal_content, bg=self.colors['card_bg'])
+        mode_container.pack(fill=tk.X, pady=(0, 10))
+
+        tk.Label(mode_container, text="Integration Mode:", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 4))
+
+        mode_buttons = tk.Frame(mode_container, bg=self.colors['card_bg'])
+        mode_buttons.pack(anchor=tk.W)
+
+        tk.Radiobutton(mode_buttons, text="Single Sector", variable=self.mode,
+                      value='single', bg=self.colors['card_bg'],
+                      font=('Arial', 9, 'bold'),
+                      command=self.update_mode).pack(side=tk.LEFT, padx=(0, 15))
+
+        tk.Radiobutton(mode_buttons, text="Multiple Sectors", variable=self.mode,
+                      value='multiple', bg=self.colors['card_bg'],
+                      font=('Arial', 9, 'bold'),
+                      command=self.update_mode).pack(side=tk.LEFT)
+
+        # Warning box
+        warning_box = tk.Frame(mode_container, bg='#FFF4DC', relief='solid', borderwidth=1, padx=8, pady=4)
+        warning_box.pack(fill=tk.X, pady=(8, 0))
+
+        tk.Label(warning_box, text="💡 Define sectors with bin size. Each sector will be divided into multiple bins.",
+                bg='#FFF4DC', fg=self.colors['text_dark'],
+                font=('Arial', 8)).pack()
+
+        # Dynamic frame for mode-specific content
+        self.dynamic_frame = tk.Frame(azimuthal_content, bg=self.colors['card_bg'])
+        self.dynamic_frame.pack(fill=tk.BOTH, expand=True, pady=(10, 0))
+
+        self.update_mode()
+
+        # Bottom padding
+        tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
 
     def _create_io_section(self):
         """File Configuration section - matching powder_module style"""
@@ -840,13 +1006,13 @@ class AzimuthalIntegrationModule(GUIBase):
         """Single sector with bin mode option"""
         # Add bin mode toggle
         bin_toggle_frame = tk.Frame(self.dynamic_frame, bg=self.colors['card_bg'])
-        bin_toggle_frame.pack(fill=tk.X, pady=(10, 15))
+        bin_toggle_frame.pack(fill=tk.X, pady=(5, 10))
 
         tk.Checkbutton(bin_toggle_frame,
-                       text="🍰 Enable Bin Mode (Divide range into multiple bins)",
+                       text="🍰 Enable Bin Mode",
                        variable=self.bin_mode,
                        bg=self.colors['card_bg'],
-                       font=('Arial', 10, 'bold'),
+                       font=('Arial', 8, 'bold'),
                        command=self._update_bin_mode_ui).pack(anchor=tk.W)
 
         # Dynamic frame for bin/normal mode
@@ -879,35 +1045,35 @@ class AzimuthalIntegrationModule(GUIBase):
             range_frame.pack(fill=tk.X, pady=(0, 10))
 
             start_cont = tk.Frame(range_frame, bg=self.colors['card_bg'])
-            start_cont.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 15))
-            tk.Label(start_cont, text="Total Range Start (°)",
+            start_cont.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
+            tk.Label(start_cont, text="Start (°)",
                     bg=self.colors['card_bg'],
                     fg=self.colors['text_dark'],
-                    font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=(0, 4))
+                    font=('Arial', 8, 'bold')).pack(anchor=tk.W, pady=(0, 3))
             tk.Entry(start_cont, textvariable=self.bin_start,
-                    font=('Arial', 10), width=20).pack(anchor=tk.W)
+                    font=('Arial', 9), width=15).pack(anchor=tk.W)
 
             end_cont = tk.Frame(range_frame, bg=self.colors['card_bg'])
             end_cont.pack(side=tk.LEFT, fill=tk.X, expand=True)
-            tk.Label(end_cont, text="Total Range End (°)",
+            tk.Label(end_cont, text="End (°)",
                     bg=self.colors['card_bg'],
                     fg=self.colors['text_dark'],
-                    font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=(0, 4))
+                    font=('Arial', 8, 'bold')).pack(anchor=tk.W, pady=(0, 3))
             tk.Entry(end_cont, textvariable=self.bin_end,
-                    font=('Arial', 10), width=20).pack(anchor=tk.W)
+                    font=('Arial', 9), width=15).pack(anchor=tk.W)
 
             # Row 2: Bin size and calculated bin count
             step_frame = tk.Frame(bin_container, bg=self.colors['card_bg'])
             step_frame.pack(fill=tk.X)
 
             step_cont = tk.Frame(step_frame, bg=self.colors['card_bg'])
-            step_cont.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 15))
-            tk.Label(step_cont, text="Bin Size (°/bin)",
+            step_cont.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
+            tk.Label(step_cont, text="Bin Size (°)",
                     bg=self.colors['card_bg'],
                     fg=self.colors['text_dark'],
-                    font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=(0, 4))
+                    font=('Arial', 8, 'bold')).pack(anchor=tk.W, pady=(0, 3))
             tk.Entry(step_cont, textvariable=self.bin_step,
-                    font=('Arial', 10), width=20).pack(anchor=tk.W)
+                    font=('Arial', 9), width=15).pack(anchor=tk.W)
 
             # Display calculated bin count
             info_cont = tk.Frame(step_frame, bg=self.colors['card_bg'])
@@ -928,8 +1094,8 @@ class AzimuthalIntegrationModule(GUIBase):
                                            text=calculate_bins(),
                                            bg=self.colors['card_bg'],
                                            fg=self.colors['primary'],
-                                           font=('Arial', 10, 'italic'))
-            self.bin_info_label.pack(anchor=tk.W, pady=(14, 0))
+                                           font=('Arial', 8, 'italic'))
+            self.bin_info_label.pack(anchor=tk.W, pady=(10, 0))
 
             # Add trace to update bin count in real-time with proper tracking
             def update_bin_info(*args):
@@ -949,25 +1115,25 @@ class AzimuthalIntegrationModule(GUIBase):
             angle_frame.pack(fill=tk.X)
 
             start_cont = tk.Frame(angle_frame, bg=self.colors['card_bg'])
-            start_cont.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 15))
-            tk.Label(start_cont, text="Start Angle (°)", bg=self.colors['card_bg'],
-                    fg=self.colors['text_dark'], font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=(0, 4))
+            start_cont.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 8))
+            tk.Label(start_cont, text="Start (°)", bg=self.colors['card_bg'],
+                    fg=self.colors['text_dark'], font=('Arial', 8, 'bold')).pack(anchor=tk.W, pady=(0, 3))
             tk.Entry(start_cont, textvariable=self.azimuth_start,
-                    font=('Arial', 10), width=20).pack(anchor=tk.W)
+                    font=('Arial', 9), width=12).pack(anchor=tk.W)
 
             end_cont = tk.Frame(angle_frame, bg=self.colors['card_bg'])
-            end_cont.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 15))
-            tk.Label(end_cont, text="End Angle (°)", bg=self.colors['card_bg'],
-                    fg=self.colors['text_dark'], font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=(0, 4))
+            end_cont.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 8))
+            tk.Label(end_cont, text="End (°)", bg=self.colors['card_bg'],
+                    fg=self.colors['text_dark'], font=('Arial', 8, 'bold')).pack(anchor=tk.W, pady=(0, 3))
             tk.Entry(end_cont, textvariable=self.azimuth_end,
-                    font=('Arial', 10), width=20).pack(anchor=tk.W)
+                    font=('Arial', 9), width=12).pack(anchor=tk.W)
 
             label_cont = tk.Frame(angle_frame, bg=self.colors['card_bg'])
             label_cont.pack(side=tk.LEFT, fill=tk.X, expand=True)
-            tk.Label(label_cont, text="Sector Label", bg=self.colors['card_bg'],
-                    fg=self.colors['text_dark'], font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=(0, 4))
+            tk.Label(label_cont, text="Label", bg=self.colors['card_bg'],
+                    fg=self.colors['text_dark'], font=('Arial', 8, 'bold')).pack(anchor=tk.W, pady=(0, 3))
             tk.Entry(label_cont, textvariable=self.sector_label,
-                    font=('Arial', 10), width=30).pack(anchor=tk.W)
+                    font=('Arial', 9), width=15).pack(anchor=tk.W)
 
     def _setup_multiple_sectors_ui(self):
         """Multiple sectors - Custom sectors only"""
@@ -1034,13 +1200,13 @@ class AzimuthalIntegrationModule(GUIBase):
 
         # Bin mode toggle
         bin_toggle_frame = tk.Frame(self.custom_center_all, bg=self.colors['card_bg'])
-        bin_toggle_frame.pack(pady=(0, 10), anchor='center')
+        bin_toggle_frame.pack(pady=(0, 8), anchor='center')
 
         tk.Checkbutton(bin_toggle_frame,
-                       text="🍰 Enable Bin Mode (Each sector will be divided into bins)",
+                       text="🍰 Enable Bin Mode",
                        variable=self.multi_bin_mode,
                        bg=self.colors['card_bg'],
-                       font=('Arial', 10, 'bold'),
+                       font=('Arial', 8, 'bold'),
                        command=self._update_custom_sectors_display).pack()
 
         # Sectors container
@@ -1056,17 +1222,17 @@ class AzimuthalIntegrationModule(GUIBase):
 
         # Buttons for add/clear sectors
         btn_frame = tk.Frame(self.custom_center_all, bg=self.colors['card_bg'])
-        btn_frame.pack(anchor='center')
+        btn_frame.pack(anchor='center', pady=(10, 0))
 
         tk.Button(btn_frame, text="🐾 Add Sector", command=self._add_sector,
                  bg='#D8A7D8', fg='white',
-                 font=('Arial', 10, 'bold'), relief='flat',
-                 padx=6, pady=7, cursor='hand2').pack(side=tk.LEFT, padx=15)
+                 font=('Arial', 8, 'bold'), relief='flat',
+                 padx=5, pady=5, cursor='hand2').pack(side=tk.LEFT, padx=10)
 
         tk.Button(btn_frame, text="🍉 Clear All", command=self._clear_all_sectors,
                  bg='#FF9FB5', fg='white',
-                 font=('Arial', 10, 'bold'), relief='flat',
-                 padx=6, pady=7, cursor='hand2').pack(side=tk.LEFT, padx=15)
+                 font=('Arial', 8, 'bold'), relief='flat',
+                 padx=5, pady=5, cursor='hand2').pack(side=tk.LEFT, padx=10)
 
         for idx in range(len(self.custom_sectors)):
             self._create_sector_row(idx)
@@ -1120,29 +1286,29 @@ class AzimuthalIntegrationModule(GUIBase):
             self.sector_row_widgets.append(row_frame)
 
             num_label = tk.Label(row_frame, text=f"#{idx+1}", bg=self.colors['card_bg'],
-                                font=('Arial', 10, 'bold'), width=3)
-            num_label.pack(side=tk.LEFT, padx=(0, 8))
+                                font=('Arial', 8, 'bold'), width=3)
+            num_label.pack(side=tk.LEFT, padx=(0, 6))
 
             tk.Label(row_frame, text="Start:", bg=self.colors['card_bg'],
-                    font=('Arial', 10, 'bold')).pack(side=tk.LEFT, padx=(0, 4))
-            tk.Entry(row_frame, textvariable=sector[0], width=12,
-                    font=('Arial', 10)).pack(side=tk.LEFT, padx=(0, 10))
+                    font=('Arial', 8, 'bold')).pack(side=tk.LEFT, padx=(0, 3))
+            tk.Entry(row_frame, textvariable=sector[0], width=10,
+                    font=('Arial', 8)).pack(side=tk.LEFT, padx=(0, 6))
 
             tk.Label(row_frame, text="End:", bg=self.colors['card_bg'],
-                    font=('Arial', 10, 'bold')).pack(side=tk.LEFT, padx=(0, 4))
-            tk.Entry(row_frame, textvariable=sector[1], width=12,
-                    font=('Arial', 10)).pack(side=tk.LEFT, padx=(0, 10))
+                    font=('Arial', 8, 'bold')).pack(side=tk.LEFT, padx=(0, 3))
+            tk.Entry(row_frame, textvariable=sector[1], width=10,
+                    font=('Arial', 8)).pack(side=tk.LEFT, padx=(0, 6))
 
             tk.Label(row_frame, text="Label:", bg=self.colors['card_bg'],
-                    font=('Arial', 10, 'bold')).pack(side=tk.LEFT, padx=(0, 4))
+                    font=('Arial', 8, 'bold')).pack(side=tk.LEFT, padx=(0, 3))
             tk.Entry(row_frame, textvariable=sector[2],
-                    font=('Arial', 10), width=18).pack(side=tk.LEFT, padx=(0, 10))
+                    font=('Arial', 8), width=12).pack(side=tk.LEFT, padx=(0, 6))
 
             if self.multi_bin_mode.get():
                 tk.Label(row_frame, text="Bin:", bg=self.colors['card_bg'],
-                        font=('Arial', 10, 'bold')).pack(side=tk.LEFT, padx=(0, 4))
-                tk.Entry(row_frame, textvariable=sector[3], width=10,
-                        font=('Arial', 10)).pack(side=tk.LEFT, padx=(0, 10))
+                        font=('Arial', 8, 'bold')).pack(side=tk.LEFT, padx=(0, 3))
+                tk.Entry(row_frame, textvariable=sector[3], width=8,
+                        font=('Arial', 8)).pack(side=tk.LEFT, padx=(0, 6))
 
                 def calculate_sector_bins(s=sector):
                     try:
@@ -1162,9 +1328,9 @@ class AzimuthalIntegrationModule(GUIBase):
                                            text=calculate_sector_bins(),
                                            bg=self.colors['card_bg'],
                                            fg=self.colors['primary'],
-                                           font=('Arial', 9, 'italic'),
+                                           font=('Arial', 7, 'italic'),
                                            width=10)
-                bin_count_label.pack(side=tk.LEFT, padx=(0, 10))
+                bin_count_label.pack(side=tk.LEFT, padx=(0, 6))
 
                 def update_bin_count(label=bin_count_label, s=sector):
                     def callback(*args):
@@ -1189,8 +1355,8 @@ class AzimuthalIntegrationModule(GUIBase):
                 self._add_trace(sector[3], callback)
 
             tk.Button(row_frame, text="✖", command=lambda i=idx: self._delete_sector(i),
-                     bg='#E88C8C', fg='white', font=('Arial', 9, 'bold'),
-                     relief='flat', width=3, cursor='hand2').pack(side=tk.LEFT)
+                     bg='#E88C8C', fg='white', font=('Arial', 8, 'bold'),
+                     relief='flat', width=2, cursor='hand2').pack(side=tk.LEFT)
 
         except Exception as e:
             print(f"Error creating sector row {idx}: {e}")
