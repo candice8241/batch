@@ -1164,97 +1164,6 @@ class PowderXRDModule(GUIBase):
         except:
             pass
 
-    def show_success_dialog(self, title, message, details=None):
-        """Beautiful success dialog"""
-        if self._is_shutting_down:
-            return
-
-        def _show():
-            if self._is_shutting_down:
-                return
-            dialog = tk.Toplevel(self.root)
-            dialog.title(title)
-            dialog.configure(bg='#F0E6FA')
-            dialog.transient(self.root)
-            dialog.grab_set()
-            
-            width = 500
-            height = 320 if details else 220
-            
-            screen_width = dialog.winfo_screenwidth()
-            screen_height = dialog.winfo_screenheight()
-            x = (screen_width - width) // 2
-            y = (screen_height - height) // 2
-            dialog.geometry(f"{width}x{height}+{x}+{y}")
-            
-            top_bar = tk.Frame(dialog, bg='#C8A2D9', height=8)
-            top_bar.pack(fill=tk.X)
-            
-            icon_frame = tk.Frame(dialog, bg='#F0E6FA')
-            icon_frame.pack(pady=20)
-            
-            icon_label = tk.Label(icon_frame, text="✨🎉✨", bg='#F0E6FA',
-                    font=('Segoe UI Emoji', 42))
-            icon_label.pack()
-            
-            title_frame = tk.Frame(dialog, bg='#F0E6FA')
-            title_frame.pack(pady=5)
-            
-            tk.Label(title_frame, text=title, bg='#F0E6FA',
-                    fg='#9966CC', font=('Helvetica', 16, 'bold')).pack()
-            
-            msg_card = tk.Frame(dialog, bg='white', relief='solid',
-                               borderwidth=2, highlightbackground='#C8A2D9',
-                               highlightthickness=2)
-            msg_card.pack(padx=30, pady=15, fill=tk.BOTH, expand=True)
-            
-            msg_inner = tk.Frame(msg_card, bg='white', padx=20, pady=15)
-            msg_inner.pack(fill=tk.BOTH, expand=True)
-            
-            tk.Label(msg_inner, text=message, bg='white',
-                    fg='#333333', font=('Helvetica', 11),
-                    wraplength=420, justify=tk.LEFT).pack()
-            
-            if details:
-                tk.Frame(msg_inner, bg='#E8D5F0', height=1).pack(fill=tk.X, pady=10)
-                tk.Label(msg_inner, text=details, bg='white',
-                        fg='#666666', font=('Helvetica', 9),
-                        wraplength=420, justify=tk.LEFT).pack()
-            
-            btn_frame = tk.Frame(dialog, bg='#F0E6FA')
-            btn_frame.pack(pady=15)
-            
-            ok_btn = tk.Button(
-                btn_frame,
-                text="🎉 Awesome!",
-                command=dialog.destroy,
-                bg='#C8A2D9',
-                fg='white',
-                font=('Helvetica', 12, 'bold'),
-                relief='flat',
-                borderwidth=0,
-                padx=40,
-                pady=12,
-                cursor='hand2'
-            )
-            ok_btn.pack()
-            
-            def on_enter(e):
-                ok_btn.config(bg='#B794F6')
-            def on_leave(e):
-                ok_btn.config(bg='#C8A2D9')
-            
-            ok_btn.bind('<Enter>', on_enter)
-            ok_btn.bind('<Leave>', on_leave)
-            
-            dialog.bind('<Return>', lambda e: dialog.destroy())
-            ok_btn.focus()
-
-        try:
-            if not self._is_shutting_down:
-                self.root.after(0, _show)
-        except:
-            pass
 
     def browse_file(self, var, filetypes):
         """Browse for file"""
@@ -1371,7 +1280,8 @@ class PowderXRDModule(GUIBase):
 
             msg = "Peak separation completed successfully!"
             details = f"Transition at {transition_pressure:.2f} GPa\nFiles saved to input directory"
-            self.show_success_dialog("Success", msg, details)
+            success_message = f"✅ {msg}\n\n{details}"
+            self.show_success(self.root, success_message)
 
         except Exception as e:
             error_msg = str(e)
@@ -1465,7 +1375,8 @@ class PowderXRDModule(GUIBase):
 
             msg = "Integration completed successfully!"
             details = f"{total_files} file(s) processed"
-            self.show_success_dialog("Integration Complete", msg, details)
+            success_message = f"✅ {msg}\n\n{details}"
+            self.show_success(self.root, success_message)
 
         except Exception as e:
             error_msg = str(e)
@@ -1617,10 +1528,11 @@ class PowderXRDModule(GUIBase):
             fitter.run_batch_fitting()
 
             self.log("✅ Fitting completed!")
-            
+
             msg = "Peak fitting completed successfully!"
             details = f"Method: {vars['fit_method']}"
-            self.show_success_dialog("Fitting Complete", msg, details)
+            success_message = f"✅ {msg}\n\n{details}"
+            self.show_success(self.root, success_message)
 
         except Exception as e:
             error_msg = str(e)
@@ -1738,8 +1650,9 @@ class PowderXRDModule(GUIBase):
             if 'transition_pressure' in results:
                 details += f"Transition at {results['transition_pressure']:.2f} GPa\n"
             details += f"{len(generated_files)} file(s) saved"
-            
-            self.show_success_dialog("Volume Calculation Complete", msg, details)
+
+            success_message = f"✅ {msg}\n\n{details}"
+            self.show_success(self.root, success_message)
 
         except Exception as e:
             import traceback
@@ -1888,8 +1801,9 @@ class PowderXRDModule(GUIBase):
             details += f"B₀ = {fit_results['B0']:.2f} ± {fit_results['B0_err']:.2f} GPa\n"
             details += f"B₀' = {fit_results['B0_prime']:.3f} ± {fit_results['B0_prime_err']:.3f}\n"
             details += f"R² = {fit_results['R_squared']:.6f}"
-            
-            self.show_success_dialog("BM Fitting Complete", msg, details)
+
+            success_message = f"✅ {msg}\n\n{details}"
+            self.show_success(self.root, success_message)
 
         except Exception as e:
             import traceback
