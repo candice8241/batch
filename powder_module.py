@@ -2,15 +2,13 @@
 """
 Powder XRD Module - THREAD-SAFE VERSION WITH IMPROVED UI
 Contains integration, peak fitting, phase analysis, and Birch-Murnaghan fitting
-FIXED: Kernel crash issues + Thread safety + Beautiful success dialogs
+FIXED: All thread safety issues + Beautiful success dialogs + Layout improvements
 """
 
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext, filedialog, simpledialog
 import threading
 import os
-import sys
-import warnings
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -19,71 +17,6 @@ import matplotlib.pyplot as plt
 import shutil
 import glob
 import weakref
-import atexit
-import time
-
-# Suppress Tkinter variable deletion warnings during shutdown
-class _TkinterWarningFilter:
-    """Filter for stderr that suppresses specific Tkinter errors"""
-
-    def __init__(self, original_stderr):
-        self.original = original_stderr
-        self.buffer = []
-        self.suppressed_patterns = [
-            "RuntimeError: main thread is not in main loop",
-            "Exception ignored in: <function Variable.__del__",
-            "Tcl_AsyncDelete: async handler deleted by the wrong thread",
-            "The kernel died, restarting",
-            "Kernel Restarting",
-            "Kernel died",
-            "File \"",
-            "Traceback (most recent call last):",
-        ]
-        self.in_error_block = False
-
-    def write(self, message):
-        message_str = str(message)
-
-        # Check if this starts an error block we want to suppress
-        if any(pattern in message_str for pattern in self.suppressed_patterns):
-            self.in_error_block = True
-            return
-
-        # If we're in an error block, suppress until blank line
-        if self.in_error_block:
-            if message_str.strip() == "" or (
-                not message_str.startswith("  ") and
-                not any(p in message_str for p in ["Traceback", "File ", "RuntimeError", "Tcl_", "Exception", "Error"])
-            ):
-                self.in_error_block = False
-                if message_str.strip():
-                    self.original.write(message)
-            return
-
-        # Write everything else
-        self.original.write(message)
-
-    def flush(self):
-        if hasattr(self.original, 'flush'):
-            self.original.flush()
-
-    def __getattr__(self, name):
-        return getattr(self.original, name)
-
-# Apply the filter
-if not isinstance(sys.stderr, _TkinterWarningFilter):
-    sys.stderr = _TkinterWarningFilter(sys.stderr)
-
-# Suppress warnings
-warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*main thread is not in main loop.*")
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
-def _ensure_filter_active():
-    """Ensure stderr filter is active at exit"""
-    if not isinstance(sys.stderr, _TkinterWarningFilter):
-        sys.stderr = _TkinterWarningFilter(sys.stderr)
-
-atexit.register(_ensure_filter_active)
 
 from batch_integration import BatchIntegrator
 from half_auto_fitting import DataProcessor
@@ -95,108 +28,6 @@ from theme_module import GUIBase, CuteSheepProgressBar, ModernTab, ModernButton
 from half_auto_fitting import PeakFittingGUI
 
 
-class SafeProgressBar(tk.Frame):
-    """Thread-safe progress bar with emoji animation - FIXED for kernel stability"""
-    
-    def __init__(self, parent, width=780, height=80, **kwargs):
-        super().__init__(parent, bg='#F0E6FA', **kwargs)
-        self.width = width
-        self.height = height
-        self.is_running = False
-        self.animation_job = None
-        self._destroyed = False
-        
-        # Create canvas
-        self.canvas = tk.Canvas(self, width=width, height=height, 
-                               bg='#F0E6FA', highlightthickness=0)
-        self.canvas.pack()
-        
-        # Emoji and position
-        self.emoji = "🐑"
-        self.emoji_pos = 0
-        self.emoji_speed = 5
-        
-        # Draw track
-        self.track_y = height // 2
-        self.track_start = 50
-        self.track_end = width - 50
-        
-        self.canvas.create_line(self.track_start, self.track_y, 
-                               self.track_end, self.track_y,
-                               fill='#C8A2D9', width=4)
-        
-        # Create emoji text
-        self.emoji_id = self.canvas.create_text(
-            self.track_start, self.track_y,
-            text=self.emoji, font=('Segoe UI Emoji', 32),
-            anchor='center'
-        )
-        
-    def start(self):
-        """Start animation - SAFE VERSION"""
-        if self._destroyed:
-            return
-        self.is_running = True
-        self.emoji_pos = 0
-        self._animate()
-    
-    def stop(self):
-        """Stop animation - SAFE VERSION"""
-        self.is_running = False
-        if self.animation_job:
-            try:
-                self.after_cancel(self.animation_job)
-            except:
-                pass
-            self.animation_job = None
-        
-        # Reset position safely
-        if not self._destroyed:
-            try:
-                self.canvas.coords(self.emoji_id, self.track_start, self.track_y)
-            except:
-                pass
-    
-    def _animate(self):
-        """Animation loop - PROTECTED"""
-        if not self.is_running or self._destroyed:
-            return
-        
-        try:
-            # Update position
-            self.emoji_pos += self.emoji_speed
-            track_length = self.track_end - self.track_start
-            
-            # Bounce back and forth
-            if self.emoji_pos >= track_length:
-                self.emoji_pos = track_length
-                self.emoji_speed = -abs(self.emoji_speed)
-            elif self.emoji_pos <= 0:
-                self.emoji_pos = 0
-                self.emoji_speed = abs(self.emoji_speed)
-            
-            # Update canvas
-            x = self.track_start + self.emoji_pos
-            self.canvas.coords(self.emoji_id, x, self.track_y)
-            
-            # Schedule next frame (slower for stability)
-            self.animation_job = self.after(50, self._animate)
-            
-        except Exception as e:
-            # Silently stop on any error
-            self.is_running = False
-            self.animation_job = None
-    
-    def destroy(self):
-        """Safe destruction"""
-        self._destroyed = True
-        self.stop()
-        try:
-            super().destroy()
-        except:
-            pass
-
-
 class SpinboxStyleButton(tk.Frame):
     """Spinbox-style button widget matching the reference image"""
 
@@ -206,16 +37,18 @@ class SpinboxStyleButton(tk.Frame):
         self.command = command
         self.text = text
 
+        # Configure frame with rounded appearance
         self.configure(relief='solid', borderwidth=1, highlightbackground='#C8B5D0',
                       highlightthickness=1)
 
+        # Create button
         self.button = tk.Button(
             self,
             text=text,
             command=command,
             bg='#E8D5F0',
             fg='#6B4C7A',
-            font=('Helvetica', 9),
+            font=('Comic Sans MS', 9),
             relief='flat',
             borderwidth=0,
             activebackground='#D5C0E0',
@@ -226,6 +59,7 @@ class SpinboxStyleButton(tk.Frame):
         )
         self.button.pack(fill=tk.BOTH, expand=True)
 
+        # Hover effects
         self.button.bind('<Enter>', self._on_enter)
         self.button.bind('<Leave>', self._on_leave)
 
@@ -310,6 +144,7 @@ class CustomSpinbox(tk.Frame):
         self.right_btn.bind('<Enter>', lambda e: self.right_btn.config(bg='#D5C0E0'))
         self.right_btn.bind('<Leave>', lambda e: self.right_btn.config(bg='#E8D5F0'))
 
+        # Bind entry validation
         self.entry.bind('<Return>', self.validate_entry)
         self.entry.bind('<FocusOut>', self.validate_entry)
 
@@ -327,6 +162,7 @@ class CustomSpinbox(tk.Frame):
 
     def set_value(self, value):
         """Set value to textvariable"""
+        # Clamp value to bounds
         value = max(self.from_, min(self.to, value))
 
         if self.textvariable:
@@ -351,7 +187,7 @@ class CustomSpinbox(tk.Frame):
         """Validate manual entry"""
         try:
             current = self.get_current_value()
-            self.set_value(current)
+            self.set_value(current)  # This will clamp to bounds
         except:
             self.set_value(self.from_)
 
@@ -360,13 +196,19 @@ class PowderXRDModule(GUIBase):
     """Powder XRD processing module - COMPLETELY THREAD-SAFE VERSION"""
 
     def __init__(self, parent, root):
-        """Initialize Powder XRD module"""
+        """
+        Initialize Powder XRD module
+
+        Args:
+            parent: Parent frame to contain this module
+            root: Root Tk window for dialogs
+        """
         super().__init__()
         self.parent = parent
         self.root = root
         self.current_module = "integration"
 
-        # Use weak references
+        # Use weak references to avoid circular references
         self._root_ref = weakref.ref(root)
         
         # Initialize variables BEFORE any other setup
@@ -385,47 +227,44 @@ class PowderXRDModule(GUIBase):
         self._cleanup_lock = threading.Lock()
 
     def _init_variables(self):
-        """Initialize all Tkinter variables - THREAD SAFE"""
-        try:
-            # Integration and fitting variables
-            self.poni_path = tk.StringVar(master=self.root)
-            self.mask_path = tk.StringVar(master=self.root)
-            self.input_pattern = tk.StringVar(master=self.root)
-            self.output_dir = tk.StringVar(master=self.root)
-            self.dataset_path = tk.StringVar(master=self.root, value="entry/data/data")
-            self.npt = tk.IntVar(master=self.root, value=4000)
-            self.unit = tk.StringVar(master=self.root, value='2th_deg')
-            self.fit_method = tk.StringVar(master=self.root, value='pseudo')
+        """Initialize all Tkinter variables - THREAD SAFE with explicit master binding"""
+        # Integration and fitting variables
+        self.poni_path = tk.StringVar(master=self.root)
+        self.mask_path = tk.StringVar(master=self.root)
+        self.input_pattern = tk.StringVar(master=self.root)
+        self.output_dir = tk.StringVar(master=self.root)
+        self.dataset_path = tk.StringVar(master=self.root, value="entry/data/data")
+        self.npt = tk.IntVar(master=self.root, value=4000)
+        self.unit = tk.StringVar(master=self.root, value='2th_deg')
+        self.fit_method = tk.StringVar(master=self.root, value='pseudo')
 
-            # Output format options
-            self.format_xy = tk.BooleanVar(master=self.root, value=True)
-            self.format_dat = tk.BooleanVar(master=self.root, value=False)
-            self.format_chi = tk.BooleanVar(master=self.root, value=False)
-            self.format_fxye = tk.BooleanVar(master=self.root, value=False)
-            self.format_svg = tk.BooleanVar(master=self.root, value=False)
-            self.format_png = tk.BooleanVar(master=self.root, value=False)
+        # Output format options (6 formats)
+        self.format_xy = tk.BooleanVar(master=self.root, value=True)
+        self.format_dat = tk.BooleanVar(master=self.root, value=False)
+        self.format_chi = tk.BooleanVar(master=self.root, value=False)
+        self.format_fxye = tk.BooleanVar(master=self.root, value=False)
+        self.format_svg = tk.BooleanVar(master=self.root, value=False)
+        self.format_png = tk.BooleanVar(master=self.root, value=False)
 
-            # Stacked plot options
-            self.create_stacked_plot = tk.BooleanVar(master=self.root, value=False)
-            self.stacked_plot_offset = tk.StringVar(master=self.root, value='auto')
+        # Stacked plot options
+        self.create_stacked_plot = tk.BooleanVar(master=self.root, value=False)
+        self.stacked_plot_offset = tk.StringVar(master=self.root, value='auto')
 
-            # Phase analysis variables
-            self.phase_peak_csv = tk.StringVar(master=self.root)
-            self.phase_volume_csv = tk.StringVar(master=self.root)
-            self.phase_volume_system = tk.StringVar(master=self.root, value='FCC')
-            self.phase_volume_output = tk.StringVar(master=self.root)
-            self.phase_wavelength = tk.DoubleVar(master=self.root, value=0.4133)
-            self.phase_tolerance_1 = tk.DoubleVar(master=self.root, value=0.3)
-            self.phase_tolerance_2 = tk.DoubleVar(master=self.root, value=0.4)
-            self.phase_tolerance_3 = tk.DoubleVar(master=self.root, value=0.01)
-            self.phase_n_points = tk.IntVar(master=self.root, value=4)
+        # Phase analysis variables
+        self.phase_peak_csv = tk.StringVar(master=self.root)
+        self.phase_volume_csv = tk.StringVar(master=self.root)
+        self.phase_volume_system = tk.StringVar(master=self.root, value='FCC')
+        self.phase_volume_output = tk.StringVar(master=self.root)
+        self.phase_wavelength = tk.DoubleVar(master=self.root, value=0.4133)
+        self.phase_tolerance_1 = tk.DoubleVar(master=self.root, value=0.3)
+        self.phase_tolerance_2 = tk.DoubleVar(master=self.root, value=0.4)
+        self.phase_tolerance_3 = tk.DoubleVar(master=self.root, value=0.01)
+        self.phase_n_points = tk.IntVar(master=self.root, value=4)
 
-            # Birch-Murnaghan variables
-            self.bm_input_file = tk.StringVar(master=self.root)
-            self.bm_output_dir = tk.StringVar(master=self.root)
-            self.bm_order = tk.StringVar(master=self.root, value='3')
-        except Exception as e:
-            print(f"Error initializing variables: {e}")
+        # Birch-Murnaghan variables
+        self.bm_input_file = tk.StringVar(master=self.root)
+        self.bm_output_dir = tk.StringVar(master=self.root)
+        self.bm_order = tk.StringVar(master=self.root, value='3')
 
     def _start_thread(self, target, name=None):
         """Start a thread and track it for cleanup"""
@@ -439,21 +278,20 @@ class PowderXRDModule(GUIBase):
         
         thread.start()
 
-        # Clean up finished threads
+        # Clean up finished threads from list
         with self._cleanup_lock:
             self.running_threads = [t for t in self.running_threads if t.is_alive()]
 
         return thread
 
     def cleanup(self):
-        """Clean up resources before shutdown - THREAD SAFE VERSION"""
+        """Clean up resources before shutdown - THREAD-SAFE VERSION"""
         with self._cleanup_lock:
-            if self._is_shutting_down:
-                return
             self._is_shutting_down = True
 
-        # Wait for threads with timeout
-        timeout = 2
+        # Wait for running threads to complete (with timeout)
+        import time
+        timeout = 3  # Reduced timeout
         start_time = time.time()
 
         with self._cleanup_lock:
@@ -465,8 +303,10 @@ class PowderXRDModule(GUIBase):
                 if remaining_time > 0:
                     thread.join(timeout=remaining_time)
 
-        # Simple cleanup
+        # Clear Tkinter variables safely - Set to None instead of deleting
+        # This prevents the "main thread is not in main loop" error during cleanup
         try:
+            # Store variable names to avoid dict change during iteration
             var_names = [
                 'poni_path', 'mask_path', 'input_pattern', 'output_dir',
                 'dataset_path', 'npt', 'unit', 'fit_method',
@@ -478,6 +318,8 @@ class PowderXRDModule(GUIBase):
                 'bm_input_file', 'bm_output_dir', 'bm_order'
             ]
 
+            # Set all variables to None instead of deleting them
+            # This prevents triggering __del__ on Tkinter variables
             for var_name in var_names:
                 if hasattr(self, var_name):
                     try:
@@ -488,7 +330,7 @@ class PowderXRDModule(GUIBase):
             pass
 
     def capture_variables(self):
-        """THREAD-SAFE: Capture all Tkinter variables"""
+        """THREAD-SAFE: Capture all Tkinter variables at once"""
         if self._is_shutting_down:
             return None
 
@@ -530,16 +372,17 @@ class PowderXRDModule(GUIBase):
         """Setup the complete powder XRD UI"""
         main_frame = tk.Frame(self.parent, bg=self.colors['bg'])
 
-        # Module selector buttons
+        # Module selector buttons with improved styling
         module_frame = tk.Frame(main_frame, bg=self.colors['bg'], height=60)
         module_frame.pack(fill=tk.X, pady=(5, 15))
 
         btn_container = tk.Frame(module_frame, bg=self.colors['bg'])
 
+        # Create module buttons with distinct colors
         self.integration_module_btn = tk.Button(
             btn_container,
             text="1D Integration & Peak Fitting",
-            font=('Helvetica', 10),
+            font=('Comic Sans MS', 10),
             bg='#C8A2D9',
             fg='#4A2C5F',
             activebackground='#B794F6',
@@ -555,7 +398,7 @@ class PowderXRDModule(GUIBase):
         self.analysis_module_btn = tk.Button(
             btn_container,
             text="Cal_Volume & BM_Fitting",
-            font=('Helvetica', 10),
+            font=('Comic Sans MS', 10),
             bg='#E8D5F0',
             fg='#4A2C5F',
             activebackground='#FFB6D9',
@@ -577,14 +420,14 @@ class PowderXRDModule(GUIBase):
         # Pre-create both module frames
         self._create_module_frames()
 
-        # Progress bar section - USING SAFE VERSION
+        # Progress bar section
         prog_cont = tk.Frame(main_frame, bg=self.colors['bg'])
         prog_cont.pack(fill=tk.X, pady=(15, 15))
 
         prog_inner = tk.Frame(prog_cont, bg=self.colors['bg'])
         prog_inner.pack(expand=True)
 
-        self.progress = SafeProgressBar(prog_inner, width=780, height=80)
+        self.progress = CuteSheepProgressBar(prog_inner, width=780, height=80)
         self.progress.pack()
 
         # Log area
@@ -602,10 +445,10 @@ class PowderXRDModule(GUIBase):
 
         tk.Label(log_header, text="Process Log",
                 bg=self.colors['card_bg'], fg=self.colors['primary'],
-                font=('Helvetica', 11, 'bold')).pack(side=tk.LEFT)
+                font=('Comic Sans MS', 11, 'bold')).pack(side=tk.LEFT)
 
         self.log_text = scrolledtext.ScrolledText(log_content, height=10, wrap=tk.WORD,
-                                                  font=('Helvetica', 10),
+                                                  font=('Comic Sans MS', 10),
                                                   bg='#FAFAFA', fg='#B794F6',
                                                   relief='flat', borderwidth=0, padx=10, pady=10)
         self.log_text.pack(fill=tk.BOTH, expand=True)
@@ -617,10 +460,12 @@ class PowderXRDModule(GUIBase):
         self.root.update_idletasks()
 
     def _create_module_frames(self):
-        """Pre-create both module frames"""
+        """Pre-create both module frames to avoid recreation lag"""
+        # Create integration module frame
         self.integration_frame = tk.Frame(self.dynamic_frame, bg=self.colors['bg'])
         self.setup_integration_module(self.integration_frame)
 
+        # Create analysis module frame
         self.analysis_frame = tk.Frame(self.dynamic_frame, bg=self.colors['bg'])
         self.setup_analysis_module(self.analysis_frame)
 
@@ -656,12 +501,12 @@ class PowderXRDModule(GUIBase):
         container.pack(fill=tk.X, pady=(5, 0))
 
         tk.Label(container, text=label_text, bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Helvetica', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
 
         input_frame = tk.Frame(container, bg=self.colors['card_bg'])
         input_frame.pack(fill=tk.X)
 
-        tk.Entry(input_frame, textvariable=var, font=('Helvetica', 9),
+        tk.Entry(input_frame, textvariable=var, font=('Comic Sans MS', 9),
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
 
         if pattern:
@@ -680,12 +525,12 @@ class PowderXRDModule(GUIBase):
         container.pack(fill=tk.X, pady=(5, 0))
 
         tk.Label(container, text=label_text, bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Helvetica', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
 
         input_frame = tk.Frame(container, bg=self.colors['card_bg'])
         input_frame.pack(fill=tk.X)
 
-        tk.Entry(input_frame, textvariable=var, font=('Helvetica', 9),
+        tk.Entry(input_frame, textvariable=var, font=('Comic Sans MS', 9),
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
 
         btn = SpinboxStyleButton(input_frame, "Browse",
@@ -694,7 +539,7 @@ class PowderXRDModule(GUIBase):
         btn.pack(side=tk.LEFT, padx=(5, 0))
 
     def setup_integration_module(self, parent_frame):
-        """Setup integration and peak fitting module UI"""
+        """Setup integration and peak fitting module UI - IMPROVED LAYOUT"""
         # Integration Settings Card
         integration_card = self.create_card_frame(parent_frame)
         integration_card.pack(fill=tk.X, pady=(0, 15))
@@ -710,7 +555,7 @@ class PowderXRDModule(GUIBase):
 
         tk.Label(header1, text="Integration Settings",
                 bg=self.colors['card_bg'], fg=self.colors['primary'],
-                font=('Helvetica', 11, 'bold')).pack(side=tk.LEFT)
+                font=('Comic Sans MS', 11, 'bold')).pack(side=tk.LEFT)
 
         self.create_file_picker_with_spinbox_btn(content1, "PONI File", self.poni_path,
                                [("PONI files", "*.poni"), ("All files", "*.*")])
@@ -725,12 +570,12 @@ class PowderXRDModule(GUIBase):
         dataset_container.pack(fill=tk.X, pady=(5, 0))
 
         tk.Label(dataset_container, text="Dataset Path", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Helvetica', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
 
         dataset_input_frame = tk.Frame(dataset_container, bg=self.colors['card_bg'])
         dataset_input_frame.pack(fill=tk.X)
 
-        tk.Entry(dataset_input_frame, textvariable=self.dataset_path, font=('Helvetica', 9),
+        tk.Entry(dataset_input_frame, textvariable=self.dataset_path, font=('Comic Sans MS', 9),
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
 
         dataset_browse_btn = SpinboxStyleButton(
@@ -748,68 +593,108 @@ class PowderXRDModule(GUIBase):
         npt_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
         npt_cont.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
         tk.Label(npt_cont, text="Number of Points", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Helvetica', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
         CustomSpinbox(npt_cont, from_=500, to=10000, textvariable=self.npt,
                      increment=100, is_float=False).pack(anchor=tk.W)
 
         unit_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
-        unit_cont.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
+        unit_cont.pack(side=tk.LEFT, fill=tk.X, expand=True)
         tk.Label(unit_cont, text="Unit", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Helvetica', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
         ttk.Combobox(unit_cont, textvariable=self.unit,
                     values=['2th_deg', 'q_A^-1', 'q_nm^-1', 'r_mm'],
-                    width=16, state='readonly', font=('Helvetica', 9)).pack(anchor=tk.W)
+                    width=16, state='readonly', font=('Comic Sans MS', 9)).pack(anchor=tk.W)
 
-        # Output Formats
-        formats_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
-        formats_cont.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
-        tk.Label(formats_cont, text="Output Formats", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Helvetica', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
+        # ===== IMPROVED LAYOUT: Output Formats and Stacked Plot Side by Side =====
+        formats_card = self.create_card_frame(parent_frame)
+        formats_card.pack(fill=tk.X, pady=(0, 15))
 
-        formats_row1 = tk.Frame(formats_cont, bg=self.colors['card_bg'])
-        formats_row1.pack(fill=tk.X)
-        tk.Checkbutton(formats_row1, text=".xy", variable=self.format_xy, bg=self.colors['card_bg'],
-                      font=('Helvetica', 8), fg=self.colors['text_dark'],
-                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 5))
-        tk.Checkbutton(formats_row1, text=".dat", variable=self.format_dat, bg=self.colors['card_bg'],
-                      font=('Helvetica', 8), fg=self.colors['text_dark'],
-                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 5))
-        tk.Checkbutton(formats_row1, text=".chi", variable=self.format_chi, bg=self.colors['card_bg'],
-                      font=('Helvetica', 8), fg=self.colors['text_dark'],
+        content_formats = tk.Frame(formats_card, bg=self.colors['card_bg'], padx=20, pady=12)
+        content_formats.pack(fill=tk.BOTH, expand=True)
+
+        header_formats = tk.Frame(content_formats, bg=self.colors['card_bg'])
+        header_formats.pack(anchor=tk.W, pady=(0, 8))
+
+        tk.Label(header_formats, text="📊", bg=self.colors['card_bg'],
+                font=('Segoe UI Emoji', 14)).pack(side=tk.LEFT, padx=(0, 6))
+
+        tk.Label(header_formats, text="Output Formats & Stacked Plot",
+                bg=self.colors['card_bg'], fg=self.colors['primary'],
+                font=('Comic Sans MS', 11, 'bold')).pack(side=tk.LEFT)
+
+        # Container for side-by-side layout
+        main_container = tk.Frame(content_formats, bg=self.colors['card_bg'])
+        main_container.pack(fill=tk.BOTH, expand=True, pady=5)
+
+        # LEFT SECTION: Output Formats
+        left_section = tk.Frame(main_container, bg=self.colors['card_bg'])
+        left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 20))
+
+        tk.Label(left_section, text="Select Output Formats:", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
+
+        formats_grid = tk.Frame(left_section, bg=self.colors['card_bg'])
+        formats_grid.pack(fill=tk.X)
+
+        row1 = tk.Frame(formats_grid, bg=self.colors['card_bg'])
+        row1.pack(fill=tk.X, pady=3)
+        tk.Checkbutton(row1, text=".xy", variable=self.format_xy, bg=self.colors['card_bg'],
+                      font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
+                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 20))
+        tk.Checkbutton(row1, text=".dat", variable=self.format_dat, bg=self.colors['card_bg'],
+                      font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
+                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 20))
+        tk.Checkbutton(row1, text=".chi", variable=self.format_chi, bg=self.colors['card_bg'],
+                      font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
 
-        formats_row2 = tk.Frame(formats_cont, bg=self.colors['card_bg'])
-        formats_row2.pack(fill=tk.X)
-        tk.Checkbutton(formats_row2, text=".fxye", variable=self.format_fxye, bg=self.colors['card_bg'],
-                      font=('Helvetica', 8), fg=self.colors['text_dark'],
-                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 5))
-        tk.Checkbutton(formats_row2, text=".svg", variable=self.format_svg, bg=self.colors['card_bg'],
-                      font=('Helvetica', 8), fg=self.colors['text_dark'],
-                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 5))
-        tk.Checkbutton(formats_row2, text=".png", variable=self.format_png, bg=self.colors['card_bg'],
-                      font=('Helvetica', 8), fg=self.colors['text_dark'],
+        row2 = tk.Frame(formats_grid, bg=self.colors['card_bg'])
+        row2.pack(fill=tk.X, pady=3)
+        tk.Checkbutton(row2, text=".fxye", variable=self.format_fxye, bg=self.colors['card_bg'],
+                      font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
+                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 20))
+        tk.Checkbutton(row2, text=".svg", variable=self.format_svg, bg=self.colors['card_bg'],
+                      font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
+                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 20))
+        tk.Checkbutton(row2, text=".png", variable=self.format_png, bg=self.colors['card_bg'],
+                      font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
 
-        # Stacked Plot Options
-        stacked_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
-        stacked_cont.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        tk.Label(stacked_cont, text="Stacked Plot", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Helvetica', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
+        # RIGHT SECTION: Stacked Plot Options (Horizontal layout for better UI)
+        right_section = tk.Frame(main_container, bg=self.colors['card_bg'])
+        right_section.pack(side=tk.LEFT, fill=tk.Y)
 
-        tk.Checkbutton(stacked_cont, text="Create", variable=self.create_stacked_plot,
-                      bg=self.colors['card_bg'], font=('Helvetica', 8),
+        tk.Label(right_section, text="Stacked Plot Options:", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
+
+        # Horizontal layout for checkbox and offset
+        stacked_options_row = tk.Frame(right_section, bg=self.colors['card_bg'])
+        stacked_options_row.pack(fill=tk.X, pady=(0, 5))
+
+        tk.Checkbutton(stacked_options_row, text="Create Stacked Plot",
+                      variable=self.create_stacked_plot,
+                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
-                      activebackground=self.colors['card_bg']).pack(anchor=tk.W)
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
 
-        offset_frame = tk.Frame(stacked_cont, bg=self.colors['card_bg'])
-        offset_frame.pack(fill=tk.X, pady=(2, 0))
-        tk.Label(offset_frame, text="Offset:", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Helvetica', 8)).pack(side=tk.LEFT, padx=(0, 3))
-        tk.Entry(offset_frame, textvariable=self.stacked_plot_offset,
-                font=('Arial', 9), width=8, justify='center',
-                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, ipady=1)
+        # Offset section in the same row
+        offset_container = tk.Frame(stacked_options_row, bg=self.colors['card_bg'])
+        offset_container.pack(side=tk.LEFT)
 
-        # Run Integration Button
+        tk.Label(offset_container, text="Offset:", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 5))
+
+        offset_entry = tk.Entry(offset_container, textvariable=self.stacked_plot_offset,
+                               font=('Arial', 10), width=12, justify='center',
+                               bg='white', relief='solid', borderwidth=1)
+        offset_entry.pack(side=tk.LEFT, ipady=2)
+
+        # Help text below
+        tk.Label(right_section, text="(use 'auto' or number for offset)",
+                bg=self.colors['card_bg'], fg='#888888',
+                font=('Comic Sans MS', 8, 'italic')).pack(anchor=tk.W, pady=(2, 0))
+
+        # ===== Run Integration Button (Moved above Peak Fitting Settings) =====
         btn_frame_top = tk.Frame(parent_frame, bg=self.colors['bg'])
         btn_frame_top.pack(fill=tk.X, pady=(10, 15))
 
@@ -834,17 +719,17 @@ class PowderXRDModule(GUIBase):
 
         tk.Label(header2, text="Peak Fitting Settings",
                 bg=self.colors['card_bg'], fg=self.colors['primary'],
-                font=('Helvetica', 11, 'bold')).pack(side=tk.LEFT)
+                font=('Comic Sans MS', 11, 'bold')).pack(side=tk.LEFT)
 
         fit_cont = tk.Frame(content2, bg=self.colors['card_bg'])
         fit_cont.pack(fill=tk.X)
         tk.Label(fit_cont, text="Fitting Method", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Helvetica', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
         ttk.Combobox(fit_cont, textvariable=self.fit_method,
                     values=['pseudo', 'voigt'], width=22, state='readonly',
-                    font=('Helvetica', 9)).pack(anchor=tk.W)
+                    font=('Comic Sans MS', 9)).pack(anchor=tk.W)
 
-        # Action Buttons
+        # Action Buttons (Removed Full Pipeline)
         btn_frame = tk.Frame(parent_frame, bg=self.colors['bg'])
         btn_frame.pack(fill=tk.X, pady=(0, 15))
 
@@ -861,7 +746,7 @@ class PowderXRDModule(GUIBase):
                           width=180).pack(side=tk.LEFT, padx=8)
 
     def browse_dataset_path(self):
-        """Browse for dataset path"""
+        """Browse for dataset path - FIXED: Using simpledialog instead of creating Toplevel"""
         result = messagebox.askquestion(
             "Dataset Path",
             "Dataset path is typically an HDF5 internal path like 'entry/data/data'.\n\n" +
@@ -871,6 +756,7 @@ class PowderXRDModule(GUIBase):
         )
 
         if result == 'yes':
+            # Use simpledialog which is thread-safe
             new_path = simpledialog.askstring(
                 "Enter Dataset Path",
                 "Enter HDF5 Dataset Path:",
@@ -878,11 +764,11 @@ class PowderXRDModule(GUIBase):
                 parent=self.root
             )
             
-            if new_path is not None:
+            if new_path is not None:  # User didn't cancel
                 self.dataset_path.set(new_path)
 
     def open_interactive_fitting(self):
-        """Open the interactive peak fitting GUI"""
+        """Open the interactive peak fitting GUI in a new window"""
         if self.interactive_fitting_window is not None:
             try:
                 if self.interactive_fitting_window.winfo_exists():
@@ -912,7 +798,7 @@ class PowderXRDModule(GUIBase):
         fitting_app = PeakFittingGUI(self.interactive_fitting_window)
         fitting_app.setup_ui()
 
-        self.log("✨ Interactive peak fitting GUI opened")
+        self.log("✨ Interactive peak fitting GUI opened in new window")
 
         def on_closing():
             if messagebox.askokcancel("Close Interactive Fitting",
@@ -940,7 +826,7 @@ class PowderXRDModule(GUIBase):
 
         tk.Label(header3, text="Phase Transition Analysis & Volume Calculation",
                 bg=self.colors['card_bg'], fg=self.colors['primary'],
-                font=('Helvetica', 11, 'bold')).pack(side=tk.LEFT)
+                font=('Comic Sans MS', 11, 'bold')).pack(side=tk.LEFT)
 
         main_content = tk.Frame(content3, bg=self.colors['card_bg'])
         main_content.pack(fill=tk.BOTH, expand=True)
@@ -949,12 +835,12 @@ class PowderXRDModule(GUIBase):
         left_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 15))
 
         tk.Label(left_col, text="Input CSV (Peak Data)", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Helvetica', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
 
         peak_input_frame = tk.Frame(left_col, bg=self.colors['card_bg'])
         peak_input_frame.pack(fill=tk.X, pady=(0, 12))
 
-        tk.Entry(peak_input_frame, textvariable=self.phase_peak_csv, font=('Helvetica', 9),
+        tk.Entry(peak_input_frame, textvariable=self.phase_peak_csv, font=('Comic Sans MS', 9),
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
 
         SpinboxStyleButton(peak_input_frame, "Browse",
@@ -966,12 +852,12 @@ class PowderXRDModule(GUIBase):
                           width=280).pack(pady=(0, 15))
 
         tk.Label(left_col, text="Input CSV (Volume Calculation)", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Helvetica', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
 
         volume_input_frame = tk.Frame(left_col, bg=self.colors['card_bg'])
         volume_input_frame.pack(fill=tk.X, pady=(0, 8))
 
-        tk.Entry(volume_input_frame, textvariable=self.phase_volume_csv, font=('Helvetica', 9),
+        tk.Entry(volume_input_frame, textvariable=self.phase_volume_csv, font=('Comic Sans MS', 9),
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
 
         SpinboxStyleButton(volume_input_frame, "Browse",
@@ -982,20 +868,20 @@ class PowderXRDModule(GUIBase):
         system_frame.pack(fill=tk.X, pady=(0, 12))
 
         tk.Label(system_frame, text="Crystal System", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Helvetica', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 10))
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 10))
 
         ttk.Combobox(system_frame, textvariable=self.phase_volume_system,
                     values=['FCC', 'BCC', 'SC', 'Hexagonal', 'Tetragonal',
                            'Orthorhombic', 'Monoclinic', 'Triclinic'],
-                    width=15, state='readonly', font=('Helvetica', 9)).pack(side=tk.LEFT)
+                    width=15, state='readonly', font=('Comic Sans MS', 9)).pack(side=tk.LEFT)
 
         tk.Label(left_col, text="Output Directory", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Helvetica', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
 
         output_frame = tk.Frame(left_col, bg=self.colors['card_bg'])
         output_frame.pack(fill=tk.X)
 
-        tk.Entry(output_frame, textvariable=self.phase_volume_output, font=('Helvetica', 9),
+        tk.Entry(output_frame, textvariable=self.phase_volume_output, font=('Comic Sans MS', 9),
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
 
         SpinboxStyleButton(output_frame, "Browse",
@@ -1016,7 +902,7 @@ class PowderXRDModule(GUIBase):
                 font=('Segoe UI Emoji', 12)).pack(side=tk.LEFT, padx=(0, 5))
 
         tk.Label(param_header, text="Analysis Parameters", bg='#F0E6FA',
-                fg='#9966CC', font=('Helvetica', 10, 'bold')).pack(side=tk.LEFT)
+                fg='#9966CC', font=('Comic Sans MS', 10, 'bold')).pack(side=tk.LEFT)
 
         wl_container = tk.Frame(right_col, bg='#F0E6FA')
         wl_container.pack(fill=tk.X, pady=(0, 8))
@@ -1028,7 +914,7 @@ class PowderXRDModule(GUIBase):
                 font=('Segoe UI Emoji', 10)).pack(side=tk.LEFT, padx=(0, 5))
 
         tk.Label(wl_label_frame, text="Wavelength (Å)", bg='#F0E6FA',
-                fg='#4A4A4A', font=('Helvetica', 9,'bold')).pack(side=tk.LEFT)
+                fg='#4A4A4A', font=('Comic Sans MS', 9,'bold')).pack(side=tk.LEFT)
 
         wl_entry = tk.Entry(wl_container, textvariable=self.phase_wavelength,
                            font=('Arial', 10), width=12, justify='center',
@@ -1044,12 +930,12 @@ class PowderXRDModule(GUIBase):
                 font=('Segoe UI Emoji', 10)).pack(side=tk.LEFT, padx=(0, 5))
 
         tk.Label(tol_header, text="Peak Tolerances", bg='#F0E6FA',
-                fg='#4A4A4A', font=('Helvetica', 9, 'bold')).pack(side=tk.LEFT)
+                fg='#4A4A4A', font=('Comic Sans MS', 9, 'bold')).pack(side=tk.LEFT)
 
         tol1_row = tk.Frame(right_col, bg='#F0E6FA')
         tol1_row.pack(fill=tk.X, pady=3)
         tk.Label(tol1_row, text="Tolerance 1:", bg='#F0E6FA',
-                font=('Helvetica', 8), anchor='w').pack(side=tk.LEFT)
+                font=('Comic Sans MS', 8), anchor='w').pack(side=tk.LEFT)
         tk.Entry(tol1_row, textvariable=self.phase_tolerance_1,
                 font=('Arial', 9), width=12, justify='center',
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.RIGHT, padx=(0, 0))
@@ -1057,7 +943,7 @@ class PowderXRDModule(GUIBase):
         tol2_row = tk.Frame(right_col, bg='#F0E6FA')
         tol2_row.pack(fill=tk.X, pady=3)
         tk.Label(tol2_row, text="Tolerance 2:", bg='#F0E6FA',
-                font=('Helvetica', 8), anchor='w').pack(side=tk.LEFT)
+                font=('Comic Sans MS', 8), anchor='w').pack(side=tk.LEFT)
         tk.Entry(tol2_row, textvariable=self.phase_tolerance_2,
                 font=('Arial', 9), width=12, justify='center',
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.RIGHT, padx=(0, 0))
@@ -1065,7 +951,7 @@ class PowderXRDModule(GUIBase):
         tol3_row = tk.Frame(right_col, bg='#F0E6FA')
         tol3_row.pack(fill=tk.X, pady=3)
         tk.Label(tol3_row, text="Tolerance 3:", bg='#F0E6FA',
-                font=('Helvetica', 8), anchor='w').pack(side=tk.LEFT)
+                font=('Comic Sans MS', 8), anchor='w').pack(side=tk.LEFT)
         tk.Entry(tol3_row, textvariable=self.phase_tolerance_3,
                 font=('Arial', 9), width=12, justify='center',
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.RIGHT, padx=(0, 0))
@@ -1076,7 +962,7 @@ class PowderXRDModule(GUIBase):
         n_row.pack(fill=tk.X)
 
         tk.Label(n_row, text="N Pressure Points:", bg='#F0E6FA',
-                font=('Helvetica', 8), anchor='w').pack(side=tk.LEFT)
+                font=('Comic Sans MS', 8), anchor='w').pack(side=tk.LEFT)
 
         ttk.Spinbox(n_row, from_=1, to=20, textvariable=self.phase_n_points,
                    width=8, font=('Arial', 9)).pack(side=tk.RIGHT, padx=(10, 0))
@@ -1096,7 +982,7 @@ class PowderXRDModule(GUIBase):
 
         tk.Label(header4, text="Birch-Murnaghan EOS",
                 bg=self.colors['card_bg'], fg=self.colors['primary'],
-                font=('Helvetica', 11, 'bold')).pack(side=tk.LEFT)
+                font=('Comic Sans MS', 11, 'bold')).pack(side=tk.LEFT)
 
         self.create_file_picker_with_spinbox_btn(content4, "Input CSV (P-V Data)",
                                self.bm_input_file, [("CSV files", "*.csv"), ("All files", "*.*")])
@@ -1105,10 +991,10 @@ class PowderXRDModule(GUIBase):
         order_cont = tk.Frame(content4, bg=self.colors['card_bg'])
         order_cont.pack(fill=tk.X, pady=(5, 0))
         tk.Label(order_cont, text="BM Order", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Helvetica', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
         ttk.Combobox(order_cont, textvariable=self.bm_order,
                     values=['2', '3'], width=18, state='readonly',
-                    font=('Helvetica', 9)).pack(anchor=tk.W)
+                    font=('Comic Sans MS', 9)).pack(anchor=tk.W)
 
         btn_frame3 = tk.Frame(parent_frame, bg=self.colors['bg'])
         btn_frame3.pack(fill=tk.X, pady=(10, 0))
@@ -1123,7 +1009,7 @@ class PowderXRDModule(GUIBase):
     # ==================== Processing Functions ====================
 
     def log(self, message):
-        """Thread-safe log message"""
+        """Thread-safe log message - NO CONSOLE OUTPUT"""
         if self._is_shutting_down:
             return
 
@@ -1165,7 +1051,7 @@ class PowderXRDModule(GUIBase):
             pass
 
     def show_success_dialog(self, title, message, details=None):
-        """Beautiful success dialog"""
+        """Beautiful success dialog with improved UI"""
         if self._is_shutting_down:
             return
 
@@ -1178,6 +1064,7 @@ class PowderXRDModule(GUIBase):
             dialog.transient(self.root)
             dialog.grab_set()
             
+            # Calculate size based on content
             width = 500
             height = 320 if details else 220
             
@@ -1187,9 +1074,11 @@ class PowderXRDModule(GUIBase):
             y = (screen_height - height) // 2
             dialog.geometry(f"{width}x{height}+{x}+{y}")
             
+            # Decorative top bar
             top_bar = tk.Frame(dialog, bg='#C8A2D9', height=8)
             top_bar.pack(fill=tk.X)
             
+            # Success icon with animation effect
             icon_frame = tk.Frame(dialog, bg='#F0E6FA')
             icon_frame.pack(pady=20)
             
@@ -1197,12 +1086,14 @@ class PowderXRDModule(GUIBase):
                     font=('Segoe UI Emoji', 42))
             icon_label.pack()
             
+            # Title with shadow effect
             title_frame = tk.Frame(dialog, bg='#F0E6FA')
             title_frame.pack(pady=5)
             
             tk.Label(title_frame, text=title, bg='#F0E6FA',
-                    fg='#9966CC', font=('Helvetica', 16, 'bold')).pack()
+                    fg='#9966CC', font=('Comic Sans MS', 16, 'bold')).pack()
             
+            # Message card with border
             msg_card = tk.Frame(dialog, bg='white', relief='solid',
                                borderwidth=2, highlightbackground='#C8A2D9',
                                highlightthickness=2)
@@ -1212,15 +1103,16 @@ class PowderXRDModule(GUIBase):
             msg_inner.pack(fill=tk.BOTH, expand=True)
             
             tk.Label(msg_inner, text=message, bg='white',
-                    fg='#333333', font=('Helvetica', 11),
+                    fg='#333333', font=('Comic Sans MS', 11),
                     wraplength=420, justify=tk.LEFT).pack()
             
             if details:
                 tk.Frame(msg_inner, bg='#E8D5F0', height=1).pack(fill=tk.X, pady=10)
                 tk.Label(msg_inner, text=details, bg='white',
-                        fg='#666666', font=('Helvetica', 9),
+                        fg='#666666', font=('Comic Sans MS', 9),
                         wraplength=420, justify=tk.LEFT).pack()
             
+            # OK Button with gradient-like effect
             btn_frame = tk.Frame(dialog, bg='#F0E6FA')
             btn_frame.pack(pady=15)
             
@@ -1230,7 +1122,7 @@ class PowderXRDModule(GUIBase):
                 command=dialog.destroy,
                 bg='#C8A2D9',
                 fg='white',
-                font=('Helvetica', 12, 'bold'),
+                font=('Comic Sans MS', 12, 'bold'),
                 relief='flat',
                 borderwidth=0,
                 padx=40,
@@ -1239,10 +1131,11 @@ class PowderXRDModule(GUIBase):
             )
             ok_btn.pack()
             
+            # Enhanced hover effect
             def on_enter(e):
-                ok_btn.config(bg='#B794F6')
+                ok_btn.config(bg='#B794F6', font=('Comic Sans MS', 12, 'bold'))
             def on_leave(e):
-                ok_btn.config(bg='#C8A2D9')
+                ok_btn.config(bg='#C8A2D9', font=('Comic Sans MS', 12, 'bold'))
             
             ok_btn.bind('<Enter>', on_enter)
             ok_btn.bind('<Leave>', on_leave)
@@ -1275,14 +1168,14 @@ class PowderXRDModule(GUIBase):
             self.log(f"❌ Error browsing folder: {str(e)}")
 
     def separate_peaks(self):
-        """Separate original and new peaks"""
+        """Separate original and new peaks from input CSV"""
         if not self.phase_peak_csv.get():
             self.show_error("Error", "Please select peak CSV file first")
             return
         self._start_thread(self._separate_peaks_thread, name="SeparatePeaks")
 
     def _separate_peaks_thread(self):
-        """Background thread for peak separation"""
+        """Background thread for peak separation - THREAD SAFE"""
         vars = self.capture_variables()
         if vars is None:
             self.log("❌ Failed to read settings")
@@ -1394,7 +1287,7 @@ class PowderXRDModule(GUIBase):
         self._start_thread(self._run_integration_thread, name="Integration")
 
     def _run_integration_thread(self):
-        """Background thread for integration"""
+        """Background thread for integration - THREAD SAFE"""
         vars = self.capture_variables()
         if vars is None:
             self.log("❌ Failed to read settings")
@@ -1493,7 +1386,8 @@ class PowderXRDModule(GUIBase):
         return 0.0
 
     def _create_combined_stacked_plot(self, output_dir, offset, unit='2th_deg'):
-        """Create a stacked plot combining all integrated files"""
+        """Create a stacked plot combining all integrated files, sorted by pressure - FIXED LABEL POSITIONING"""
+        # Map unit to axis label
         unit_labels = {
             '2th_deg': '2θ (°)',
             'q_A^-1': 'Q (Å⁻¹)',
@@ -1522,6 +1416,7 @@ class PowderXRDModule(GUIBase):
 
             fig, ax = plt.subplots(figsize=(12, 10))
 
+            # Calculate offset value
             if offset == 'auto':
                 max_intensities = []
                 for xy_file in xy_files_sorted:
@@ -1532,7 +1427,7 @@ class PowderXRDModule(GUIBase):
                 try:
                     offset_value = float(offset)
                 except:
-                    offset_value = 1000
+                    offset_value = 1000  # Default fallback
 
             all_x_min = float('inf')
             all_x_max = float('-inf')
@@ -1558,9 +1453,14 @@ class PowderXRDModule(GUIBase):
 
                 ax.plot(x, y_offset, linewidth=1.5, alpha=0.8, color=curve_color)
 
+                # FIXED: Position label from the lowest pressure curve (baseline + min intensity)
+                # For the first curve (i=0), the label starts from above the baseline
+                # For subsequent curves, labels are positioned at their respective baselines
                 baseline_y = i * offset_value
 
+                # Find the minimum intensity value at the label position to place label above the curve
                 label_x_pos = x_min + 0.02 * (x_max - x_min)
+                # Find y value at label x position (approximate using nearest point)
                 idx = np.argmin(np.abs(x - label_x_pos))
                 label_y = y_offset[idx] if idx < len(y_offset) else baseline_y
 
@@ -1568,7 +1468,7 @@ class PowderXRDModule(GUIBase):
                        label_y,
                        f'{pressure:.1f} GPa',
                        fontsize=9,
-                       verticalalignment='bottom',
+                       verticalalignment='bottom',  # Changed to 'bottom' so label sits above the curve
                        horizontalalignment='left',
                        bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
                                 edgecolor='gray', alpha=0.8))
@@ -1603,7 +1503,7 @@ class PowderXRDModule(GUIBase):
         self._start_thread(self._run_fitting_thread, name="Fitting")
 
     def _run_fitting_thread(self):
-        """Background thread for peak fitting"""
+        """Background thread for peak fitting - THREAD SAFE"""
         vars = self.capture_variables()
         if vars is None:
             self.log("❌ Failed to read settings")
@@ -1643,7 +1543,7 @@ class PowderXRDModule(GUIBase):
         self._start_thread(self._run_phase_analysis_thread, name="PhaseAnalysis")
 
     def _run_phase_analysis_thread(self):
-        """Background thread for phase analysis"""
+        """Background thread for phase analysis - THREAD SAFE"""
         vars = self.capture_variables()
         if vars is None:
             self.log("❌ Failed to read settings")
@@ -1759,7 +1659,7 @@ class PowderXRDModule(GUIBase):
         self._start_thread(self._run_birch_murnaghan_thread, name="BirchMurnaghan")
 
     def _run_birch_murnaghan_thread(self):
-        """Background thread for Birch-Murnaghan fitting"""
+        """Background thread for Birch-Murnaghan fitting - THREAD SAFE"""
         vars = self.capture_variables()
         if vars is None:
             self.log("❌ Failed to read settings")
@@ -1900,4 +1800,3 @@ class PowderXRDModule(GUIBase):
             self.show_error("Error", f"BM fitting failed:\n\n{error_msg}")
         finally:
             self.root.after(0, self.progress.stop)
-
