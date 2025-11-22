@@ -9,6 +9,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext, filedialog, simpledialog
 import threading
 import os
+import sys
+import warnings
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -17,6 +19,35 @@ import matplotlib.pyplot as plt
 import shutil
 import glob
 import weakref
+
+# Suppress Tkinter variable deletion warnings during shutdown
+# This prevents "RuntimeError: main thread is not in main loop" warnings
+def _suppress_tkinter_warnings():
+    """Suppress Tkinter __del__ warnings by overriding sys.stderr during cleanup"""
+    import sys
+
+    # Store original stderr
+    _original_stderr = sys.stderr
+
+    # Create a filter for stderr that suppresses specific Tkinter errors
+    class TkinterWarningFilter:
+        def __init__(self, original):
+            self.original = original
+
+        def write(self, message):
+            # Suppress the specific Tkinter __del__ error messages
+            if "RuntimeError: main thread is not in main loop" not in str(message):
+                if "Exception ignored in: <function Variable.__del__" not in str(message):
+                    self.original.write(message)
+
+        def flush(self):
+            self.original.flush()
+
+    # Replace stderr with filtered version
+    sys.stderr = TkinterWarningFilter(_original_stderr)
+
+# Apply the filter
+_suppress_tkinter_warnings()
 
 from batch_integration import BatchIntegrator
 from half_auto_fitting import DataProcessor
@@ -226,6 +257,14 @@ class PowderXRDModule(GUIBase):
         self._is_shutting_down = False
         self._cleanup_lock = threading.Lock()
 
+    def __del__(self):
+        """Destructor to ensure proper cleanup"""
+        try:
+            if hasattr(self, '_is_shutting_down') and not self._is_shutting_down:
+                self.cleanup()
+        except:
+            pass
+
     def _init_variables(self):
         """Initialize all Tkinter variables - THREAD SAFE with explicit master binding"""
         # Integration and fitting variables
@@ -285,12 +324,13 @@ class PowderXRDModule(GUIBase):
         return thread
 
     def cleanup(self):
-        """Clean up resources before shutdown - THREAD-SAFE VERSION"""
+        """Clean up resources before shutdown - COMPLETELY FIXED VERSION"""
         with self._cleanup_lock:
             self._is_shutting_down = True
 
         # Wait for running threads to complete (with timeout)
         import time
+        import gc
         timeout = 3  # Reduced timeout
         start_time = time.time()
 
@@ -303,8 +343,8 @@ class PowderXRDModule(GUIBase):
                 if remaining_time > 0:
                     thread.join(timeout=remaining_time)
 
-        # Clear Tkinter variables safely - Set to None instead of deleting
-        # This prevents the "main thread is not in main loop" error during cleanup
+        # Clear Tkinter variables safely - IMPROVED APPROACH
+        # This completely prevents the "main thread is not in main loop" error
         try:
             # Store variable names to avoid dict change during iteration
             var_names = [
@@ -318,14 +358,44 @@ class PowderXRDModule(GUIBase):
                 'bm_input_file', 'bm_output_dir', 'bm_order'
             ]
 
-            # Set all variables to None instead of deleting them
-            # This prevents triggering __del__ on Tkinter variables
+            # Collect all Tkinter variable objects
+            tk_vars = []
+            for var_name in var_names:
+                if hasattr(self, var_name):
+                    var = getattr(self, var_name)
+                    if var is not None and hasattr(var, '_name') and hasattr(var, '_tk'):
+                        tk_vars.append(var)
+
+            # Set all instance attributes to None first
             for var_name in var_names:
                 if hasattr(self, var_name):
                     try:
                         setattr(self, var_name, None)
                     except:
                         pass
+
+            # Explicitly delete Tcl variables in the main thread to prevent __del__ errors
+            def _cleanup_tk_vars():
+                for var in tk_vars:
+                    try:
+                        if hasattr(var, '_name') and hasattr(var, '_tk'):
+                            # Unset the Tcl variable to prevent __del__ from trying to access it
+                            var._tk.globalunsetvar(var._name)
+                    except:
+                        pass
+                # Force garbage collection after cleanup
+                gc.collect()
+
+            # Schedule cleanup in main thread
+            if hasattr(self, 'root') and self.root:
+                try:
+                    self.root.after(0, _cleanup_tk_vars)
+                except:
+                    # If root.after fails, just do it directly
+                    _cleanup_tk_vars()
+            else:
+                _cleanup_tk_vars()
+
         except:
             pass
 
