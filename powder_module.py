@@ -540,33 +540,45 @@ class PowderXRDModule(GUIBase):
 
     def setup_integration_module(self, parent_frame):
         """Setup integration and peak fitting module UI - IMPROVED LAYOUT"""
-        # Integration Settings Card
-        integration_card = self.create_card_frame(parent_frame)
-        integration_card.pack(fill=tk.X, pady=(0, 15))
+        # ===== MERGED CARD: Integration Settings + Output Formats & Stacked Plot =====
+        merged_card = self.create_card_frame(parent_frame)
+        merged_card.pack(fill=tk.X, pady=(0, 15))
 
-        content1 = tk.Frame(integration_card, bg=self.colors['card_bg'], padx=20, pady=12)
-        content1.pack(fill=tk.BOTH, expand=True)
+        content_merged = tk.Frame(merged_card, bg=self.colors['card_bg'], padx=20, pady=12)
+        content_merged.pack(fill=tk.BOTH, expand=True)
 
-        header1 = tk.Frame(content1, bg=self.colors['card_bg'])
-        header1.pack(anchor=tk.W, pady=(0, 8))
+        # Header for merged card
+        header_merged = tk.Frame(content_merged, bg=self.colors['card_bg'])
+        header_merged.pack(anchor=tk.W, pady=(0, 8))
 
-        tk.Label(header1, text="🦊", bg=self.colors['card_bg'],
+        tk.Label(header_merged, text="🦊", bg=self.colors['card_bg'],
                 font=('Segoe UI Emoji', 14)).pack(side=tk.LEFT, padx=(0, 6))
 
-        tk.Label(header1, text="Integration Settings",
+        tk.Label(header_merged, text="Integration Settings & Output Options",
                 bg=self.colors['card_bg'], fg=self.colors['primary'],
                 font=('Comic Sans MS', 11, 'bold')).pack(side=tk.LEFT)
 
-        self.create_file_picker_with_spinbox_btn(content1, "PONI File", self.poni_path,
+        # Container for left-right layout
+        main_container = tk.Frame(content_merged, bg=self.colors['card_bg'])
+        main_container.pack(fill=tk.BOTH, expand=True, pady=5)
+
+        # ========== LEFT SECTION: Integration Settings ==========
+        left_section = tk.Frame(main_container, bg=self.colors['card_bg'])
+        left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 20))
+
+        tk.Label(left_section, text="Integration Settings", bg=self.colors['card_bg'],
+                fg=self.colors['primary'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
+
+        self.create_file_picker_with_spinbox_btn(left_section, "PONI File", self.poni_path,
                                [("PONI files", "*.poni"), ("All files", "*.*")])
-        self.create_file_picker_with_spinbox_btn(content1, "Mask File", self.mask_path,
+        self.create_file_picker_with_spinbox_btn(left_section, "Mask File", self.mask_path,
                                [("EDF files", "*.edf"), ("All files", "*.*")])
-        self.create_file_picker_with_spinbox_btn(content1, "Input .h5 File",
+        self.create_file_picker_with_spinbox_btn(left_section, "Input .h5 File",
                                self.input_pattern, [("HDF5 files", "*.h5"), ("All files", "*.*")])
-        self.create_folder_picker_with_spinbox_btn(content1, "Output Directory", self.output_dir)
+        self.create_folder_picker_with_spinbox_btn(left_section, "Output Directory", self.output_dir)
 
         # Dataset Path
-        dataset_container = tk.Frame(content1, bg=self.colors['card_bg'])
+        dataset_container = tk.Frame(left_section, bg=self.colors['card_bg'])
         dataset_container.pack(fill=tk.X, pady=(5, 0))
 
         tk.Label(dataset_container, text="Dataset Path", bg=self.colors['card_bg'],
@@ -587,7 +599,7 @@ class PowderXRDModule(GUIBase):
         dataset_browse_btn.pack(side=tk.LEFT, padx=(5, 0))
 
         # Parameters
-        param_frame = tk.Frame(content1, bg=self.colors['card_bg'])
+        param_frame = tk.Frame(left_section, bg=self.colors['card_bg'])
         param_frame.pack(fill=tk.X, pady=(10, 0))
 
         npt_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
@@ -605,75 +617,57 @@ class PowderXRDModule(GUIBase):
                     values=['2θ (°)', 'Q (Å⁻¹)', 'r (mm)'],
                     width=16, state='readonly', font=('Comic Sans MS', 9)).pack(anchor=tk.W)
 
-        # ===== IMPROVED LAYOUT: Output Formats and Stacked Plot Side by Side =====
-        formats_card = self.create_card_frame(parent_frame)
-        formats_card.pack(fill=tk.X, pady=(0, 15))
+        # ========== RIGHT SECTION: Output Formats & Stacked Plot ==========
+        right_section = tk.Frame(main_container, bg=self.colors['card_bg'])
+        right_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        content_formats = tk.Frame(formats_card, bg=self.colors['card_bg'], padx=20, pady=12)
-        content_formats.pack(fill=tk.BOTH, expand=True)
+        tk.Label(right_section, text="Output Options", bg=self.colors['card_bg'],
+                fg=self.colors['primary'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
-        header_formats = tk.Frame(content_formats, bg=self.colors['card_bg'])
-        header_formats.pack(anchor=tk.W, pady=(0, 8))
-
-        tk.Label(header_formats, text="📊", bg=self.colors['card_bg'],
-                font=('Segoe UI Emoji', 14)).pack(side=tk.LEFT, padx=(0, 6))
-
-        tk.Label(header_formats, text="Output Formats & Stacked Plot",
-                bg=self.colors['card_bg'], fg=self.colors['primary'],
-                font=('Comic Sans MS', 11, 'bold')).pack(side=tk.LEFT)
-
-        # Container for side-by-side layout
-        main_container = tk.Frame(content_formats, bg=self.colors['card_bg'])
-        main_container.pack(fill=tk.BOTH, expand=True, pady=5)
-
-        # LEFT SECTION: Output Formats
-        left_section = tk.Frame(main_container, bg=self.colors['card_bg'])
-        left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
-
-        tk.Label(left_section, text="Select Output Formats:", bg=self.colors['card_bg'],
+        # Output Formats
+        tk.Label(right_section, text="Select Output Formats:", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
-        formats_grid = tk.Frame(left_section, bg=self.colors['card_bg'])
+        formats_grid = tk.Frame(right_section, bg=self.colors['card_bg'])
         formats_grid.pack(fill=tk.X)
 
         row1 = tk.Frame(formats_grid, bg=self.colors['card_bg'])
         row1.pack(fill=tk.X, pady=3)
-        
+
         tk.Checkbutton(row1, text=".xy", variable=self.format_xy, bg=self.colors['card_bg'],
                       font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
                       ).pack(side=tk.LEFT, padx=(0, 15))
-        
+
         tk.Checkbutton(row1, text=".dat", variable=self.format_dat, bg=self.colors['card_bg'],
                       font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
                       ).pack(side=tk.LEFT, padx=(0, 15))
-        
+
         tk.Checkbutton(row1, text=".chi", variable=self.format_chi, bg=self.colors['card_bg'],
                       font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
                       ).pack(side=tk.LEFT, padx=(0, 15))
-        
+
         tk.Checkbutton(row1, text=".fxye", variable=self.format_fxye, bg=self.colors['card_bg'],
                       font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
                       ).pack(side=tk.LEFT, padx=(0, 15))
-        
+
         tk.Checkbutton(row1, text=".svg", variable=self.format_svg, bg=self.colors['card_bg'],
                       font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
                       ).pack(side=tk.LEFT, padx=(0, 15))
-        
+
         tk.Checkbutton(row1, text=".png", variable=self.format_png, bg=self.colors['card_bg'],
                       font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
                       ).pack(side=tk.LEFT)
 
+        # Separator between output formats and stacked plot options
+        tk.Frame(right_section, bg='#E8D5F0', height=2).pack(fill=tk.X, pady=15)
 
-        # RIGHT SECTION: Stacked Plot Options (Horizontal layout for better UI)
-        right_section = tk.Frame(main_container, bg=self.colors['card_bg'])
-        right_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
+        # Stacked Plot Options
         tk.Label(right_section, text="Stacked Plot Options:", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
@@ -685,7 +679,7 @@ class PowderXRDModule(GUIBase):
                       variable=self.create_stacked_plot,
                       bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
-                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 40))
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 20))
 
         # Offset section in the same row
         offset_container = tk.Frame(stacked_options_row, bg=self.colors['card_bg'])
