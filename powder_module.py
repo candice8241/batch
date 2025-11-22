@@ -640,10 +640,6 @@ class PowderXRDModule(GUIBase):
         right_outer.pack(side=tk.LEFT, fill=tk.Y)
         right_outer.pack_propagate(False)
 
-        # 右侧标题（和左侧标题对齐，在顶部）
-        tk.Label(right_outer, text="Output Options", bg=self.colors['card_bg'],
-                fg=self.colors['primary'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
-
         # 创建垂直居中容器
         center_container = tk.Frame(right_outer, bg=self.colors['card_bg'])
         center_container.pack(fill=tk.BOTH, expand=True)
@@ -654,6 +650,10 @@ class PowderXRDModule(GUIBase):
         # 内容区域（水平居中，垂直居中）
         right_section = tk.Frame(center_container, bg=self.colors['card_bg'])
         right_section.pack()
+
+        # 右侧标题（与下方内容左对齐）
+        tk.Label(right_section, text="Output Options", bg=self.colors['card_bg'],
+                fg=self.colors['primary'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
         # 下方填充
         tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
@@ -917,45 +917,41 @@ class PowderXRDModule(GUIBase):
         tk.Label(system_frame, text="Crystal System", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
-        # Row 1: FCC, BCC, Hexagonal, Tetragonal
-        system_row1 = tk.Frame(system_frame, bg=self.colors['card_bg'])
-        system_row1.pack(fill=tk.X, pady=2)
+        # All 7 options in one row
+        system_row = tk.Frame(system_frame, bg=self.colors['card_bg'])
+        system_row.pack(fill=tk.X)
 
-        tk.Radiobutton(system_row1, text="FCC", variable=self.phase_volume_system, value='FCC',
+        tk.Radiobutton(system_row, text="FCC", variable=self.phase_volume_system, value='FCC',
                       bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
-                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 12))
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 10))
 
-        tk.Radiobutton(system_row1, text="BCC", variable=self.phase_volume_system, value='BCC',
+        tk.Radiobutton(system_row, text="BCC", variable=self.phase_volume_system, value='BCC',
                       bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
-                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 12))
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 10))
 
-        tk.Radiobutton(system_row1, text="Hexagonal", variable=self.phase_volume_system, value='Hexagonal',
+        tk.Radiobutton(system_row, text="Hexagonal", variable=self.phase_volume_system, value='Hexagonal',
                       bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
-                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 12))
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 10))
 
-        tk.Radiobutton(system_row1, text="Tetragonal", variable=self.phase_volume_system, value='Tetragonal',
+        tk.Radiobutton(system_row, text="Tetragonal", variable=self.phase_volume_system, value='Tetragonal',
                       bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
-                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 10))
 
-        # Row 2: Orthorhombic, Monoclinic, Triclinic
-        system_row2 = tk.Frame(system_frame, bg=self.colors['card_bg'])
-        system_row2.pack(fill=tk.X, pady=2)
-
-        tk.Radiobutton(system_row2, text="Orthorhombic", variable=self.phase_volume_system, value='Orthorhombic',
+        tk.Radiobutton(system_row, text="Orthorhombic", variable=self.phase_volume_system, value='Orthorhombic',
                       bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
-                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 12))
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 10))
 
-        tk.Radiobutton(system_row2, text="Monoclinic", variable=self.phase_volume_system, value='Monoclinic',
+        tk.Radiobutton(system_row, text="Monoclinic", variable=self.phase_volume_system, value='Monoclinic',
                       bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
-                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 12))
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 10))
 
-        tk.Radiobutton(system_row2, text="Triclinic", variable=self.phase_volume_system, value='Triclinic',
+        tk.Radiobutton(system_row, text="Triclinic", variable=self.phase_volume_system, value='Triclinic',
                       bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
@@ -977,7 +973,7 @@ class PowderXRDModule(GUIBase):
                           self.run_phase_analysis,
                           width=300).pack(pady=(15, 0))
 
-        right_col = tk.Frame(main_content, bg='#F0E6FA', relief='solid', borderwidth=1, padx=15, pady=15)
+        right_col = tk.Frame(main_content, bg='#F0E6FA', relief='solid', borderwidth=1, padx=12, pady=12)
         right_col.pack(side=tk.LEFT, fill=tk.Y)
 
         param_header = tk.Frame(right_col, bg='#F0E6FA')
@@ -1070,13 +1066,35 @@ class PowderXRDModule(GUIBase):
         bm_main_container = tk.Frame(content4, bg=self.colors['card_bg'])
         bm_main_container.pack(fill=tk.BOTH, expand=True, pady=(8, 0))
 
-        # Left section: File pickers
+        # Left section: File pickers (manually created to align with phase analysis)
         bm_left_section = tk.Frame(bm_main_container, bg=self.colors['card_bg'])
         bm_left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 30))
 
-        self.create_file_picker_with_spinbox_btn(bm_left_section, "Input CSV (P-V Data)",
-                               self.bm_input_file, [("CSV files", "*.csv"), ("All files", "*.*")])
-        self.create_folder_picker_with_spinbox_btn(bm_left_section, "Output Directory", self.bm_output_dir)
+        tk.Label(bm_left_section, text="Input CSV (P-V Data)", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
+
+        bm_input_frame = tk.Frame(bm_left_section, bg=self.colors['card_bg'])
+        bm_input_frame.pack(fill=tk.X, pady=(0, 12))
+
+        tk.Entry(bm_input_frame, textvariable=self.bm_input_file, font=('Comic Sans MS', 9),
+                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
+
+        SpinboxStyleButton(bm_input_frame, "Browse",
+                          lambda: self.browse_file(self.bm_input_file, [("CSV files", "*.csv"), ("All files", "*.*")]),
+                          width=75).pack(side=tk.LEFT, padx=(5, 0))
+
+        tk.Label(bm_left_section, text="Output Directory", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
+
+        bm_output_frame = tk.Frame(bm_left_section, bg=self.colors['card_bg'])
+        bm_output_frame.pack(fill=tk.X)
+
+        tk.Entry(bm_output_frame, textvariable=self.bm_output_dir, font=('Comic Sans MS', 9),
+                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
+
+        SpinboxStyleButton(bm_output_frame, "Browse",
+                          lambda: self.browse_folder(self.bm_output_dir),
+                          width=75).pack(side=tk.LEFT, padx=(5, 0))
 
         # Right section: BM Order (centered vertically)
         bm_right_outer = tk.Frame(bm_main_container, bg=self.colors['card_bg'])
