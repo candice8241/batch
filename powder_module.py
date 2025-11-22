@@ -921,7 +921,7 @@ class PowderXRDModule(GUIBase):
 
         SpinboxStyleButton(separate_btn_container, "🐶 Separate Original & New Peaks",
                           self.separate_peaks,
-                          width=280).pack()
+                          width=280, font_size=11).pack()
 
         tk.Label(left_col, text="Input CSV (Volume Calculation)", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
@@ -1003,7 +1003,7 @@ class PowderXRDModule(GUIBase):
 
         SpinboxStyleButton(calc_btn_container, "🦊 Calculate Volume & Fit Lattice Parameters",
                           self.run_phase_analysis,
-                          width=300).pack()
+                          width=300, font_size=11).pack()
 
         # Create right outer container for centering
         right_outer = tk.Frame(main_content, bg=self.colors['card_bg'])
@@ -1151,6 +1151,17 @@ class PowderXRDModule(GUIBase):
                           lambda: self.browse_folder(self.bm_output_dir),
                           width=75).pack(side=tk.LEFT, padx=(5, 0))
 
+        # Center the BM fitting button
+        bm_btn_frame = tk.Frame(bm_left_section, bg=self.colors['card_bg'])
+        bm_btn_frame.pack(fill=tk.X, pady=(15, 0))
+
+        bm_btn_container = tk.Frame(bm_btn_frame, bg=self.colors['card_bg'])
+        bm_btn_container.pack(expand=True)
+
+        SpinboxStyleButton(bm_btn_container, "⚗️ Birch-Murnaghan Fit",
+                          self.run_birch_murnaghan,
+                          width=250, font_size=11).pack()
+
         # Right section: BM Order (centered vertically)
         bm_right_outer = tk.Frame(bm_main_container, bg=self.colors['card_bg'])
         bm_right_outer.pack(side=tk.LEFT, fill=tk.Y)
@@ -1183,17 +1194,6 @@ class PowderXRDModule(GUIBase):
                       bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
-
-        # Center the BM fitting button
-        btn_frame3 = tk.Frame(parent_frame, bg=self.colors['bg'])
-        btn_frame3.pack(fill=tk.X, pady=(10, 0))
-
-        btn_cont3 = tk.Frame(btn_frame3, bg=self.colors['bg'])
-        btn_cont3.pack(expand=True)
-
-        SpinboxStyleButton(btn_cont3, "⚗️ Birch-Murnaghan Fit",
-                          self.run_birch_murnaghan,
-                          width=250).pack()
 
     # ==================== Processing Functions ====================
 
