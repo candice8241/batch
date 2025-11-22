@@ -90,12 +90,12 @@ class CustomSpinbox(tk.Frame):
             self,
             text="<",
             command=self.decrease,
-            bg='#E8D5F0',
+            bg='white',
             fg='#6B4C7A',
             font=('Arial', 10, 'bold'),
-            relief='flat',
+            relief='solid',
             borderwidth=1,
-            activebackground='#D5C0E0',
+            activebackground='#F0E6FA',
             cursor='hand2',
             width=2,
             padx=2,
@@ -125,12 +125,12 @@ class CustomSpinbox(tk.Frame):
             self,
             text=">",
             command=self.increase,
-            bg='#E8D5F0',
+            bg='white',
             fg='#6B4C7A',
             font=('Arial', 10, 'bold'),
-            relief='flat',
+            relief='solid',
             borderwidth=1,
-            activebackground='#D5C0E0',
+            activebackground='#F0E6FA',
             cursor='hand2',
             width=2,
             padx=2,
@@ -139,10 +139,10 @@ class CustomSpinbox(tk.Frame):
         self.right_btn.pack(side=tk.LEFT, padx=2)
 
         # Bind hover effects
-        self.left_btn.bind('<Enter>', lambda e: self.left_btn.config(bg='#D5C0E0'))
-        self.left_btn.bind('<Leave>', lambda e: self.left_btn.config(bg='#E8D5F0'))
-        self.right_btn.bind('<Enter>', lambda e: self.right_btn.config(bg='#D5C0E0'))
-        self.right_btn.bind('<Leave>', lambda e: self.right_btn.config(bg='#E8D5F0'))
+        self.left_btn.bind('<Enter>', lambda e: self.left_btn.config(bg='#F0E6FA'))
+        self.left_btn.bind('<Leave>', lambda e: self.left_btn.config(bg='white'))
+        self.right_btn.bind('<Enter>', lambda e: self.right_btn.config(bg='#F0E6FA'))
+        self.right_btn.bind('<Leave>', lambda e: self.right_btn.config(bg='white'))
 
         # Bind entry validation
         self.entry.bind('<Return>', self.validate_entry)
@@ -651,9 +651,9 @@ class PowderXRDModule(GUIBase):
         # 上方填充
         tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
 
-        # 内容区域（左对齐）
+        # 内容区域（水平和垂直都居中）
         right_section = tk.Frame(center_container, bg=self.colors['card_bg'])
-        right_section.pack(anchor=tk.W)
+        right_section.pack()
 
         # 下方填充
         tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
