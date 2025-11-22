@@ -1819,9 +1819,16 @@ class PeakFittingGUI:
         for g_idx, (left, right) in enumerate(group_windows):
             x_region = self.x[left:right]
             x_smooth = np.linspace(x_region.min(), x_region.max(), 400)
-            bg_smooth = np.interp(x_smooth, self.x, global_bg)
 
-            y_total = bg_smooth.copy()
+            # If background already subtracted, don't add it to fit curves
+            if len(self.fitted_bg_points) >= 2:
+                # Data is background-subtracted, fit curves should start from zero
+                y_total = np.zeros_like(x_smooth)
+            else:
+                # Background not subtracted, add background to fit curves
+                bg_smooth = np.interp(x_smooth, self.x, global_bg)
+                y_total = bg_smooth.copy()
+
             group = peak_groups[g_idx]
 
             for i in group:
@@ -1853,8 +1860,14 @@ class PeakFittingGUI:
             else:
                 y_component = PeakProfile.pseudo_voigt(x_smooth, *params)
 
-            bg_smooth = np.interp(x_smooth, self.x, global_bg)
-            y_with_bg = y_component + bg_smooth
+            # If background already subtracted, don't add it to component curves
+            if len(self.fitted_bg_points) >= 2:
+                # Data is background-subtracted, show component as-is
+                y_with_bg = y_component
+            else:
+                # Background not subtracted, add background to component
+                bg_smooth = np.interp(x_smooth, self.x, global_bg)
+                y_with_bg = y_component + bg_smooth
 
             original_idx = sorted_indices[i]
             line_comp, = self.ax.plot(x_smooth, y_with_bg, '--',
