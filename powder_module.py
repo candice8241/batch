@@ -31,7 +31,7 @@ from half_auto_fitting import PeakFittingGUI
 class SpinboxStyleButton(tk.Frame):
     """Spinbox-style button widget matching the reference image"""
 
-    def __init__(self, parent, text, command, width=80, **kwargs):
+    def __init__(self, parent, text, command, width=80, font_size=9, **kwargs):
         super().__init__(parent, bg='#E8D5F0', **kwargs)
 
         self.command = command
@@ -48,7 +48,7 @@ class SpinboxStyleButton(tk.Frame):
             command=command,
             bg='#E8D5F0',
             fg='#6B4C7A',
-            font=('Comic Sans MS', 9),
+            font=('Comic Sans MS', font_size),
             relief='flat',
             borderwidth=0,
             activebackground='#D5C0E0',
@@ -615,10 +615,10 @@ class PowderXRDModule(GUIBase):
         unit_cont.pack(side=tk.LEFT)
 
         tk.Label(unit_cont, text="Unit", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(pady=(0, 8))
 
         unit_options_frame = tk.Frame(unit_cont, bg=self.colors['card_bg'])
-        unit_options_frame.pack(anchor=tk.W)
+        unit_options_frame.pack()
 
         tk.Radiobutton(unit_options_frame, text="2θ (°)", variable=self.unit, value='2θ (°)',
                       bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
@@ -640,10 +640,6 @@ class PowderXRDModule(GUIBase):
         right_outer.pack(side=tk.LEFT, fill=tk.Y)
         right_outer.pack_propagate(False)
 
-        # 右侧标题（和左侧标题对齐）
-        tk.Label(right_outer, text="Output Options", bg=self.colors['card_bg'],
-                fg=self.colors['primary'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
-
         # 创建垂直居中容器
         center_container = tk.Frame(right_outer, bg=self.colors['card_bg'])
         center_container.pack(fill=tk.BOTH, expand=True)
@@ -651,9 +647,13 @@ class PowderXRDModule(GUIBase):
         # 上方填充
         tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
 
-        # 内容区域（水平和垂直都居中）
+        # 内容区域（左对齐，垂直居中）
         right_section = tk.Frame(center_container, bg=self.colors['card_bg'])
-        right_section.pack()
+        right_section.pack(anchor=tk.W)
+
+        # 右侧标题（和内容一起左对齐）
+        tk.Label(right_section, text="Output Options", bg=self.colors['card_bg'],
+                fg=self.colors['primary'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
         # 下方填充
         tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
@@ -739,7 +739,7 @@ class PowderXRDModule(GUIBase):
         btn_cont_top.pack(expand=True)
 
         SpinboxStyleButton(btn_cont_top, "🐿️ Run Integration", self.run_integration,
-                          width=200).pack()
+                          width=200, font_size=11).pack()
 
         # Fitting Settings Card
         fitting_card = self.create_card_frame(parent_frame)
@@ -761,10 +761,20 @@ class PowderXRDModule(GUIBase):
         fit_cont = tk.Frame(content2, bg=self.colors['card_bg'])
         fit_cont.pack(fill=tk.X)
         tk.Label(fit_cont, text="Fitting Method", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
-        ttk.Combobox(fit_cont, textvariable=self.fit_method,
-                    values=['pseudo', 'voigt'], width=22, state='readonly',
-                    font=('Comic Sans MS', 9)).pack(anchor=tk.W)
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
+
+        fit_method_frame = tk.Frame(fit_cont, bg=self.colors['card_bg'])
+        fit_method_frame.pack(anchor=tk.W)
+
+        tk.Radiobutton(fit_method_frame, text="Pseudo", variable=self.fit_method, value='pseudo',
+                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
+
+        tk.Radiobutton(fit_method_frame, text="Voigt", variable=self.fit_method, value='voigt',
+                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
 
         # Action Buttons (Removed Full Pipeline)
         btn_frame = tk.Frame(parent_frame, bg=self.colors['bg'])
@@ -777,10 +787,10 @@ class PowderXRDModule(GUIBase):
         btns.pack()
 
         SpinboxStyleButton(btns, "🐻 Run Fitting", self.run_fitting,
-                          width=180).pack(side=tk.LEFT, padx=8)
+                          width=180, font_size=11).pack(side=tk.LEFT, padx=8)
 
         SpinboxStyleButton(btns, "✨ Interactive Fitting", self.open_interactive_fitting,
-                          width=180).pack(side=tk.LEFT, padx=8)
+                          width=180, font_size=11).pack(side=tk.LEFT, padx=8)
 
     def browse_dataset_path(self):
         """Browse for dataset path - FIXED: Using simpledialog instead of creating Toplevel"""
@@ -1028,10 +1038,20 @@ class PowderXRDModule(GUIBase):
         order_cont = tk.Frame(content4, bg=self.colors['card_bg'])
         order_cont.pack(fill=tk.X, pady=(5, 0))
         tk.Label(order_cont, text="BM Order", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
-        ttk.Combobox(order_cont, textvariable=self.bm_order,
-                    values=['2', '3'], width=18, state='readonly',
-                    font=('Comic Sans MS', 9)).pack(anchor=tk.W)
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
+
+        bm_order_frame = tk.Frame(order_cont, bg=self.colors['card_bg'])
+        bm_order_frame.pack(anchor=tk.W)
+
+        tk.Radiobutton(bm_order_frame, text="2nd Order", variable=self.bm_order, value='2',
+                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
+
+        tk.Radiobutton(bm_order_frame, text="3rd Order", variable=self.bm_order, value='3',
+                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
 
         btn_frame3 = tk.Frame(parent_frame, bg=self.colors['bg'])
         btn_frame3.pack(fill=tk.X, pady=(10, 0))
