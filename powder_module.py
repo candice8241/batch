@@ -507,7 +507,7 @@ class PowderXRDModule(GUIBase):
         input_frame.pack(fill=tk.X)
 
         tk.Entry(input_frame, textvariable=var, font=('Comic Sans MS', 9),
-                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
+                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=5)
 
         if pattern:
             btn = SpinboxStyleButton(input_frame, "Browse Folder",
@@ -531,7 +531,7 @@ class PowderXRDModule(GUIBase):
         input_frame.pack(fill=tk.X)
 
         tk.Entry(input_frame, textvariable=var, font=('Comic Sans MS', 9),
-                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
+                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=5)
 
         btn = SpinboxStyleButton(input_frame, "Browse",
                                 lambda: self.browse_folder(var),
@@ -562,9 +562,9 @@ class PowderXRDModule(GUIBase):
         main_container = tk.Frame(content_merged, bg=self.colors['card_bg'])
         main_container.pack(fill=tk.BOTH, expand=True, pady=5)
 
-        # ========== LEFT SECTION: Integration Settings ==========
+        # ========== LEFT SECTION: Integration Settings (占更多空间) ==========
         left_section = tk.Frame(main_container, bg=self.colors['card_bg'])
-        left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 40))
+        left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 30))
 
         tk.Label(left_section, text="Integration Settings", bg=self.colors['card_bg'],
                 fg=self.colors['primary'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
@@ -588,7 +588,7 @@ class PowderXRDModule(GUIBase):
         dataset_input_frame.pack(fill=tk.X)
 
         tk.Entry(dataset_input_frame, textvariable=self.dataset_path, font=('Comic Sans MS', 9),
-                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
+                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=5)
 
         dataset_browse_btn = SpinboxStyleButton(
             dataset_input_frame,
@@ -620,9 +620,17 @@ class PowderXRDModule(GUIBase):
         # Add padding at bottom to make left section taller
         tk.Frame(left_section, bg=self.colors['card_bg'], height=50).pack(fill=tk.X, pady=(10, 0))
 
-        # ========== RIGHT SECTION: Output Formats & Stacked Plot ==========
-        right_section = tk.Frame(main_container, bg=self.colors['card_bg'])
-        right_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # ========== RIGHT SECTION: Output Formats & Stacked Plot (固定宽度，居中显示) ==========
+        right_outer = tk.Frame(main_container, bg=self.colors['card_bg'], width=350)
+        right_outer.pack(side=tk.LEFT, fill=tk.Y)
+        right_outer.pack_propagate(False)  # 防止子组件改变容器大小
+
+        # 创建一个居中容器
+        right_center_container = tk.Frame(right_outer, bg=self.colors['card_bg'])
+        right_center_container.place(relx=0.5, rely=0.5, anchor='center')
+
+        right_section = tk.Frame(right_center_container, bg=self.colors['card_bg'])
+        right_section.pack()
 
         tk.Label(right_section, text="Output Options", bg=self.colors['card_bg'],
                 fg=self.colors['primary'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
