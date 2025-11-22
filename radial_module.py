@@ -1291,18 +1291,18 @@ class AzimuthalIntegrationModule(GUIBase):
 
             tk.Label(row_frame, text="Start:", bg=self.colors['card_bg'],
                     font=('Arial', 8, 'bold')).pack(side=tk.LEFT, padx=(0, 3))
-            tk.Entry(row_frame, textvariable=sector[0], width=8,
+            tk.Entry(row_frame, textvariable=sector[0], width=6,
                     font=('Arial', 8), relief='solid', borderwidth=1).pack(side=tk.LEFT, padx=(0, 6))
 
             tk.Label(row_frame, text="End:", bg=self.colors['card_bg'],
                     font=('Arial', 8, 'bold')).pack(side=tk.LEFT, padx=(0, 3))
-            tk.Entry(row_frame, textvariable=sector[1], width=8,
+            tk.Entry(row_frame, textvariable=sector[1], width=6,
                     font=('Arial', 8), relief='solid', borderwidth=1).pack(side=tk.LEFT, padx=(0, 6))
 
             tk.Label(row_frame, text="Label:", bg=self.colors['card_bg'],
                     font=('Arial', 8, 'bold')).pack(side=tk.LEFT, padx=(0, 3))
             tk.Entry(row_frame, textvariable=sector[2],
-                    font=('Arial', 8), width=10, relief='solid', borderwidth=1).pack(side=tk.LEFT, padx=(0, 6))
+                    font=('Arial', 8), width=8, relief='solid', borderwidth=1).pack(side=tk.LEFT, padx=(0, 6))
 
             if self.multi_bin_mode.get():
                 tk.Label(row_frame, text="Bin:", bg=self.colors['card_bg'],
