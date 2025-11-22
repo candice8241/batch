@@ -973,76 +973,84 @@ class PowderXRDModule(GUIBase):
                           self.run_phase_analysis,
                           width=300).pack(pady=(15, 0))
 
-        right_col = tk.Frame(main_content, bg='#F0E6FA', relief='solid', borderwidth=1, padx=10, pady=10)
-        right_col.pack(side=tk.LEFT, fill=tk.Y)
+        right_col = tk.Frame(
+            main_content, 
+            bg=self.colors['card_bg'], 
+            padx=6, 
+            pady=15,
+            highlightbackground="#8B7BB8",  # Border color (matching your purple theme)
+            highlightthickness=2,             # Border width
+            relief=tk.SOLID                   # Border style
+        )
+        right_col.pack(side=tk.LEFT, fill=tk.NONE, anchor=tk.N)
 
-        param_header = tk.Frame(right_col, bg='#F0E6FA')
+        param_header = tk.Frame(right_col, bg=self.colors['card_bg'])
         param_header.pack(pady=(0, 15))
 
-        tk.Label(param_header, text="🎀", bg='#F0E6FA',
+        tk.Label(param_header, text="🎀", bg=self.colors['card_bg'],
                 font=('Segoe UI Emoji', 12)).pack(side=tk.LEFT, padx=(0, 5))
 
-        tk.Label(param_header, text="Analysis Parameters", bg='#F0E6FA',
+        tk.Label(param_header, text="Analysis Parameters", bg=self.colors['card_bg'],
                 fg='#9966CC', font=('Comic Sans MS', 10, 'bold')).pack(side=tk.LEFT)
 
-        wl_container = tk.Frame(right_col, bg='#F0E6FA')
+        wl_container = tk.Frame(right_col, bg=self.colors['card_bg'])
         wl_container.pack(fill=tk.X, pady=(0, 8))
 
-        wl_label_frame = tk.Frame(wl_container, bg='#F0E6FA')
+        wl_label_frame = tk.Frame(wl_container, bg=self.colors['card_bg'])
         wl_label_frame.pack(pady=(0, 3))
 
-        tk.Label(wl_label_frame, text="🌸", bg='#F0E6FA',
+        tk.Label(wl_label_frame, text="🌸", bg=self.colors['card_bg'],
                 font=('Segoe UI Emoji', 10)).pack(side=tk.LEFT, padx=(0, 5))
 
-        tk.Label(wl_label_frame, text="Wavelength (Å)", bg='#F0E6FA',
+        tk.Label(wl_label_frame, text="Wavelength (Å)", bg=self.colors['card_bg'],
                 fg='#4A4A4A', font=('Comic Sans MS', 9,'bold')).pack(side=tk.LEFT)
 
         wl_entry = tk.Entry(wl_container, textvariable=self.phase_wavelength,
-                           font=('Arial', 10), width=12, justify='center',
+                           font=('Arial', 10), width=9, justify='center',
                            bg='white', relief='solid', borderwidth=1)
         wl_entry.pack()
 
-        tol_header = tk.Frame(right_col, bg='#F0E6FA')
+        tol_header = tk.Frame(right_col, bg=self.colors['card_bg'])
         tol_header.pack(pady=(0, 10))
 
-        tk.Label(tol_header, text="🎀", bg='#F0E6FA',
+        tk.Label(tol_header, text="🎀", bg=self.colors['card_bg'],
                 font=('Segoe UI Emoji', 10)).pack(side=tk.LEFT, padx=(0, 5))
 
-        tk.Label(tol_header, text="Peak Tolerances", bg='#F0E6FA',
+        tk.Label(tol_header, text="Peak Tolerances", bg=self.colors['card_bg'],
                 fg='#4A4A4A', font=('Comic Sans MS', 9, 'bold')).pack(side=tk.LEFT)
 
-        tol1_row = tk.Frame(right_col, bg='#F0E6FA')
+        tol1_row = tk.Frame(right_col, bg=self.colors['card_bg'])
         tol1_row.pack(fill=tk.X, pady=3)
-        tk.Label(tol1_row, text="Tolerance 1:", bg='#F0E6FA',
+        tk.Label(tol1_row, text="Tolerance 1:", bg=self.colors['card_bg'],
                 font=('Comic Sans MS', 8), anchor='w').pack(side=tk.LEFT)
         tk.Entry(tol1_row, textvariable=self.phase_tolerance_1,
-                font=('Arial', 9), width=12, justify='center',
+                font=('Arial', 9), width=8, justify='center',
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.RIGHT, padx=(0, 0))
 
-        tol2_row = tk.Frame(right_col, bg='#F0E6FA')
+        tol2_row = tk.Frame(right_col, bg=self.colors['card_bg'])
         tol2_row.pack(fill=tk.X, pady=3)
-        tk.Label(tol2_row, text="Tolerance 2:", bg='#F0E6FA',
+        tk.Label(tol2_row, text="Tolerance 2:", bg=self.colors['card_bg'],
                 font=('Comic Sans MS', 8), anchor='w').pack(side=tk.LEFT)
         tk.Entry(tol2_row, textvariable=self.phase_tolerance_2,
-                font=('Arial', 9), width=12, justify='center',
+                font=('Arial', 9), width=8, justify='center',
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.RIGHT, padx=(0, 0))
 
-        tol3_row = tk.Frame(right_col, bg='#F0E6FA')
+        tol3_row = tk.Frame(right_col, bg=self.colors['card_bg'])
         tol3_row.pack(fill=tk.X, pady=3)
-        tk.Label(tol3_row, text="Tolerance 3:", bg='#F0E6FA',
+        tk.Label(tol3_row, text="Tolerance 3:", bg=self.colors['card_bg'],
                 font=('Comic Sans MS', 8), anchor='w').pack(side=tk.LEFT)
         tk.Entry(tol3_row, textvariable=self.phase_tolerance_3,
-                font=('Arial', 9), width=12, justify='center',
+                font=('Arial', 9), width=8, justify='center',
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.RIGHT, padx=(0, 0))
 
-        n_row = tk.Frame(right_col, bg='#F0E6FA')
+        n_row = tk.Frame(right_col, bg=self.colors['card_bg'])
         n_row.pack(fill=tk.X, pady=(12, 0))
 
-        tk.Label(n_row, text="N Pressure Points:", bg='#F0E6FA',
+        tk.Label(n_row, text="N Pressure Points:", bg=self.colors['card_bg'],
                 font=('Comic Sans MS', 8), anchor='w').pack(side=tk.LEFT)
 
         tk.Entry(n_row, textvariable=self.phase_n_points,
-                font=('Arial', 9), width=12, justify='center',
+                font=('Arial', 9), width=8, justify='center',
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.RIGHT)
 
         # Birch-Murnaghan Section
@@ -1068,7 +1076,7 @@ class PowderXRDModule(GUIBase):
 
         # Left section: File pickers (manually created to align with phase analysis)
         bm_left_section = tk.Frame(bm_main_container, bg=self.colors['card_bg'])
-        bm_left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 30))
+        bm_left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 15))
 
         tk.Label(bm_left_section, text="Input CSV (P-V Data)", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
