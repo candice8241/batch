@@ -394,6 +394,9 @@ class PeakProfile:
         baseline : float
             Estimated baseline value
         """
+        # Ensure peak_idx is within bounds
+        peak_idx = max(0, min(peak_idx, len(y) - 1))
+
         if smooth and len(y) > 11:
             try:
                 y_smooth = savgol_filter(y, min(11, len(y)//2*2+1), 3)
@@ -413,8 +416,10 @@ class PeakProfile:
         # Find left half-max point with interpolation
         left_x = x[0]
         for j in range(peak_idx, 0, -1):
+            if j >= len(y_smooth):
+                continue
             if y_smooth[j] <= half_max:
-                if y_smooth[j+1] != y_smooth[j]:
+                if j+1 < len(y_smooth) and y_smooth[j+1] != y_smooth[j]:
                     frac = (half_max - y_smooth[j]) / (y_smooth[j+1] - y_smooth[j])
                     left_x = x[j] + frac * (x[j+1] - x[j])
                 else:
@@ -423,9 +428,11 @@ class PeakProfile:
 
         # Find right half-max point with interpolation
         right_x = x[-1]
-        for j in range(peak_idx, len(y_smooth)-1):
+        for j in range(peak_idx, len(y_smooth)):
+            if j >= len(y_smooth):
+                break
             if y_smooth[j] <= half_max:
-                if y_smooth[j-1] != y_smooth[j]:
+                if j > 0 and y_smooth[j-1] != y_smooth[j]:
                     frac = (half_max - y_smooth[j]) / (y_smooth[j-1] - y_smooth[j])
                     right_x = x[j] - frac * (x[j] - x[j-1])
                 else:
@@ -570,6 +577,7 @@ class PeakFittingGUI:
         self.batch_delay = tk.DoubleVar(value=2.0)  # seconds to display each fit
         self.batch_on_failure = tk.StringVar(value="pause")  # pause/skip/stop
         self.batch_auto_save = tk.BooleanVar(value=True)
+        self.batch_pause_for_review = tk.BooleanVar(value=True)  # pause before fitting for manual review
 
         # Initialize GUI components
         self.create_widgets()
@@ -1982,7 +1990,7 @@ class PeakFittingGUI:
         """Show batch auto-fitting settings dialog"""
         settings_window = tk.Toplevel(self.master)
         settings_window.title("Batch Auto-Fit Settings")
-        settings_window.geometry("400x300")
+        settings_window.geometry("450x380")
         settings_window.configure(bg='#F0E6FA')
         settings_window.transient(self.master)
         settings_window.grab_set()
@@ -2000,9 +2008,22 @@ class PeakFittingGUI:
                                    width=10, font=('Arial', 10))
         delay_spinbox.pack(side=tk.LEFT, padx=5)
 
+        # Pause for review setting
+        review_frame = tk.Frame(settings_window, bg='#F0E6FA')
+        review_frame.pack(pady=5, padx=20, fill=tk.X)
+
+        tk.Checkbutton(review_frame, text="Pause after auto-peak/background for manual review",
+                      variable=self.batch_pause_for_review,
+                      bg='#F0E6FA', fg='#4B0082',
+                      font=('Arial', 10, 'bold')).pack(anchor=tk.W)
+
+        tk.Label(review_frame, text="  (Allows you to manually adjust peaks/background before fitting)",
+                bg='#F0E6FA', fg='#666666',
+                font=('Arial', 8, 'italic')).pack(anchor=tk.W, padx=20)
+
         # Auto-save setting
         autosave_frame = tk.Frame(settings_window, bg='#F0E6FA')
-        autosave_frame.pack(pady=10, padx=20, fill=tk.X)
+        autosave_frame.pack(pady=5, padx=20, fill=tk.X)
 
         tk.Checkbutton(autosave_frame, text="Auto-save results for each file",
                       variable=self.batch_auto_save,
@@ -2177,6 +2198,25 @@ class PeakFittingGUI:
 
             self.update_info(f"  ✓ Selected {len(self.bg_points)} background points\n")
 
+            # Optional: Pause for manual review before fitting
+            if self.batch_pause_for_review.get():
+                self.update_info("  ⏸ Pausing for manual review...\n")
+                self.batch_paused = True
+                user_action = self._show_review_dialog()
+
+                # Wait for user action
+                while self.batch_paused and self.batch_running:
+                    self.master.update()
+                    self.master.after(100)
+
+                if user_action == "skip":
+                    self.update_info("  ⏭ Skipping this file\n")
+                    return False
+                elif user_action == "stop":
+                    self.batch_running = False
+                    return False
+                # If "continue", proceed with fitting
+
             # Step 4: Subtract background
             self.update_info("  Step 3: Subtracting background...\n")
             self.subtract_background()
@@ -2209,6 +2249,72 @@ class PeakFittingGUI:
             self.update_info(f"  ❌ Error: {str(e)}\n")
             self.update_info(f"  {traceback.format_exc()}\n")
             return False
+
+    def _show_review_dialog(self):
+        """Show dialog for reviewing auto-detected peaks and background"""
+        dialog = tk.Toplevel(self.master)
+        dialog.title("Review Auto-Detection Results")
+        dialog.geometry("450x280")
+        dialog.configure(bg='#E6F3FF')
+        dialog.transient(self.master)
+        dialog.grab_set()
+
+        user_action = ["continue"]  # Default action
+
+        # Message
+        msg = tk.Label(dialog,
+                      text=f"Auto-detection complete!\n\n"
+                           f"✓ Found {len(self.selected_peaks)} peaks\n"
+                           f"✓ Selected {len(self.bg_points)} background points\n\n"
+                           "Review the plot and:\n"
+                           "• Add/remove peaks (left/right click)\n"
+                           "• Adjust background points if needed\n\n"
+                           "Choose action:",
+                      bg='#E6F3FF', fg='#003366',
+                      font=('Arial', 10, 'bold'),
+                      justify=tk.LEFT)
+        msg.pack(pady=15, padx=20)
+
+        # Buttons
+        btn_frame = tk.Frame(dialog, bg='#E6F3FF')
+        btn_frame.pack(pady=10)
+
+        def continue_fitting():
+            user_action[0] = "continue"
+            self.batch_paused = False
+            dialog.destroy()
+
+        def skip_file():
+            user_action[0] = "skip"
+            self.batch_paused = False
+            dialog.destroy()
+
+        def stop_batch():
+            user_action[0] = "stop"
+            self.batch_running = False
+            self.batch_paused = False
+            dialog.destroy()
+
+        tk.Button(btn_frame, text="✓ Continue with Auto Fit",
+                 bg='#90EE90', fg='#006400',
+                 font=('Arial', 11, 'bold'),
+                 command=continue_fitting,
+                 width=22, height=2).pack(pady=5)
+
+        tk.Button(btn_frame, text="⏭ Skip This File",
+                 bg='#FFD700', fg='#8B4513',
+                 font=('Arial', 10, 'bold'),
+                 command=skip_file,
+                 width=22).pack(pady=5)
+
+        tk.Button(btn_frame, text="⏹ Stop Batch Processing",
+                 bg='#FF6347', fg='white',
+                 font=('Arial', 10, 'bold'),
+                 command=stop_batch,
+                 width=22).pack(pady=5)
+
+        dialog.wait_window()
+        return user_action[0]
 
     def _show_manual_adjustment_dialog(self):
         """Show dialog for manual adjustment during batch processing"""
