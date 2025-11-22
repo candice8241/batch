@@ -285,7 +285,7 @@ class PowderXRDModule(GUIBase):
         return thread
 
     def cleanup(self):
-        """Clean up resources before shutdown - IMPROVED VERSION"""
+        """Clean up resources before shutdown - THREAD-SAFE VERSION"""
         with self._cleanup_lock:
             self._is_shutting_down = True
 
@@ -303,7 +303,8 @@ class PowderXRDModule(GUIBase):
                 if remaining_time > 0:
                     thread.join(timeout=remaining_time)
 
-        # Destroy Tkinter variables safely
+        # Clear Tkinter variables safely - Set to None instead of deleting
+        # This prevents the "main thread is not in main loop" error during cleanup
         try:
             # Store variable names to avoid dict change during iteration
             var_names = [
@@ -317,17 +318,12 @@ class PowderXRDModule(GUIBase):
                 'bm_input_file', 'bm_output_dir', 'bm_order'
             ]
 
+            # Set all variables to None instead of deleting them
+            # This prevents triggering __del__ on Tkinter variables
             for var_name in var_names:
                 if hasattr(self, var_name):
                     try:
-                        var = getattr(self, var_name)
-                        # Explicitly delete the Tcl variable
-                        if hasattr(var, '_name') and hasattr(var, '_tk'):
-                            try:
-                                var._tk.globalunsetvar(var._name)
-                            except:
-                                pass
-                        delattr(self, var_name)
+                        setattr(self, var_name, None)
                     except:
                         pass
         except:
@@ -664,30 +660,39 @@ class PowderXRDModule(GUIBase):
                       font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
 
-        # RIGHT SECTION: Stacked Plot Options (Same style as Output Formats)
+        # RIGHT SECTION: Stacked Plot Options (Horizontal layout for better UI)
         right_section = tk.Frame(main_container, bg=self.colors['card_bg'])
         right_section.pack(side=tk.LEFT, fill=tk.Y)
 
         tk.Label(right_section, text="Stacked Plot Options:", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
-        tk.Checkbutton(right_section, text="Create Stacked Plot",
+        # Horizontal layout for checkbox and offset
+        stacked_options_row = tk.Frame(right_section, bg=self.colors['card_bg'])
+        stacked_options_row.pack(fill=tk.X, pady=(0, 5))
+
+        tk.Checkbutton(stacked_options_row, text="Create Stacked Plot",
                       variable=self.create_stacked_plot,
                       bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
-                      activebackground=self.colors['card_bg']).pack(anchor=tk.W, pady=(0, 10))
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
 
-        tk.Label(right_section, text="Offset Value:", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
+        # Offset section in the same row
+        offset_container = tk.Frame(stacked_options_row, bg=self.colors['card_bg'])
+        offset_container.pack(side=tk.LEFT)
 
-        offset_entry = tk.Entry(right_section, textvariable=self.stacked_plot_offset,
-                               font=('Arial', 10), width=15, justify='center',
+        tk.Label(offset_container, text="Offset:", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 5))
+
+        offset_entry = tk.Entry(offset_container, textvariable=self.stacked_plot_offset,
+                               font=('Arial', 10), width=12, justify='center',
                                bg='white', relief='solid', borderwidth=1)
-        offset_entry.pack(ipady=3)
+        offset_entry.pack(side=tk.LEFT, ipady=2)
 
-        tk.Label(right_section, text="(use 'auto' or number)",
+        # Help text below
+        tk.Label(right_section, text="(use 'auto' or number for offset)",
                 bg=self.colors['card_bg'], fg='#888888',
-                font=('Comic Sans MS', 8, 'italic')).pack(pady=(5, 0))
+                font=('Comic Sans MS', 8, 'italic')).pack(anchor=tk.W, pady=(2, 0))
 
         # ===== Run Integration Button (Moved above Peak Fitting Settings) =====
         btn_frame_top = tk.Frame(parent_frame, bg=self.colors['bg'])
@@ -1448,15 +1453,22 @@ class PowderXRDModule(GUIBase):
 
                 ax.plot(x, y_offset, linewidth=1.5, alpha=0.8, color=curve_color)
 
-                # FIXED: Position label correctly based on actual offset
-                # Place label at the baseline of the current curve
+                # FIXED: Position label from the lowest pressure curve (baseline + min intensity)
+                # For the first curve (i=0), the label starts from above the baseline
+                # For subsequent curves, labels are positioned at their respective baselines
                 baseline_y = i * offset_value
-                
-                ax.text(x_min + 0.02 * (x_max - x_min),
-                       baseline_y,
+
+                # Find the minimum intensity value at the label position to place label above the curve
+                label_x_pos = x_min + 0.02 * (x_max - x_min)
+                # Find y value at label x position (approximate using nearest point)
+                idx = np.argmin(np.abs(x - label_x_pos))
+                label_y = y_offset[idx] if idx < len(y_offset) else baseline_y
+
+                ax.text(label_x_pos,
+                       label_y,
                        f'{pressure:.1f} GPa',
                        fontsize=9,
-                       verticalalignment='center',
+                       verticalalignment='bottom',  # Changed to 'bottom' so label sits above the curve
                        horizontalalignment='left',
                        bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
                                 edgecolor='gray', alpha=0.8))
