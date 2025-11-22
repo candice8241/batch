@@ -879,7 +879,7 @@ class PowderXRDModule(GUIBase):
         main_content.pack(fill=tk.BOTH, expand=True)
 
         left_col = tk.Frame(main_content, bg=self.colors['card_bg'])
-        left_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 15))
+        left_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 8))
 
         tk.Label(left_col, text="Input CSV (Peak Data)", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
@@ -888,7 +888,7 @@ class PowderXRDModule(GUIBase):
         peak_input_frame.pack(fill=tk.X, pady=(0, 12))
 
         tk.Entry(peak_input_frame, textvariable=self.phase_peak_csv, font=('Comic Sans MS', 9),
-                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
+                bg='white', relief='solid', borderwidth=1, width=90).pack(side=tk.LEFT, fill=tk.X, ipady=3)
 
         SpinboxStyleButton(peak_input_frame, "Browse",
                           lambda: self.browse_file(self.phase_peak_csv, [("CSV files", "*.csv")]),
@@ -905,7 +905,7 @@ class PowderXRDModule(GUIBase):
         volume_input_frame.pack(fill=tk.X, pady=(0, 8))
 
         tk.Entry(volume_input_frame, textvariable=self.phase_volume_csv, font=('Comic Sans MS', 9),
-                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
+                bg='white', relief='solid', borderwidth=1, width=90).pack(side=tk.LEFT, fill=tk.X, ipady=3)
 
         SpinboxStyleButton(volume_input_frame, "Browse",
                           lambda: self.browse_file(self.phase_volume_csv, [("CSV files", "*.csv")]),
@@ -963,7 +963,7 @@ class PowderXRDModule(GUIBase):
         output_frame.pack(fill=tk.X)
 
         tk.Entry(output_frame, textvariable=self.phase_volume_output, font=('Comic Sans MS', 9),
-                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
+                bg='white', relief='solid', borderwidth=1, width=90).pack(side=tk.LEFT, fill=tk.X, ipady=3)
 
         SpinboxStyleButton(output_frame, "Browse",
                           lambda: self.browse_folder(self.phase_volume_output),
@@ -973,19 +973,27 @@ class PowderXRDModule(GUIBase):
                           self.run_phase_analysis,
                           width=300).pack(pady=(15, 0))
 
-        right_col = tk.Frame(
-            main_content, 
-            bg=self.colors['card_bg'], 
-            padx=6, 
-            pady=15,
+        right_col_outer = tk.Frame(
+            main_content,
+            bg=self.colors['card_bg'],
+            padx=6,
+            pady=6,
             highlightbackground="#8B7BB8",  # Border color (matching your purple theme)
             highlightthickness=2,             # Border width
             relief=tk.SOLID                   # Border style
         )
-        right_col.pack(side=tk.LEFT, fill=tk.NONE, anchor=tk.N)
+        right_col_outer.pack(side=tk.LEFT, fill=tk.Y, anchor=tk.N)
+
+        # 水平居中容器
+        horizontal_center = tk.Frame(right_col_outer, bg=self.colors['card_bg'])
+        horizontal_center.pack()
+
+        # 内容区域（水平居中）
+        right_col = tk.Frame(horizontal_center, bg=self.colors['card_bg'])
+        right_col.pack(padx=(5, 15))
 
         param_header = tk.Frame(right_col, bg=self.colors['card_bg'])
-        param_header.pack(pady=(0, 15))
+        param_header.pack(pady=(5, 15))
 
         tk.Label(param_header, text="🎀", bg=self.colors['card_bg'],
                 font=('Segoe UI Emoji', 12)).pack(side=tk.LEFT, padx=(0, 5))
@@ -1044,7 +1052,7 @@ class PowderXRDModule(GUIBase):
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.RIGHT, padx=(0, 0))
 
         n_row = tk.Frame(right_col, bg=self.colors['card_bg'])
-        n_row.pack(fill=tk.X, pady=(12, 0))
+        n_row.pack(fill=tk.X, pady=(12, 5))
 
         tk.Label(n_row, text="N Pressure Points:", bg=self.colors['card_bg'],
                 font=('Comic Sans MS', 8), anchor='w').pack(side=tk.LEFT)
@@ -1085,7 +1093,7 @@ class PowderXRDModule(GUIBase):
         bm_input_frame.pack(fill=tk.X, pady=(0, 12))
 
         tk.Entry(bm_input_frame, textvariable=self.bm_input_file, font=('Comic Sans MS', 9),
-                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
+                bg='white', relief='solid', borderwidth=1, width=90).pack(side=tk.LEFT, fill=tk.X, ipady=3)
 
         SpinboxStyleButton(bm_input_frame, "Browse",
                           lambda: self.browse_file(self.bm_input_file, [("CSV files", "*.csv"), ("All files", "*.*")]),
@@ -1098,7 +1106,7 @@ class PowderXRDModule(GUIBase):
         bm_output_frame.pack(fill=tk.X)
 
         tk.Entry(bm_output_frame, textvariable=self.bm_output_dir, font=('Comic Sans MS', 9),
-                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
+                bg='white', relief='solid', borderwidth=1, width=90).pack(side=tk.LEFT, fill=tk.X, ipady=3)
 
         SpinboxStyleButton(bm_output_frame, "Browse",
                           lambda: self.browse_folder(self.bm_output_dir),
