@@ -973,7 +973,7 @@ class PowderXRDModule(GUIBase):
                           self.run_phase_analysis,
                           width=300).pack(pady=(15, 0))
 
-        right_col = tk.Frame(
+        right_col_outer = tk.Frame(
             main_content,
             bg=self.colors['card_bg'],
             padx=6,
@@ -982,7 +982,25 @@ class PowderXRDModule(GUIBase):
             highlightthickness=2,             # Border width
             relief=tk.SOLID                   # Border style
         )
-        right_col.pack(side=tk.LEFT, fill=tk.NONE, anchor=tk.N)
+        right_col_outer.pack(side=tk.LEFT, fill=tk.Y, anchor=tk.N)
+
+        # 创建垂直居中容器
+        vertical_center = tk.Frame(right_col_outer, bg=self.colors['card_bg'])
+        vertical_center.pack(fill=tk.BOTH, expand=True)
+
+        # 上方填充
+        tk.Frame(vertical_center, bg=self.colors['card_bg']).pack(expand=True)
+
+        # 水平居中容器
+        horizontal_center = tk.Frame(vertical_center, bg=self.colors['card_bg'])
+        horizontal_center.pack()
+
+        # 内容区域（水平、垂直居中）
+        right_col = tk.Frame(horizontal_center, bg=self.colors['card_bg'])
+        right_col.pack()
+
+        # 下方填充
+        tk.Frame(vertical_center, bg=self.colors['card_bg']).pack(expand=True)
 
         param_header = tk.Frame(right_col, bg=self.colors['card_bg'])
         param_header.pack(pady=(5, 15))
@@ -1085,7 +1103,7 @@ class PowderXRDModule(GUIBase):
         bm_input_frame.pack(fill=tk.X, pady=(0, 12))
 
         tk.Entry(bm_input_frame, textvariable=self.bm_input_file, font=('Comic Sans MS', 9),
-                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
+                bg='white', relief='solid', borderwidth=1, width=90).pack(side=tk.LEFT, fill=tk.X, ipady=3)
 
         SpinboxStyleButton(bm_input_frame, "Browse",
                           lambda: self.browse_file(self.bm_input_file, [("CSV files", "*.csv"), ("All files", "*.*")]),
@@ -1098,7 +1116,7 @@ class PowderXRDModule(GUIBase):
         bm_output_frame.pack(fill=tk.X)
 
         tk.Entry(bm_output_frame, textvariable=self.bm_output_dir, font=('Comic Sans MS', 9),
-                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
+                bg='white', relief='solid', borderwidth=1, width=90).pack(side=tk.LEFT, fill=tk.X, ipady=3)
 
         SpinboxStyleButton(bm_output_frame, "Browse",
                           lambda: self.browse_folder(self.bm_output_dir),
