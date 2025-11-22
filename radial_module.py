@@ -951,35 +951,12 @@ class AzimuthalIntegrationModule(GUIBase):
                     font=('Comic Sans MS', 10), width=24).pack(anchor=tk.W)
 
     def _setup_multiple_sectors_ui(self):
-        """Multiple sectors"""
+        """Multiple sectors - Custom sectors only"""
         main_container = tk.Frame(self.dynamic_frame, bg=self.colors['card_bg'])
         main_container.pack(fill=tk.BOTH, expand=True, pady=(10, 0))
 
-        # LEFT SIDE: Mode selector
-        left_side = tk.Frame(main_container, bg=self.colors['card_bg'])
-        left_side.pack(side=tk.LEFT, fill=tk.BOTH, expand=False, padx=(0, 20))
-
-        tk.Label(left_side, text="Multiple Sectors Mode:", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 6))
-
-        mode_buttons = tk.Frame(left_side, bg=self.colors['card_bg'])
-        mode_buttons.pack(anchor=tk.W)
-
-        tk.Radiobutton(mode_buttons, text="Preset Templates", variable=self.multiple_mode,
-                      value='preset', bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 10),
-                      command=self.update_multiple_submode).pack(anchor=tk.W, pady=2)
-
-        tk.Radiobutton(mode_buttons, text="Custom Sectors", variable=self.multiple_mode,
-                      value='custom', bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 10),
-                      command=self.update_multiple_submode).pack(anchor=tk.W, pady=2)
-
-        # RIGHT SIDE
-        self.submode_frame = tk.Frame(main_container, bg=self.colors['card_bg'])
-        self.submode_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-        self.update_multiple_submode()
+        # Directly setup custom sectors mode
+        self._setup_custom_sectors_mode_direct(main_container)
 
     def update_multiple_submode(self):
         # Remove all existing traces before updating UI
@@ -1020,22 +997,20 @@ class AzimuthalIntegrationModule(GUIBase):
                 bg=self.colors['card_bg'], fg=self.colors['text_light'],
                 font=('Comic Sans MS', 9, 'italic')).pack(anchor=tk.W, pady=(8, 0))
 
-    def _setup_custom_sectors_mode(self):
-        """Custom sectors with BIN MODE support"""
+    def _setup_custom_sectors_mode_direct(self, parent_container):
+        """Custom sectors with BIN MODE support - Direct setup"""
         if not self.custom_sectors:
             try:
                 self.custom_sectors = [
                     [tk.DoubleVar(value=0.0), tk.DoubleVar(value=90.0), tk.StringVar(value="Sector_1"), tk.DoubleVar(value=10.0)],
-                    [tk.DoubleVar(value=90.0), tk.DoubleVar(value=180.0), tk.StringVar(value="Sector_2"), tk.DoubleVar(value=10.0)],
-                    [tk.DoubleVar(value=180.0), tk.DoubleVar(value=270.0), tk.StringVar(value="Sector_3"), tk.DoubleVar(value=10.0)],
-                    [tk.DoubleVar(value=270.0), tk.DoubleVar(value=360.0), tk.StringVar(value="Sector_4"), tk.DoubleVar(value=10.0)]
+                    [tk.DoubleVar(value=90.0), tk.DoubleVar(value=180.0), tk.StringVar(value="Sector_2"), tk.DoubleVar(value=10.0)]
                 ]
             except Exception as e:
                 print(f"Error initializing custom sectors: {e}")
                 return
 
         # Main container
-        self.custom_center_all = tk.Frame(self.submode_frame, bg=self.colors['card_bg'])
+        self.custom_center_all = tk.Frame(parent_container, bg=self.colors['card_bg'])
         self.custom_center_all.pack(expand=True, anchor='center')
 
         # Bin mode toggle
@@ -1055,7 +1030,7 @@ class AzimuthalIntegrationModule(GUIBase):
         instruction_frame.pack(pady=(0, 15), anchor='center')
 
         self.custom_instruction_label = tk.Label(instruction_frame,
-                text="💡 Define custom azimuthal sectors. Add multiple rows for different angular ranges.",
+                text="💡 Define custom azimuthal sectors (2 sectors).",
                 bg='#FFF4DC', fg=self.colors['text_dark'],
                 font=('Comic Sans MS', 9))
         self.custom_instruction_label.pack()
@@ -1071,20 +1046,7 @@ class AzimuthalIntegrationModule(GUIBase):
         self.sectors_container = tk.Frame(sectors_outer_frame, bg=self.colors['card_bg'])
         self.sectors_container.pack(side=tk.LEFT, anchor='center')
 
-        # Buttons
-        btn_frame = tk.Frame(self.custom_center_all, bg=self.colors['card_bg'])
-        btn_frame.pack(anchor='center')
-
-        tk.Button(btn_frame, text="🐾 Add Sector", command=self._add_sector,
-                 bg='#D8A7D8', fg='white',
-                 font=('Comic Sans MS', 10, 'bold'), relief='flat',
-                 padx=6, pady=7, cursor='hand2').pack(side=tk.LEFT, padx=15)
-
-        tk.Button(btn_frame, text="🍉 Clear All", command=self._clear_all_sectors,
-                 bg='#FF9FB5', fg='white',
-                 font=('Comic Sans MS', 10, 'bold'), relief='flat',
-                 padx=6, pady=7, cursor='hand2').pack(side=tk.LEFT, padx=15)
-
+        # No add/clear buttons - fixed 2 sectors
         for idx in range(len(self.custom_sectors)):
             self._create_sector_row(idx)
 
@@ -1098,7 +1060,7 @@ class AzimuthalIntegrationModule(GUIBase):
                         text="💡 Define sectors with bin size. Each sector will be divided into multiple bins.")
                 else:
                     self.custom_instruction_label.config(
-                        text="💡 Define custom azimuthal sectors. Add multiple rows for different angular ranges.")
+                        text="💡 Define custom azimuthal sectors (2 sectors).")
             except:
                 pass
         
@@ -1217,9 +1179,7 @@ class AzimuthalIntegrationModule(GUIBase):
                 self._add_trace(sector[1], callback)
                 self._add_trace(sector[3], callback)
 
-            tk.Button(row_frame, text="✖", command=lambda i=idx: self._delete_sector(i),
-                     bg='#E88C8C', fg='white', font=('Comic Sans MS', 9, 'bold'),
-                     relief='flat', width=3, cursor='hand2').pack(side=tk.LEFT)
+            # No delete button - fixed 2 sectors
 
         except Exception as e:
             print(f"Error creating sector row {idx}: {e}")
@@ -1387,44 +1347,39 @@ class AzimuthalIntegrationModule(GUIBase):
                     )]
                     params['bin_mode'] = False
             else:
-                if self.multiple_mode.get() == 'preset':
-                    preset_name = self.preset.get()
-                    params['sectors'] = self._get_preset_sectors(preset_name)
-                    params['preset_name'] = preset_name
-                    params['bin_mode'] = False
+                # Multiple sectors - custom sectors only
+                if self.multi_bin_mode.get():
+                    all_sectors = []
+                    for sector_data in self.custom_sectors:
+                        start = sector_data[0].get()
+                        end = sector_data[1].get()
+                        base_label = sector_data[2].get()
+                        bin_step = sector_data[3].get()
+
+                        if bin_step <= 0:
+                            messagebox.showerror("Error", f"Bin size for {base_label} must be positive!")
+                            return
+
+                        current = start
+                        bin_idx = 1
+                        while current < end:
+                            next_angle = min(current + bin_step, end)
+                            label = f"{base_label}_Bin{bin_idx:02d}_{current:.1f}-{next_angle:.1f}"
+                            all_sectors.append((float(current), float(next_angle), label))
+                            current = next_angle
+                            bin_idx += 1
+
+                    params['sectors'] = all_sectors
+                    params['bin_mode'] = True
                 else:
-                    if self.multi_bin_mode.get():
-                        all_sectors = []
-                        for sector_data in self.custom_sectors:
-                            start = sector_data[0].get()
-                            end = sector_data[1].get()
-                            base_label = sector_data[2].get()
-                            bin_step = sector_data[3].get()
-
-                            if bin_step <= 0:
-                                messagebox.showerror("Error", f"Bin size for {base_label} must be positive!")
-                                return
-
-                            current = start
-                            bin_idx = 1
-                            while current < end:
-                                next_angle = min(current + bin_step, end)
-                                label = f"{base_label}_Bin{bin_idx:02d}_{current:.1f}-{next_angle:.1f}"
-                                all_sectors.append((float(current), float(next_angle), label))
-                                current = next_angle
-                                bin_idx += 1
-
-                        params['sectors'] = all_sectors
-                        params['bin_mode'] = True
-                    else:
-                        sectors = []
-                        for sector_data in self.custom_sectors:
-                            start = sector_data[0].get()
-                            end = sector_data[1].get()
-                            label = sector_data[2].get()
-                            sectors.append((float(start), float(end), str(label)))
-                        params['sectors'] = sectors
-                        params['bin_mode'] = False
+                    sectors = []
+                    for sector_data in self.custom_sectors:
+                        start = sector_data[0].get()
+                        end = sector_data[1].get()
+                        label = sector_data[2].get()
+                        sectors.append((float(start), float(end), str(label)))
+                    params['sectors'] = sectors
+                    params['bin_mode'] = False
 
             self.processing = True
             self.stop_processing = False
@@ -1557,13 +1512,10 @@ class AzimuthalIntegrationModule(GUIBase):
 
         sector_list = params['sectors']
 
-        if 'preset_name' in params:
-            self.log(f"🌻 Using preset: {params['preset_name']}")
+        if params.get('bin_mode', False):
+            self.log(f"🦄 Using custom sectors with bin mode")
         else:
-            if params.get('bin_mode', False):
-                self.log(f"🦄 Using custom sectors with bin mode")
-            else:
-                self.log(f"🦄 Using custom sectors")
+            self.log(f"🦄 Using custom sectors")
 
         self.log(f"🦄 Number of sectors/bins: {len(sector_list)}")
 
