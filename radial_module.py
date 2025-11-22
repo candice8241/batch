@@ -23,9 +23,148 @@ from pyFAI.integrator.azimuthal import AzimuthalIntegrator
 
 # GUI imports
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog, scrolledtext
+from tkinter import ttk, messagebox, filedialog, scrolledtext, simpledialog
 
 from theme_module import GUIBase, CuteSheepProgressBar, ModernTab, ModernButton
+
+
+# ============================================================================
+# Custom UI Components
+# ============================================================================
+
+class SpinboxStyleButton(tk.Frame):
+    """Spinbox-style button widget matching the reference image"""
+
+    def __init__(self, parent, text, command, width=80, font_size=9, **kwargs):
+        super().__init__(parent, bg='#E8D5F0', **kwargs)
+
+        self.command = command
+        self.text = text
+
+        # Configure frame with rounded appearance
+        self.configure(relief='solid', borderwidth=1, highlightbackground='#C8B5D0',
+                      highlightthickness=1)
+
+        # Create button
+        self.button = tk.Button(
+            self,
+            text=text,
+            command=command,
+            bg='#E8D5F0',
+            fg='#6B4C7A',
+            font=('Arial', font_size),
+            relief='flat',
+            borderwidth=0,
+            activebackground='#D5C0E0',
+            activeforeground='#6B4C7A',
+            cursor='hand2',
+            padx=15,
+            pady=5
+        )
+        self.button.pack(fill=tk.BOTH, expand=True)
+
+        # Hover effects
+        self.button.bind('<Enter>', self._on_enter)
+        self.button.bind('<Leave>', self._on_leave)
+
+    def _on_enter(self, event):
+        self.button.config(bg='#D5C0E0')
+        self.configure(bg='#D5C0E0')
+
+    def _on_leave(self, event):
+        self.button.config(bg='#E8D5F0')
+        self.configure(bg='#E8D5F0')
+
+
+class CustomSpinbox(tk.Frame):
+    """Custom spinbox with left/right arrow buttons for value adjustment"""
+
+    def __init__(self, parent, from_=0, to=100, textvariable=None, increment=1,
+                 width=80, is_float=False, **kwargs):
+        super().__init__(parent, bg='#F0E6FA', **kwargs)
+
+        self.from_ = from_
+        self.to = to
+        self.increment = increment
+        self.is_float = is_float
+        self.textvariable = textvariable
+
+        # Left decrease button
+        self.left_btn = tk.Button(
+            self,
+            text="<",
+            command=self.decrease,
+            bg='white',
+            fg='#6B4C7A',
+            font=('Arial', 10, 'bold'),
+            relief='solid',
+            borderwidth=1,
+            activebackground='#F0E6FA',
+            cursor='hand2',
+            width=2,
+            padx=2,
+            pady=2
+        )
+        self.left_btn.pack(side=tk.LEFT, padx=2)
+
+        # Value display
+        self.value_frame = tk.Frame(self, bg='white', relief='solid', borderwidth=1)
+        self.value_frame.pack(side=tk.LEFT, padx=2)
+
+        self.entry = tk.Entry(
+            self.value_frame,
+            textvariable=textvariable,
+            font=('Arial', 10),
+            bg='white',
+            fg='#333333',
+            justify='center',
+            relief='flat',
+            borderwidth=0,
+            width=8
+        )
+        self.entry.pack(padx=3, pady=2)
+
+        # Right increase button
+        self.right_btn = tk.Button(
+            self,
+            text=">",
+            command=self.increase,
+            bg='white',
+            fg='#6B4C7A',
+            font=('Arial', 10, 'bold'),
+            relief='solid',
+            borderwidth=1,
+            activebackground='#F0E6FA',
+            cursor='hand2',
+            width=2,
+            padx=2,
+            pady=2
+        )
+        self.right_btn.pack(side=tk.LEFT, padx=2)
+
+    def increase(self):
+        """Increase value"""
+        try:
+            current = self.textvariable.get()
+            if self.is_float:
+                new_val = min(float(self.to), current + self.increment)
+            else:
+                new_val = min(int(self.to), current + self.increment)
+            self.textvariable.set(new_val)
+        except:
+            pass
+
+    def decrease(self):
+        """Decrease value"""
+        try:
+            current = self.textvariable.get()
+            if self.is_float:
+                new_val = max(float(self.from_), current - self.increment)
+            else:
+                new_val = max(int(self.from_), current - self.increment)
+            self.textvariable.set(new_val)
+        except:
+            pass
 
 
 # ============================================================================
@@ -331,84 +470,94 @@ class AzimuthalIntegrationModule(GUIBase):
                 font=('Comic Sans MS', 9, 'italic')).pack()
 
     def _create_io_section(self):
-        """File Configuration section - styled like the uploaded image"""
+        """File Configuration section - matching powder_module style"""
         io_frame = tk.Frame(self.parent, bg=self.colors['bg'])
         io_frame.pack(fill=tk.X, padx=0, pady=(0, 10))
 
-        # No outer card frame - direct white background
-        content = tk.Frame(io_frame, bg='white', relief='solid', borderwidth=1)
-        content.pack(fill=tk.X, padx=20, pady=0)
+        # Card frame
+        card = self.create_card_frame(io_frame)
+        card.pack(fill=tk.X)
 
-        # Title at top
-        title_label = tk.Label(content, text="Integration Settings",
-                              bg='white', fg='#9370DB',
-                              font=('Arial', 11, 'bold'))
-        title_label.pack(anchor=tk.W, padx=15, pady=(10, 15))
+        content = tk.Frame(card, bg=self.colors['card_bg'], padx=20, pady=12)
+        content.pack(fill=tk.BOTH, expand=True)
 
-        # PONI file
-        self._create_simple_file_row(content, "PONI File", self.poni_path,
-                                     lambda: self._browse_file(self.poni_path, "PONI files", "*.poni"))
+        # Header
+        header = tk.Frame(content, bg=self.colors['card_bg'])
+        header.pack(anchor=tk.W, pady=(0, 8))
 
-        # Mask file
-        self._create_simple_file_row(content, "Mask File", self.mask_path,
-                                     lambda: self._browse_file(self.mask_path, "Mask files", "*.npy *.h5 *.edf"))
+        tk.Label(header, text="🦊", bg=self.colors['card_bg'],
+                font=('Segoe UI Emoji', 14)).pack(side=tk.LEFT, padx=(0, 6))
 
-        # Input H5 file
-        self._create_simple_file_row(content, "Input .h5 File", self.input_pattern,
-                                     self._select_input_files)
+        tk.Label(header, text="Integration Settings",
+                bg=self.colors['card_bg'], fg=self.colors['primary'],
+                font=('Arial', 11, 'bold')).pack(side=tk.LEFT)
 
-        # Output directory
-        self._create_simple_file_row(content, "Output Directory", self.output_dir,
-                                     self._browse_directory)
+        # File pickers
+        self.create_file_picker_with_spinbox_btn(content, "PONI File", self.poni_path,
+                               [("PONI files", "*.poni"), ("All files", "*.*")])
+        self.create_file_picker_with_spinbox_btn(content, "Mask File", self.mask_path,
+                               [("Mask files", "*.npy *.h5 *.edf"), ("All files", "*.*")])
+        self.create_file_picker_with_spinbox_btn(content, "Input .h5 File",
+                               self.input_pattern, [("HDF5 files", "*.h5"), ("All files", "*.*")])
+        self.create_folder_picker_with_spinbox_btn(content, "Output Directory", self.output_dir)
 
-        # Dataset path
-        self._create_simple_file_row(content, "Dataset Path", self.dataset_path, None)
+        # Dataset Path
+        dataset_container = tk.Frame(content, bg=self.colors['card_bg'])
+        dataset_container.pack(fill=tk.X, pady=(5, 0))
 
-        # Bottom section with Number of Points and Unit
-        bottom_frame = tk.Frame(content, bg='white')
-        bottom_frame.pack(fill=tk.X, padx=15, pady=(15, 15))
+        tk.Label(dataset_container, text="Dataset Path", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
 
-        # Number of Points on the left
-        npt_frame = tk.Frame(bottom_frame, bg='white')
-        npt_frame.pack(side=tk.LEFT, padx=(0, 40))
+        dataset_input_frame = tk.Frame(dataset_container, bg=self.colors['card_bg'])
+        dataset_input_frame.pack(fill=tk.X)
 
-        tk.Label(npt_frame, text="Number of Points",
-                bg='white', fg='#555',
-                font=('Arial', 10)).pack(anchor=tk.W)
+        tk.Entry(dataset_input_frame, textvariable=self.dataset_path, font=('Arial', 9),
+                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=5)
 
-        npt_controls = tk.Frame(npt_frame, bg='white')
-        npt_controls.pack(anchor=tk.W, pady=(5, 0))
+        dataset_browse_btn = SpinboxStyleButton(
+            dataset_input_frame,
+            "Browse",
+            lambda: self.browse_dataset_path(),
+            width=75
+        )
+        dataset_browse_btn.pack(side=tk.LEFT, padx=(5, 0))
 
-        tk.Button(npt_controls, text="<", command=lambda: self._adjust_npt(-100),
-                 bg='#E8D5E8', fg='#333', font=('Arial', 9, 'bold'),
-                 relief='flat', width=2, padx=2, cursor='hand2').pack(side=tk.LEFT)
+        # Parameters - Number of Points and Unit in same row
+        param_frame = tk.Frame(content, bg=self.colors['card_bg'])
+        param_frame.pack(fill=tk.X, pady=(10, 0))
 
-        npt_entry = tk.Entry(npt_controls, textvariable=self.npt, width=8,
-                            font=('Arial', 10), justify='center', relief='solid',
-                            borderwidth=1)
-        npt_entry.pack(side=tk.LEFT, padx=3)
+        # Number of Points (left side with expand for distributed centering)
+        npt_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
+        npt_cont.pack(side=tk.LEFT, expand=True)
+        tk.Label(npt_cont, text="Number of Points", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
+        CustomSpinbox(npt_cont, from_=500, to=10000, textvariable=self.npt,
+                     increment=100, is_float=False).pack(anchor=tk.W)
 
-        tk.Button(npt_controls, text=">", command=lambda: self._adjust_npt(100),
-                 bg='#E8D5E8', fg='#333', font=('Arial', 9, 'bold'),
-                 relief='flat', width=2, padx=2, cursor='hand2').pack(side=tk.LEFT)
+        # Unit (right side with expand for distributed centering)
+        unit_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
+        unit_cont.pack(side=tk.LEFT, expand=True)
 
-        # Unit selection on the right
-        unit_frame = tk.Frame(bottom_frame, bg='white')
-        unit_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        tk.Label(unit_cont, text="Unit", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(pady=(0, 8))
 
-        tk.Label(unit_frame, text="Unit",
-                bg='white', fg='#555',
-                font=('Arial', 10)).pack(anchor=tk.W)
+        unit_options_frame = tk.Frame(unit_cont, bg=self.colors['card_bg'])
+        unit_options_frame.pack()
 
-        unit_radios = tk.Frame(unit_frame, bg='white')
-        unit_radios.pack(anchor=tk.W, pady=(5, 0))
+        tk.Radiobutton(unit_options_frame, text="2θ (°)", variable=self.unit, value='2th_deg',
+                      bg=self.colors['card_bg'], font=('Arial', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
 
-        tk.Radiobutton(unit_radios, text="2θ (°)", variable=self.unit, value='2th_deg',
-                      bg='white', font=('Arial', 9), indicatoron=True).pack(side=tk.LEFT, padx=(0, 15))
-        tk.Radiobutton(unit_radios, text="Q (Å⁻¹)", variable=self.unit, value='q_A^-1',
-                      bg='white', font=('Arial', 9), indicatoron=True).pack(side=tk.LEFT, padx=(0, 15))
-        tk.Radiobutton(unit_radios, text="r (mm)", variable=self.unit, value='r_mm',
-                      bg='white', font=('Arial', 9), indicatoron=True).pack(side=tk.LEFT)
+        tk.Radiobutton(unit_options_frame, text="Q (Å⁻¹)", variable=self.unit, value='q_A^-1',
+                      bg=self.colors['card_bg'], font=('Arial', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
+
+        tk.Radiobutton(unit_options_frame, text="r (mm)", variable=self.unit, value='r_mm',
+                      bg=self.colors['card_bg'], font=('Arial', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
 
     def _create_simple_file_row(self, parent, label_text, variable, browse_command):
         """Create a simple file input row without extra frames"""
@@ -477,6 +626,88 @@ class AzimuthalIntegrationModule(GUIBase):
                 self.output_dir.set(directory)
         except Exception as e:
             self.log(f"Error browsing directory: {e}")
+
+    def create_file_picker_with_spinbox_btn(self, parent, label_text, var, filetypes, pattern=False):
+        """Create file picker with spinbox-style button"""
+        container = tk.Frame(parent, bg=self.colors['card_bg'])
+        container.pack(fill=tk.X, pady=(5, 0))
+
+        tk.Label(container, text=label_text, bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
+
+        input_frame = tk.Frame(container, bg=self.colors['card_bg'])
+        input_frame.pack(fill=tk.X)
+
+        tk.Entry(input_frame, textvariable=var, font=('Arial', 9),
+                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=5)
+
+        if pattern:
+            btn = SpinboxStyleButton(input_frame, "Browse Folder",
+                                    lambda: self.browse_folder(var),
+                                    width=95)
+        else:
+            btn = SpinboxStyleButton(input_frame, "Browse",
+                                    lambda: self.browse_file(var, filetypes),
+                                    width=75)
+        btn.pack(side=tk.LEFT, padx=(5, 0))
+
+    def create_folder_picker_with_spinbox_btn(self, parent, label_text, var):
+        """Create folder picker with spinbox-style button"""
+        container = tk.Frame(parent, bg=self.colors['card_bg'])
+        container.pack(fill=tk.X, pady=(5, 0))
+
+        tk.Label(container, text=label_text, bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
+
+        input_frame = tk.Frame(container, bg=self.colors['card_bg'])
+        input_frame.pack(fill=tk.X)
+
+        tk.Entry(input_frame, textvariable=var, font=('Arial', 9),
+                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=5)
+
+        btn = SpinboxStyleButton(input_frame, "Browse",
+                                lambda: self.browse_folder(var),
+                                width=75)
+        btn.pack(side=tk.LEFT, padx=(5, 0))
+
+    def browse_file(self, var, filetypes):
+        """Browse for file"""
+        try:
+            filename = filedialog.askopenfilename(filetypes=filetypes)
+            if filename:
+                var.set(filename)
+        except Exception as e:
+            self.log(f"Error browsing file: {str(e)}")
+
+    def browse_folder(self, var):
+        """Browse for folder"""
+        try:
+            foldername = filedialog.askdirectory()
+            if foldername:
+                var.set(foldername)
+        except Exception as e:
+            self.log(f"Error browsing folder: {str(e)}")
+
+    def browse_dataset_path(self):
+        """Browse for dataset path - Using simpledialog"""
+        result = messagebox.askquestion(
+            "Dataset Path",
+            "Dataset path is typically an HDF5 internal path like 'entry/data/data'.\n\n" +
+            "Do you want to manually enter the path?\n\n" +
+            "Click 'No' to keep the current value.",
+            icon='question'
+        )
+
+        if result == 'yes':
+            # Use simpledialog which is thread-safe
+            new_path = simpledialog.askstring(
+                "Enter Dataset Path",
+                "Enter HDF5 Dataset Path:",
+                initialvalue=self.dataset_path.get(),
+                parent=self.root
+            )
+            if new_path:
+                self.dataset_path.set(new_path)
 
     def _create_azimuthal_section(self):
         """Azimuthal settings"""
