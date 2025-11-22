@@ -598,27 +598,27 @@ class PowderXRDModule(GUIBase):
         )
         dataset_browse_btn.pack(side=tk.LEFT, padx=(5, 0))
 
-        # Parameters
+        # Parameters - Number of Points and Unit in same row
         param_frame = tk.Frame(left_section, bg=self.colors['card_bg'])
         param_frame.pack(fill=tk.X, pady=(10, 0))
 
-        # Number of Points
+        # Number of Points (左侧)
         npt_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
-        npt_cont.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
+        npt_cont.pack(side=tk.LEFT, padx=(0, 30))
         tk.Label(npt_cont, text="Number of Points", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
         CustomSpinbox(npt_cont, from_=500, to=10000, textvariable=self.npt,
                      increment=100, is_float=False).pack(anchor=tk.W)
 
-        # Unit (改为单选按钮形式)
-        unit_frame = tk.Frame(left_section, bg=self.colors['card_bg'])
-        unit_frame.pack(fill=tk.X, pady=(10, 0))
+        # Unit (右侧，改为单选按钮形式)
+        unit_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
+        unit_cont.pack(side=tk.LEFT)
 
-        tk.Label(unit_frame, text="Unit", bg=self.colors['card_bg'],
+        tk.Label(unit_cont, text="Unit", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
-        unit_options_frame = tk.Frame(unit_frame, bg=self.colors['card_bg'])
-        unit_options_frame.pack(fill=tk.X)
+        unit_options_frame = tk.Frame(unit_cont, bg=self.colors['card_bg'])
+        unit_options_frame.pack(anchor=tk.W)
 
         tk.Radiobutton(unit_options_frame, text="2θ (°)", variable=self.unit, value='2θ (°)',
                       bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
@@ -642,14 +642,21 @@ class PowderXRDModule(GUIBase):
 
         # 右侧标题（和左侧标题对齐）
         tk.Label(right_outer, text="Output Options", bg=self.colors['card_bg'],
-                fg=self.colors['primary'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 20))
+                fg=self.colors['primary'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
-        # 创建一个容器来放置内容，使其相对于左侧文件选择器部分垂直居中
-        right_content_container = tk.Frame(right_outer, bg=self.colors['card_bg'])
-        right_content_container.pack(expand=True)
+        # 创建垂直居中容器
+        center_container = tk.Frame(right_outer, bg=self.colors['card_bg'])
+        center_container.pack(fill=tk.BOTH, expand=True)
 
-        right_section = tk.Frame(right_content_container, bg=self.colors['card_bg'])
-        right_section.pack()
+        # 上方填充
+        tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
+
+        # 内容区域（左对齐）
+        right_section = tk.Frame(center_container, bg=self.colors['card_bg'])
+        right_section.pack(anchor=tk.W)
+
+        # 下方填充
+        tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
 
         # Output Formats
         tk.Label(right_section, text="Select Output Formats:", bg=self.colors['card_bg'],
