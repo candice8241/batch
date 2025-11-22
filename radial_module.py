@@ -1133,8 +1133,9 @@ class AzimuthalIntegrationModule(GUIBase):
         layout_container.pack(fill=tk.BOTH, expand=True)
 
         # ========== LEFT MODULE: Output Options ==========
-        left_module = tk.Frame(layout_container, bg=self.colors['bg'])
+        left_module = tk.Frame(layout_container, bg=self.colors['bg'], height=200)
         left_module.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
+        left_module.pack_propagate(False)
 
         left_card = self.create_card_frame(left_module)
         left_card.pack(fill=tk.BOTH, expand=True)
@@ -1245,8 +1246,9 @@ class AzimuthalIntegrationModule(GUIBase):
                 font=('Arial', 8, 'italic')).pack(anchor=tk.W, pady=(2, 0))
 
         # ========== RIGHT MODULE: Run Button ==========
-        right_module = tk.Frame(layout_container, bg=self.colors['bg'])
+        right_module = tk.Frame(layout_container, bg=self.colors['bg'], height=200)
         right_module.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
+        right_module.pack_propagate(False)
 
         # Vertical centering container for run button
         center_container = tk.Frame(right_module, bg=self.colors['bg'])
