@@ -667,7 +667,11 @@ class PowderXRDModule(GUIBase):
         # 下方填充
         tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
 
-        # Output Formats with border
+        # Output Formats 标题（在边框外）
+        tk.Label(output_options_content, text="Select Output Formats:", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
+
+        # Output Formats with border（只框住六个格式复选框）
         formats_border_frame = tk.Frame(output_options_content, bg=self.colors['card_bg'],
                                        relief='solid', borderwidth=1, highlightbackground='#CCCCCC')
         formats_border_frame.pack(fill=tk.X, pady=(0, 10))
@@ -675,9 +679,6 @@ class PowderXRDModule(GUIBase):
         # Inner padding frame
         formats_content = tk.Frame(formats_border_frame, bg=self.colors['card_bg'])
         formats_content.pack(fill=tk.X, padx=8, pady=8)
-
-        tk.Label(formats_content, text="Select Output Formats:", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
         formats_grid = tk.Frame(formats_content, bg=self.colors['card_bg'])
         formats_grid.pack(fill=tk.X)
