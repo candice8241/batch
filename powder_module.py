@@ -973,24 +973,16 @@ class PowderXRDModule(GUIBase):
                           self.run_phase_analysis,
                           width=300).pack(pady=(15, 0))
 
-        right_col_outer = tk.Frame(
-            main_content,
-            bg=self.colors['card_bg'],
-            padx=6,
+        right_col = tk.Frame(
+            main_content, 
+            bg=self.colors['card_bg'], 
+            padx=6, 
             pady=6,
-            highlightbackground="#8B7BB8",  # Border color (matching your purple theme)
-            highlightthickness=2,             # Border width
-            relief=tk.SOLID                   # Border style
+            highlightbackground="#8B7BB8",
+            highlightthickness=2,
+            relief=tk.SOLID
         )
-        right_col_outer.pack(side=tk.LEFT, fill=tk.Y, anchor=tk.N)
-
-        # 水平居中容器
-        horizontal_center = tk.Frame(right_col_outer, bg=self.colors['card_bg'])
-        horizontal_center.pack()
-
-        # 内容区域（水平居中）
-        right_col = tk.Frame(horizontal_center, bg=self.colors['card_bg'])
-        right_col.pack(padx=(5, 15))
+        right_col.pack(side=tk.LEFT, fill=tk.NONE, anchor=tk.N)  # Changed this line
 
         param_header = tk.Frame(right_col, bg=self.colors['card_bg'])
         param_header.pack(pady=(5, 15))
