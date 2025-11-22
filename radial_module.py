@@ -479,8 +479,8 @@ class AzimuthalIntegrationModule(GUIBase):
         layout_container.pack(fill=tk.X)
 
         # ========== LEFT MODULE: Integration Settings ==========
-        left_module = tk.Frame(layout_container, bg=self.colors['bg'], width=450)
-        left_module.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 5))
+        left_module = tk.Frame(layout_container, bg=self.colors['bg'], width=450, height=500)
+        left_module.pack(side=tk.LEFT, fill=tk.BOTH, padx=(0, 5))
         left_module.pack_propagate(False)
 
         left_card = self.create_card_frame(left_module)
@@ -568,8 +568,8 @@ class AzimuthalIntegrationModule(GUIBase):
                       activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
 
         # ========== RIGHT MODULE: Azimuthal Angle Settings ==========
-        right_module = tk.Frame(layout_container, bg=self.colors['bg'], width=450)
-        right_module.pack(side=tk.LEFT, fill=tk.Y, padx=(5, 0))
+        right_module = tk.Frame(layout_container, bg=self.colors['bg'], width=450, height=500)
+        right_module.pack(side=tk.LEFT, fill=tk.BOTH, padx=(5, 0))
         right_module.pack_propagate(False)
 
         right_card = self.create_card_frame(right_module)
