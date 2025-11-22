@@ -22,32 +22,76 @@ import weakref
 
 # Suppress Tkinter variable deletion warnings during shutdown
 # This prevents "RuntimeError: main thread is not in main loop" warnings
-def _suppress_tkinter_warnings():
-    """Suppress Tkinter __del__ warnings by overriding sys.stderr during cleanup"""
-    import sys
+class _TkinterWarningFilter:
+    """Filter for stderr that suppresses specific Tkinter errors"""
 
-    # Store original stderr
-    _original_stderr = sys.stderr
+    def __init__(self, original_stderr):
+        self.original = original_stderr
+        self.buffer = []
+        self.suppressed_patterns = [
+            "RuntimeError: main thread is not in main loop",
+            "Exception ignored in: <function Variable.__del__",
+            "File \"",  # Part of traceback we want to suppress
+            "Traceback (most recent call last):",
+        ]
+        self.in_tkinter_error = False
 
-    # Create a filter for stderr that suppresses specific Tkinter errors
-    class TkinterWarningFilter:
-        def __init__(self, original):
-            self.original = original
+    def write(self, message):
+        message_str = str(message)
 
-        def write(self, message):
-            # Suppress the specific Tkinter __del__ error messages
-            if "RuntimeError: main thread is not in main loop" not in str(message):
-                if "Exception ignored in: <function Variable.__del__" not in str(message):
+        # Check if this is a Tkinter error start
+        if "Exception ignored in: <function Variable.__del__" in message_str:
+            self.in_tkinter_error = True
+            return  # Suppress
+
+        # If we're in a Tkinter error block, suppress everything until we see a blank line
+        if self.in_tkinter_error:
+            # Check if this is end of error (blank line or new non-traceback content)
+            if message_str.strip() == "" or (
+                not message_str.startswith("  ") and
+                "Traceback" not in message_str and
+                "File " not in message_str and
+                "RuntimeError" not in message_str
+            ):
+                self.in_tkinter_error = False
+                # Only write if it's not blank
+                if message_str.strip():
                     self.original.write(message)
+            return  # Suppress everything in error block
 
-        def flush(self):
+        # Check for RuntimeError patterns
+        if any(pattern in message_str for pattern in self.suppressed_patterns[:2]):
+            return  # Suppress
+
+        # Write everything else
+        self.original.write(message)
+
+    def flush(self):
+        if hasattr(self.original, 'flush'):
             self.original.flush()
 
-    # Replace stderr with filtered version
-    sys.stderr = TkinterWarningFilter(_original_stderr)
+    def __getattr__(self, name):
+        # Delegate all other attributes to original stderr
+        return getattr(self.original, name)
 
-# Apply the filter
-_suppress_tkinter_warnings()
+# Apply the filter at module import time
+import sys
+if not isinstance(sys.stderr, _TkinterWarningFilter):
+    sys.stderr = _TkinterWarningFilter(sys.stderr)
+
+# Additional protection: suppress warnings module warnings
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*main thread is not in main loop.*")
+
+# Register cleanup handler to ensure filter stays active
+import atexit
+
+def _ensure_filter_active():
+    """Ensure stderr filter is active at exit"""
+    if not isinstance(sys.stderr, _TkinterWarningFilter):
+        sys.stderr = _TkinterWarningFilter(sys.stderr)
+
+atexit.register(_ensure_filter_active)
 
 from batch_integration import BatchIntegrator
 from half_auto_fitting import DataProcessor
@@ -331,6 +375,7 @@ class PowderXRDModule(GUIBase):
         # Wait for running threads to complete (with timeout)
         import time
         import gc
+        import os
         timeout = 3  # Reduced timeout
         start_time = time.time()
 
@@ -343,8 +388,8 @@ class PowderXRDModule(GUIBase):
                 if remaining_time > 0:
                     thread.join(timeout=remaining_time)
 
-        # Clear Tkinter variables safely - IMPROVED APPROACH
-        # This completely prevents the "main thread is not in main loop" error
+        # Clear Tkinter variables safely - COMPLETELY SUPPRESSED VERSION
+        # Suppress ALL stderr output during cleanup to prevent any error messages
         try:
             # Store variable names to avoid dict change during iteration
             var_names = [
@@ -374,17 +419,34 @@ class PowderXRDModule(GUIBase):
                     except:
                         pass
 
-            # Explicitly delete Tcl variables in the main thread to prevent __del__ errors
+            # Explicitly delete Tcl variables with complete stderr suppression
             def _cleanup_tk_vars():
-                for var in tk_vars:
+                # Temporarily redirect stderr to devnull during cleanup
+                import sys
+                old_stderr = sys.stderr
+
+                try:
+                    # Redirect to devnull
+                    sys.stderr = open(os.devnull, 'w')
+
+                    for var in tk_vars:
+                        try:
+                            if hasattr(var, '_name') and hasattr(var, '_tk'):
+                                # Unset the Tcl variable to prevent __del__ from trying to access it
+                                var._tk.globalunsetvar(var._name)
+                        except:
+                            pass
+
+                    # Force garbage collection after cleanup
+                    gc.collect()
+
+                finally:
+                    # Restore stderr
                     try:
-                        if hasattr(var, '_name') and hasattr(var, '_tk'):
-                            # Unset the Tcl variable to prevent __del__ from trying to access it
-                            var._tk.globalunsetvar(var._name)
+                        sys.stderr.close()
                     except:
                         pass
-                # Force garbage collection after cleanup
-                gc.collect()
+                    sys.stderr = old_stderr
 
             # Schedule cleanup in main thread
             if hasattr(self, 'root') and self.root:
