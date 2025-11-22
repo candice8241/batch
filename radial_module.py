@@ -450,7 +450,6 @@ class AzimuthalIntegrationModule(GUIBase):
         self._create_reference_section()
         self._create_separated_settings_sections()
         self._create_output_options_section()
-        self._create_run_button_section()
         self._create_progress_section()
         self._create_log_section()
 
@@ -1124,16 +1123,23 @@ class AzimuthalIntegrationModule(GUIBase):
         self.update_mode()
 
     def _create_output_options_section(self):
-        """Output format and stacked plot options section"""
-        # Main container
-        options_frame = tk.Frame(self.parent, bg=self.colors['bg'])
-        options_frame.pack(fill=tk.X, padx=0, pady=(0, 10))
+        """Output format and stacked plot options section with Run button on the right"""
+        # Main container for both sections
+        sections_frame = tk.Frame(self.parent, bg=self.colors['bg'])
+        sections_frame.pack(fill=tk.X, padx=0, pady=(0, 10))
 
-        # Card frame
-        card = self.create_card_frame(options_frame)
-        card.pack(fill=tk.X)
+        # Container for left-right layout
+        layout_container = tk.Frame(sections_frame, bg=self.colors['bg'])
+        layout_container.pack(fill=tk.BOTH, expand=True)
 
-        content = tk.Frame(card, bg=self.colors['card_bg'], padx=20, pady=12)
+        # ========== LEFT MODULE: Output Options ==========
+        left_module = tk.Frame(layout_container, bg=self.colors['bg'])
+        left_module.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
+
+        left_card = self.create_card_frame(left_module)
+        left_card.pack(fill=tk.BOTH, expand=True)
+
+        content = tk.Frame(left_card, bg=self.colors['card_bg'], padx=20, pady=12)
         content.pack(fill=tk.BOTH, expand=True)
 
         # Header
@@ -1237,6 +1243,21 @@ class AzimuthalIntegrationModule(GUIBase):
         tk.Label(right_section, text="(use 'auto' or number for offset)",
                 bg=self.colors['card_bg'], fg='#888888',
                 font=('Arial', 8, 'italic')).pack(anchor=tk.W, pady=(2, 0))
+
+        # ========== RIGHT MODULE: Run Button ==========
+        right_module = tk.Frame(layout_container, bg=self.colors['bg'])
+        right_module.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
+
+        # Vertical centering container for run button
+        center_container = tk.Frame(right_module, bg=self.colors['bg'])
+        center_container.pack(expand=True)
+
+        self.run_btn = tk.Button(center_container, text="🌸 Run Azimuthal Integration",
+                           command=self.run_integration,
+                           bg='#E89FE9', fg='white',
+                           font=('Arial', 10, 'bold'), relief='flat',
+                           padx=12, pady=5, cursor='hand2')
+        self.run_btn.pack()
 
     def _create_run_button_section(self):
         """Run button directly on background"""
