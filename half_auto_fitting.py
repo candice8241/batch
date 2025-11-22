@@ -2401,41 +2401,41 @@ class PeakFittingGUI:
             self.update_info("\nBatch processing stopped by user.\n")
 
 # ==================== Startup Window ====================
-# ==================== Main Entry Point (无启动窗口版) ====================
+# ==================== Main Entry Point ====================
 def main():
-    """主程序入口 - 简单直接版"""
+    """Main program entry point"""
     root = tk.Tk()
-    
-    # 设置应用ID
+
+    # Set application ID for Windows taskbar
     try:
         app_id = u"felicity.xrd.peakfitting.v1"
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
     except:
         pass
-    
-    # 设置图标
+
+    # Set application icon
     icon_paths = [
         "xrd_sheep_icon.ico",
         "xrd_peak_fitting_icon.ico",
         os.path.join(os.path.dirname(__file__), "icon.ico"),
         r"D:\HEPS\ID31\dioptas_data\github_felicity\batch\HP_full_package\ChatGPT Image.ico"
     ]
-    
+
     for icon_path in icon_paths:
         if os.path.exists(icon_path):
             try:
                 root.iconbitmap(icon_path)
-                print(f"✅ 图标加载成功: {icon_path}")
+                print(f"✅ Icon loaded successfully: {icon_path}")
                 break
             except Exception as e:
-                print(f"⚠️ 图标加载失败: {e}")
-    
-    # 启动应用
+                print(f"⚠️ Failed to load icon: {e}")
+
+    # Launch application
     app = PeakFittingGUI(root)
     root.mainloop()
-    root = tk.Tk()
-    
+
 
 if __name__ == "__main__":
     main()
+
 
