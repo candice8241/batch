@@ -1453,25 +1453,29 @@ class PowderXRDModule(GUIBase):
 
                 ax.plot(x, y_offset, linewidth=1.5, alpha=0.8, color=curve_color)
 
-                # FIXED: Position label from the lowest pressure curve (baseline + min intensity)
-                # For the first curve (i=0), the label starts from above the baseline
-                # For subsequent curves, labels are positioned at their respective baselines
+                # Position label based on offset, not on the data curve
+                # Place label at the baseline of each curve plus a fixed offset
                 baseline_y = i * offset_value
 
-                # Find the minimum intensity value at the label position to place label above the curve
-                label_x_pos = x_min + 0.02 * (x_max - x_min)
-                # Find y value at label x position (approximate using nearest point)
-                idx = np.argmin(np.abs(x - label_x_pos))
-                label_y = y_offset[idx] if idx < len(y_offset) else baseline_y
+                # Vertical offset to position label away from the data line
+                # Negative value moves label down, positive moves up
+                label_vertical_offset = -offset_value * 0.15  # 15% below baseline
+
+                # Horizontal position: far left of the plot
+                label_x_pos = x_min + 0.01 * (x_max - x_min)
+
+                # Label Y position: baseline + vertical offset (below the data curve)
+                label_y = baseline_y + label_vertical_offset
 
                 ax.text(label_x_pos,
                        label_y,
                        f'{pressure:.1f} GPa',
-                       fontsize=9,
-                       verticalalignment='bottom',  # Changed to 'bottom' so label sits above the curve
+                       fontsize=10,  # Slightly larger font for better readability
+                       verticalalignment='center',
                        horizontalalignment='left',
-                       bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
-                                edgecolor='gray', alpha=0.8))
+                       fontweight='bold',  # Bold text for emphasis
+                       bbox=dict(boxstyle='round,pad=0.4', facecolor='white',
+                                edgecolor='#666666', alpha=0.9, linewidth=1.5))
 
             ax.set_xlim(x_min, x_max)
             ax.set_xlabel(xlabel, fontsize=13, fontweight='bold')
