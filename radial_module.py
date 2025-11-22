@@ -436,7 +436,7 @@ class AzimuthalIntegrationModule(GUIBase):
             pass
 
         self._create_reference_section()
-        self._create_merged_settings_section()
+        self._create_separated_settings_sections()
         self._create_run_button_section()
         self._create_progress_section()
         self._create_log_section()
@@ -467,6 +467,173 @@ class AzimuthalIntegrationModule(GUIBase):
         tk.Label(center_container, text="Counter-clockwise rotation from right horizontal",
                 bg=self.colors['card_bg'], fg=self.colors['text_light'],
                 font=('Arial', 9, 'italic')).pack()
+
+    def _create_separated_settings_sections(self):
+        """Create two independent modules side by side: Integration Settings (left) and Azimuthal Angle Settings (right)"""
+        # Main container for both sections
+        sections_frame = tk.Frame(self.parent, bg=self.colors['bg'])
+        sections_frame.pack(fill=tk.X, padx=0, pady=(0, 10))
+
+        # Container for left-right layout
+        layout_container = tk.Frame(sections_frame, bg=self.colors['bg'])
+        layout_container.pack(fill=tk.X)
+
+        # ========== LEFT MODULE: Integration Settings ==========
+        left_module = tk.Frame(layout_container, bg=self.colors['bg'])
+        left_module.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
+
+        left_card = self.create_card_frame(left_module)
+        left_card.pack(fill=tk.BOTH, expand=True)
+
+        left_content = tk.Frame(left_card, bg=self.colors['card_bg'], padx=20, pady=12)
+        left_content.pack(fill=tk.BOTH, expand=True)
+
+        # Left header
+        left_header = tk.Frame(left_content, bg=self.colors['card_bg'])
+        left_header.pack(anchor=tk.W, pady=(0, 8))
+
+        tk.Label(left_header, text="🦊", bg=self.colors['card_bg'],
+                font=('Segoe UI Emoji', 14)).pack(side=tk.LEFT, padx=(0, 6))
+
+        tk.Label(left_header, text="Integration Settings",
+                bg=self.colors['card_bg'], fg=self.colors['primary'],
+                font=('Arial', 11, 'bold')).pack(side=tk.LEFT)
+
+        # File pickers
+        self.create_file_picker_with_spinbox_btn(left_content, "PONI File", self.poni_path,
+                               [("PONI files", "*.poni"), ("All files", "*.*")])
+        self.create_file_picker_with_spinbox_btn(left_content, "Mask File", self.mask_path,
+                               [("Mask files", "*.npy *.h5 *.edf"), ("All files", "*.*")])
+        self.create_file_picker_with_spinbox_btn(left_content, "Input .h5 File",
+                               self.input_pattern, [("HDF5 files", "*.h5"), ("All files", "*.*")])
+        self.create_folder_picker_with_spinbox_btn(left_content, "Output Directory", self.output_dir)
+
+        # Dataset Path
+        dataset_container = tk.Frame(left_content, bg=self.colors['card_bg'])
+        dataset_container.pack(fill=tk.X, pady=(5, 0))
+
+        tk.Label(dataset_container, text="Dataset Path", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
+
+        dataset_input_frame = tk.Frame(dataset_container, bg=self.colors['card_bg'])
+        dataset_input_frame.pack(fill=tk.X)
+
+        tk.Entry(dataset_input_frame, textvariable=self.dataset_path, font=('Arial', 9),
+                bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=5)
+
+        dataset_browse_btn = SpinboxStyleButton(
+            dataset_input_frame,
+            "Browse",
+            lambda: self.browse_dataset_path(),
+            width=75
+        )
+        dataset_browse_btn.pack(side=tk.LEFT, padx=(5, 0))
+
+        # Parameters - Number of Points and Unit in same row
+        param_frame = tk.Frame(left_content, bg=self.colors['card_bg'])
+        param_frame.pack(fill=tk.X, pady=(10, 0))
+
+        # Number of Points (left side with expand for distributed centering)
+        npt_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
+        npt_cont.pack(side=tk.LEFT, expand=True)
+        tk.Label(npt_cont, text="Number of Points", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
+        CustomSpinbox(npt_cont, from_=500, to=10000, textvariable=self.npt,
+                     increment=100, is_float=False).pack(anchor=tk.W)
+
+        # Unit (right side with expand for distributed centering)
+        unit_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
+        unit_cont.pack(side=tk.LEFT, expand=True)
+
+        tk.Label(unit_cont, text="Unit", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(pady=(0, 8))
+
+        unit_options_frame = tk.Frame(unit_cont, bg=self.colors['card_bg'])
+        unit_options_frame.pack()
+
+        tk.Radiobutton(unit_options_frame, text="2θ (°)", variable=self.unit, value='2th_deg',
+                      bg=self.colors['card_bg'], font=('Arial', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
+
+        tk.Radiobutton(unit_options_frame, text="Q (Å⁻¹)", variable=self.unit, value='q_A^-1',
+                      bg=self.colors['card_bg'], font=('Arial', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
+
+        tk.Radiobutton(unit_options_frame, text="r (mm)", variable=self.unit, value='r_mm',
+                      bg=self.colors['card_bg'], font=('Arial', 9),
+                      fg=self.colors['text_dark'], selectcolor='#E8D5F0',
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
+
+        # ========== RIGHT MODULE: Azimuthal Angle Settings ==========
+        right_module = tk.Frame(layout_container, bg=self.colors['bg'])
+        right_module.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
+
+        right_card = self.create_card_frame(right_module)
+        right_card.pack(fill=tk.BOTH, expand=True)
+
+        right_content = tk.Frame(right_card, bg=self.colors['card_bg'], padx=20, pady=12)
+        right_content.pack(fill=tk.BOTH, expand=True)
+
+        # Right header
+        right_header = tk.Frame(right_content, bg=self.colors['card_bg'])
+        right_header.pack(anchor=tk.W, pady=(0, 8))
+
+        tk.Label(right_header, text="🍰", bg=self.colors['card_bg'],
+                font=('Arial', 16)).pack(side=tk.LEFT, padx=(0, 6))
+
+        tk.Label(right_header, text="Azimuthal Angle Settings",
+                bg=self.colors['card_bg'], fg=self.colors['primary'],
+                font=('Arial', 11, 'bold')).pack(side=tk.LEFT)
+
+        # Create vertical centering container
+        center_container = tk.Frame(right_content, bg=self.colors['card_bg'])
+        center_container.pack(fill=tk.BOTH, expand=True)
+
+        # Top padding
+        tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
+
+        # Content area
+        azimuthal_content = tk.Frame(center_container, bg=self.colors['card_bg'])
+        azimuthal_content.pack()
+
+        # Mode selection with warning box
+        mode_container = tk.Frame(azimuthal_content, bg=self.colors['card_bg'])
+        mode_container.pack(fill=tk.X, pady=(0, 10))
+
+        tk.Label(mode_container, text="Integration Mode:", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 4))
+
+        mode_buttons = tk.Frame(mode_container, bg=self.colors['card_bg'])
+        mode_buttons.pack(anchor=tk.W)
+
+        tk.Radiobutton(mode_buttons, text="Single Sector", variable=self.mode,
+                      value='single', bg=self.colors['card_bg'],
+                      font=('Arial', 9, 'bold'),
+                      command=self.update_mode).pack(side=tk.LEFT, padx=(0, 15))
+
+        tk.Radiobutton(mode_buttons, text="Multiple Sectors", variable=self.mode,
+                      value='multiple', bg=self.colors['card_bg'],
+                      font=('Arial', 9, 'bold'),
+                      command=self.update_mode).pack(side=tk.LEFT)
+
+        # Warning box
+        warning_box = tk.Frame(mode_container, bg='#FFF4DC', relief='solid', borderwidth=1, padx=8, pady=4)
+        warning_box.pack(fill=tk.X, pady=(8, 0))
+
+        tk.Label(warning_box, text="💡 Define sectors with bin size. Each sector will be divided into multiple bins.",
+                bg='#FFF4DC', fg=self.colors['text_dark'],
+                font=('Arial', 8)).pack()
+
+        # Dynamic frame for mode-specific content
+        self.dynamic_frame = tk.Frame(azimuthal_content, bg=self.colors['card_bg'])
+        self.dynamic_frame.pack(fill=tk.BOTH, expand=True, pady=(10, 0))
+
+        self.update_mode()
+
+        # Bottom padding
+        tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
 
     def _create_merged_settings_section(self):
         """Merged card with Integration Settings (left) and Azimuthal Angle Settings (right)"""
