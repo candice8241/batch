@@ -981,16 +981,31 @@ class PowderXRDModule(GUIBase):
                           self.run_phase_analysis,
                           width=300).pack(pady=(15, 0))
 
+        # 创建右侧外层容器以实现居中
+        right_outer = tk.Frame(main_content, bg=self.colors['card_bg'])
+        right_outer.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # 创建垂直居中容器
+        center_container = tk.Frame(right_outer, bg=self.colors['card_bg'])
+        center_container.pack(fill=tk.BOTH, expand=True)
+
+        # 上方填充
+        tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
+
+        # 实际内容区域（水平和垂直居中）
         right_col = tk.Frame(
-            main_content, 
-            bg=self.colors['card_bg'], 
-            padx=6, 
+            center_container,
+            bg=self.colors['card_bg'],
+            padx=6,
             pady=6,
             highlightbackground="#8B7BB8",
             highlightthickness=2,
             relief=tk.SOLID
         )
-        right_col.pack(side=tk.LEFT, fill=tk.NONE, anchor=tk.N)  # Changed this line
+        right_col.pack()
+
+        # 下方填充
+        tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
 
         param_header = tk.Frame(right_col, bg=self.colors['card_bg'])
         param_header.pack(pady=(5, 15))
