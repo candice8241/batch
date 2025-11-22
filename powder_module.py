@@ -1052,7 +1052,7 @@ class PowderXRDModule(GUIBase):
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.RIGHT, padx=(0, 0))
 
         n_row = tk.Frame(right_col, bg=self.colors['card_bg'])
-        n_row.pack(fill=tk.X, pady=3)
+        n_row.pack(fill=tk.X, pady=0)
 
         tk.Label(n_row, text="N Pressure Points:", bg=self.colors['card_bg'],
                 font=('Comic Sans MS', 8), anchor='w').pack(side=tk.LEFT)
