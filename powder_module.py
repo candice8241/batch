@@ -651,15 +651,24 @@ class PowderXRDModule(GUIBase):
         right_section = tk.Frame(center_container, bg=self.colors['card_bg'])
         right_section.pack()
 
+        # Output Options 外层边框容器
+        output_options_border = tk.Frame(right_section, bg=self.colors['card_bg'],
+                                         relief='solid', borderwidth=1)
+        output_options_border.pack(fill=tk.X)
+
+        # Output Options 内容区域（带内边距）
+        output_options_content = tk.Frame(output_options_border, bg=self.colors['card_bg'])
+        output_options_content.pack(fill=tk.X, padx=10, pady=10)
+
         # 右侧标题（与下方内容左对齐）
-        tk.Label(right_section, text="Output Options", bg=self.colors['card_bg'],
+        tk.Label(output_options_content, text="Output Options", bg=self.colors['card_bg'],
                 fg=self.colors['primary'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
         # 下方填充
         tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
 
         # Output Formats with border
-        formats_border_frame = tk.Frame(right_section, bg=self.colors['card_bg'],
+        formats_border_frame = tk.Frame(output_options_content, bg=self.colors['card_bg'],
                                        relief='solid', borderwidth=1, highlightbackground='#CCCCCC')
         formats_border_frame.pack(fill=tk.X, pady=(0, 10))
 
@@ -712,18 +721,18 @@ class PowderXRDModule(GUIBase):
                       ).pack(side=tk.LEFT)
 
         # Stacked Plot Options
-        tk.Label(right_section, text="Stacked Plot Options:", bg=self.colors['card_bg'],
+        tk.Label(output_options_content, text="Stacked Plot Options:", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(15, 8))
 
         # Checkbox on first line
-        tk.Checkbutton(right_section, text="Create Stacked Plot",
+        tk.Checkbutton(output_options_content, text="Create Stacked Plot",
                       variable=self.create_stacked_plot,
                       bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(anchor=tk.W, pady=(0, 8))
 
         # Offset section on second line
-        offset_container = tk.Frame(right_section, bg=self.colors['card_bg'])
+        offset_container = tk.Frame(output_options_content, bg=self.colors['card_bg'])
         offset_container.pack(anchor=tk.W, fill=tk.X)
 
         tk.Label(offset_container, text="Offset:", bg=self.colors['card_bg'],
@@ -735,7 +744,7 @@ class PowderXRDModule(GUIBase):
         offset_entry.pack(side=tk.LEFT, ipady=2)
 
         # Help text below
-        tk.Label(right_section, text="(use 'auto' or number for offset)",
+        tk.Label(output_options_content, text="(use 'auto' or number for offset)",
                 bg=self.colors['card_bg'], fg='#888888',
                 font=('Comic Sans MS', 8, 'italic')).pack(anchor=tk.W, pady=(2, 0))
 
