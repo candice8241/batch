@@ -1565,27 +1565,35 @@ class PeakFittingGUI:
 
             # Use saved background points from subtract_background if available
             if len(self.fitted_bg_points) >= 2:
+                # Background already subtracted, self.y is already background-subtracted data
                 sorted_bg_points = self.fitted_bg_points
                 bg_x = np.array([p[0] for p in sorted_bg_points])
                 bg_y = np.array([p[1] for p in sorted_bg_points])
                 global_bg = np.interp(self.x, bg_x, bg_y)
                 global_bg_points = sorted_bg_points
+                # Data is already background-subtracted, no need to subtract again
+                y_nobg = self.y
                 self.update_info(f"Using {len(global_bg_points)} saved background points (from subtraction)\n")
+                self.update_info("Data already background-subtracted, using directly\n")
             elif len(self.bg_points) >= 2:
+                # Background not subtracted yet, need to subtract
                 sorted_bg_points = sorted(self.bg_points, key=lambda p: p[0])
                 bg_x = np.array([p[0] for p in sorted_bg_points])
                 bg_y = np.array([p[1] for p in sorted_bg_points])
                 global_bg = np.interp(self.x, bg_x, bg_y)
                 global_bg_points = sorted_bg_points
+                # Subtract background for fitting
+                y_nobg = self.y - global_bg
                 self.update_info(f"Using {len(global_bg_points)} currently selected background points\n")
+                self.update_info("Subtracting background for fitting\n")
             else:
+                # No background points, auto-calculate
                 global_bg, global_bg_points = BackgroundFitter.fit_global_background(
                     self.x, self.y, sorted_peaks, method='piecewise')
+                # Subtract background for fitting
+                y_nobg = self.y - global_bg
                 self.update_info(f"Piecewise linear background fitted "
                                f"with {len(global_bg_points)} anchor points\n")
-
-            # Subtract global background
-            y_nobg = self.y - global_bg
 
             # Estimate FWHM for each peak
             fwhm_estimates = []
@@ -1999,9 +2007,23 @@ class PeakFittingGUI:
             self.batch_running = False
             self.batch_paused = False
 
+        # Cancel any pending after() callbacks to prevent errors
+        try:
+            for after_id in self.master.tk.call('after', 'info'):
+                self.master.after_cancel(after_id)
+        except:
+            pass
+
         # Destroy the window and quit the application
-        self.master.quit()
-        self.master.destroy()
+        try:
+            self.master.quit()
+        except:
+            pass
+
+        try:
+            self.master.destroy()
+        except:
+            pass
 
     def update_info(self, message):
         """Update info text"""
