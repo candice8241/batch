@@ -1147,25 +1147,30 @@ class AzimuthalIntegrationModule(GUIBase):
                 bg=self.colors['card_bg'], fg=self.colors['primary'],
                 font=('Arial', 11, 'bold')).pack(side=tk.LEFT)
 
+        # Main horizontal container for left-right layout (centered)
+        main_container = tk.Frame(content, bg=self.colors['card_bg'])
+        main_container.pack(expand=True)
+
+        # ========== LEFT SECTION: Output Formats ==========
+        left_section = tk.Frame(main_container, bg=self.colors['card_bg'])
+        left_section.pack(side=tk.LEFT, padx=(0, 20))
+
         # Output Formats title
-        tk.Label(content, text="Select Output Formats:", bg=self.colors['card_bg'],
+        tk.Label(left_section, text="Select Output Formats:", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
         # Output Formats with border (only frames the six format checkboxes)
-        formats_border_frame = tk.Frame(content, bg=self.colors['card_bg'],
+        formats_border_frame = tk.Frame(left_section, bg=self.colors['card_bg'],
                                        relief='solid', borderwidth=1, highlightbackground='#CCCCCC')
-        formats_border_frame.pack(fill=tk.X, pady=(0, 10))
+        formats_border_frame.pack()
 
         # Inner padding frame
         formats_content = tk.Frame(formats_border_frame, bg=self.colors['card_bg'])
-        formats_content.pack(fill=tk.X, padx=8, pady=8)
-
-        formats_grid = tk.Frame(formats_content, bg=self.colors['card_bg'])
-        formats_grid.pack(fill=tk.X)
+        formats_content.pack(padx=8, pady=8)
 
         # First row of formats (3 checkboxes)
-        row1 = tk.Frame(formats_grid, bg=self.colors['card_bg'])
-        row1.pack(fill=tk.X, pady=3)
+        row1 = tk.Frame(formats_content, bg=self.colors['card_bg'])
+        row1.pack(pady=3)
 
         tk.Checkbutton(row1, text=".xy", variable=self.format_xy, bg=self.colors['card_bg'],
                       font=('Arial', 9), fg=self.colors['text_dark'],
@@ -1183,8 +1188,8 @@ class AzimuthalIntegrationModule(GUIBase):
                       ).pack(side=tk.LEFT)
 
         # Second row of formats (3 checkboxes)
-        row2 = tk.Frame(formats_grid, bg=self.colors['card_bg'])
-        row2.pack(fill=tk.X, pady=3)
+        row2 = tk.Frame(formats_content, bg=self.colors['card_bg'])
+        row2.pack(pady=3)
 
         tk.Checkbutton(row2, text=".fxye", variable=self.format_fxye, bg=self.colors['card_bg'],
                       font=('Arial', 9), fg=self.colors['text_dark'],
@@ -1201,20 +1206,24 @@ class AzimuthalIntegrationModule(GUIBase):
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
                       ).pack(side=tk.LEFT)
 
-        # Stacked Plot Options
-        tk.Label(content, text="Stacked Plot Options:", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(15, 8))
+        # ========== RIGHT SECTION: Stacked Plot Options ==========
+        right_section = tk.Frame(main_container, bg=self.colors['card_bg'])
+        right_section.pack(side=tk.LEFT)
+
+        # Stacked Plot Options title
+        tk.Label(right_section, text="Stacked Plot Options:", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
         # Checkbox on first line
-        tk.Checkbutton(content, text="Create Stacked Plot",
+        tk.Checkbutton(right_section, text="Create Stacked Plot",
                       variable=self.create_stacked_plot,
                       bg=self.colors['card_bg'], font=('Arial', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(anchor=tk.W, pady=(0, 8))
 
         # Offset section on second line
-        offset_container = tk.Frame(content, bg=self.colors['card_bg'])
-        offset_container.pack(anchor=tk.W, fill=tk.X)
+        offset_container = tk.Frame(right_section, bg=self.colors['card_bg'])
+        offset_container.pack(anchor=tk.W)
 
         tk.Label(offset_container, text="Offset:", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 5))
@@ -1225,7 +1234,7 @@ class AzimuthalIntegrationModule(GUIBase):
         offset_entry.pack(side=tk.LEFT, ipady=2)
 
         # Help text below
-        tk.Label(content, text="(use 'auto' or number for offset)",
+        tk.Label(right_section, text="(use 'auto' or number for offset)",
                 bg=self.colors['card_bg'], fg='#888888',
                 font=('Arial', 8, 'italic')).pack(anchor=tk.W, pady=(2, 0))
 
