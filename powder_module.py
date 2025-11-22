@@ -973,7 +973,7 @@ class PowderXRDModule(GUIBase):
                           self.run_phase_analysis,
                           width=300).pack(pady=(15, 0))
 
-        right_col = tk.Frame(main_content, bg='#F0E6FA', relief='solid', borderwidth=1, padx=12, pady=12)
+        right_col = tk.Frame(main_content, bg='#F0E6FA', relief='solid', borderwidth=1, padx=10, pady=10)
         right_col.pack(side=tk.LEFT, fill=tk.Y)
 
         param_header = tk.Frame(right_col, bg='#F0E6FA')
@@ -1049,11 +1049,11 @@ class PowderXRDModule(GUIBase):
         bm_card = self.create_card_frame(parent_frame)
         bm_card.pack(fill=tk.X, pady=(0, 15))
 
-        content4 = tk.Frame(bm_card, bg=self.colors['card_bg'], padx=20, pady=12)
+        content4 = tk.Frame(bm_card, bg=self.colors['card_bg'], padx=20, pady=15)
         content4.pack(fill=tk.BOTH, expand=True)
 
         header4 = tk.Frame(content4, bg=self.colors['card_bg'])
-        header4.pack(anchor=tk.W, pady=(0, 8))
+        header4.pack(anchor=tk.W, pady=(0, 15))
 
         tk.Label(header4, text="⚗️", bg=self.colors['card_bg'],
                 font=('Segoe UI Emoji', 14)).pack(side=tk.LEFT, padx=(0, 6))
@@ -1064,7 +1064,7 @@ class PowderXRDModule(GUIBase):
 
         # Container for left-right layout
         bm_main_container = tk.Frame(content4, bg=self.colors['card_bg'])
-        bm_main_container.pack(fill=tk.BOTH, expand=True, pady=(8, 0))
+        bm_main_container.pack(fill=tk.BOTH, expand=True)
 
         # Left section: File pickers (manually created to align with phase analysis)
         bm_left_section = tk.Frame(bm_main_container, bg=self.colors['card_bg'])
