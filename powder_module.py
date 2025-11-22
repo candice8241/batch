@@ -977,7 +977,7 @@ class PowderXRDModule(GUIBase):
             main_content,
             bg=self.colors['card_bg'],
             padx=6,
-            pady=(6, 2),
+            pady=2,
             highlightbackground="#8B7BB8",  # Border color (matching your purple theme)
             highlightthickness=2,             # Border width
             relief=tk.SOLID                   # Border style
@@ -986,7 +986,7 @@ class PowderXRDModule(GUIBase):
 
         # 水平居中容器
         horizontal_center = tk.Frame(right_col_outer, bg=self.colors['card_bg'])
-        horizontal_center.pack()
+        horizontal_center.pack(pady=(4, 0))
 
         # 内容区域（水平居中）
         right_col = tk.Frame(horizontal_center, bg=self.colors['card_bg'])
