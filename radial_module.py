@@ -268,6 +268,13 @@ class AzimuthalIntegrationModule(GUIBase):
 
             # Multi bin mode
             self.multi_bin_mode = tk.BooleanVar(value=False)
+
+            # Additional text fields below main inputs
+            self.poni_text = tk.StringVar()
+            self.mask_text = tk.StringVar()
+            self.h5_text = tk.StringVar()
+            self.output_text = tk.StringVar()
+            self.dataset_text = tk.StringVar()
         except Exception as e:
             print(f"Warning: Error initializing variables: {e}")
 
@@ -299,7 +306,6 @@ class AzimuthalIntegrationModule(GUIBase):
         self._create_title_section()
         self._create_reference_section()
         self._create_io_section()
-        self._create_azimuthal_section()
         self._create_run_button_section()
         self._create_progress_section()
         self._create_log_section()
@@ -404,6 +410,11 @@ class AzimuthalIntegrationModule(GUIBase):
                  relief='flat', padx=10, pady=5,
                  cursor='hand2').pack(side=tk.LEFT)
 
+        # Additional text field below PONI
+        tk.Entry(poni_row, textvariable=self.poni_text,
+                font=('Comic Sans MS', 10),
+                bg='white', relief='flat').pack(fill=tk.X, pady=(4, 0))
+
         # Mask file (optional)
         mask_row = tk.Frame(content, bg=self.colors['card_bg'])
         mask_row.pack(fill=tk.X, pady=(0, 8))
@@ -426,6 +437,11 @@ class AzimuthalIntegrationModule(GUIBase):
                  font=('Comic Sans MS', 9, 'bold'),
                  relief='flat', padx=10, pady=5,
                  cursor='hand2').pack(side=tk.LEFT)
+
+        # Additional text field below Mask
+        tk.Entry(mask_row, textvariable=self.mask_text,
+                font=('Comic Sans MS', 10),
+                bg='white', relief='flat').pack(fill=tk.X, pady=(4, 0))
 
         # Input H5 files
         input_row = tk.Frame(content, bg=self.colors['card_bg'])
@@ -450,6 +466,11 @@ class AzimuthalIntegrationModule(GUIBase):
                  relief='flat', padx=10, pady=5,
                  cursor='hand2').pack(side=tk.LEFT)
 
+        # Additional text field below H5 input
+        tk.Entry(input_row, textvariable=self.h5_text,
+                font=('Comic Sans MS', 10),
+                bg='white', relief='flat').pack(fill=tk.X, pady=(4, 0))
+
         # Output directory
         output_row = tk.Frame(content, bg=self.colors['card_bg'])
         output_row.pack(fill=tk.X, pady=(0, 8))
@@ -473,6 +494,11 @@ class AzimuthalIntegrationModule(GUIBase):
                  relief='flat', padx=10, pady=5,
                  cursor='hand2').pack(side=tk.LEFT)
 
+        # Additional text field below output directory
+        tk.Entry(output_row, textvariable=self.output_text,
+                font=('Comic Sans MS', 10),
+                bg='white', relief='flat').pack(fill=tk.X, pady=(4, 0))
+
         # Advanced settings row
         advanced_row = tk.Frame(content, bg=self.colors['card_bg'])
         advanced_row.pack(fill=tk.X, pady=(8, 0))
@@ -488,6 +514,11 @@ class AzimuthalIntegrationModule(GUIBase):
         tk.Entry(dataset_col, textvariable=self.dataset_path,
                 font=('Comic Sans MS', 10),
                 bg='white', relief='flat').pack(fill=tk.X)
+
+        # Additional text field below dataset path
+        tk.Entry(dataset_col, textvariable=self.dataset_text,
+                font=('Comic Sans MS', 10),
+                bg='white', relief='flat').pack(fill=tk.X, pady=(4, 0))
 
         # Number of points
         npt_col = tk.Frame(advanced_row, bg=self.colors['card_bg'])
