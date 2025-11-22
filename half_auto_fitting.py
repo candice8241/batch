@@ -531,6 +531,9 @@ class PeakFittingGUI:
         self.master.geometry("1400x850")
         self.master.configure(bg='#F0E6FA')
 
+        # Handle window close event
+        self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
+
         # Data storage
         self.x = None
         self.y = None
@@ -1977,6 +1980,17 @@ class PeakFittingGUI:
 
     # ==================== Utility Methods ====================
 
+    def on_closing(self):
+        """Handle window close event"""
+        # Stop any running batch processing
+        if self.batch_running:
+            self.batch_running = False
+            self.batch_paused = False
+
+        # Destroy the window and quit the application
+        self.master.quit()
+        self.master.destroy()
+
     def update_info(self, message):
         """Update info text"""
         self.info_text.config(state=tk.NORMAL)
@@ -2254,10 +2268,10 @@ class PeakFittingGUI:
         """Show dialog for reviewing auto-detected peaks and background"""
         dialog = tk.Toplevel(self.master)
         dialog.title("Review Auto-Detection Results")
-        dialog.geometry("450x280")
+        dialog.geometry("450x320")
         dialog.configure(bg='#E6F3FF')
         dialog.transient(self.master)
-        dialog.grab_set()
+        # DO NOT use grab_set() - allow user to interact with main window
 
         user_action = ["continue"]  # Default action
 
@@ -2266,10 +2280,11 @@ class PeakFittingGUI:
                       text=f"Auto-detection complete!\n\n"
                            f"✓ Found {len(self.selected_peaks)} peaks\n"
                            f"✓ Selected {len(self.bg_points)} background points\n\n"
-                           "Review the plot and:\n"
-                           "• Add/remove peaks (left/right click)\n"
-                           "• Adjust background points if needed\n\n"
-                           "Choose action:",
+                           "You can now:\n"
+                           "• Add/remove peaks (left/right click on plot)\n"
+                           "• Adjust background points\n"
+                           "• Click 'Select BG Points' to modify background\n\n"
+                           "When ready, choose an action:",
                       bg='#E6F3FF', fg='#003366',
                       font=('Arial', 10, 'bold'),
                       justify=tk.LEFT)
@@ -2312,6 +2327,9 @@ class PeakFittingGUI:
                  font=('Arial', 10, 'bold'),
                  command=stop_batch,
                  width=22).pack(pady=5)
+
+        # Keep dialog on top but allow interaction with main window
+        dialog.attributes('-topmost', True)
 
         dialog.wait_window()
         return user_action[0]
