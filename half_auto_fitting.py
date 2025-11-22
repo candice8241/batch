@@ -1793,12 +1793,24 @@ class PeakFittingGUI:
         if len(global_bg_points) >= 2:
             bg_x = [p[0] for p in global_bg_points]
             bg_y = [p[1] for p in global_bg_points]
-            bg_markers, = self.ax.plot(bg_x, bg_y, 'o', color='#4169E1',
+
+            # If background was already subtracted, show background points at zero level
+            if len(self.fitted_bg_points) >= 2:
+                # Data is already background-subtracted, so background should be shown at ~0
+                bg_y_plot = [0] * len(bg_y)  # Show at baseline (zero)
+                bg_line_plot = np.zeros_like(self.x)  # Background line at zero
+                bg_label = 'Subtracted Background (at zero)'
+            else:
+                # Background not yet subtracted, show actual background values
+                bg_y_plot = bg_y
+                bg_line_plot = global_bg
+                bg_label = 'Manual Background' if len(self.bg_points) >= 2 else 'Auto Background'
+
+            bg_markers, = self.ax.plot(bg_x, bg_y_plot, 'o', color='#4169E1',
                                       markersize=6, alpha=0.8, zorder=3)
             self.fit_lines.append(bg_markers)
 
-            bg_label = 'Manual Background' if len(self.bg_points) >= 2 else 'Auto Background'
-            bg_line, = self.ax.plot(self.x, global_bg, '-', color='#4169E1',
+            bg_line, = self.ax.plot(self.x, bg_line_plot, '-', color='#4169E1',
                                    linewidth=1.5, alpha=0.6,
                                    label=bg_label, zorder=3)
             self.fit_lines.append(bg_line)
