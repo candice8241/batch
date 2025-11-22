@@ -48,7 +48,7 @@ class SpinboxStyleButton(tk.Frame):
             command=command,
             bg='#E8D5F0',
             fg='#6B4C7A',
-            font=('Comic Sans MS', font_size),
+            font=('Arial', font_size),
             relief='flat',
             borderwidth=0,
             activebackground='#D5C0E0',
@@ -382,7 +382,7 @@ class PowderXRDModule(GUIBase):
         self.integration_module_btn = tk.Button(
             btn_container,
             text="1D Integration & Peak Fitting",
-            font=('Comic Sans MS', 10),
+            font=('Arial', 10),
             bg='#C8A2D9',
             fg='#4A2C5F',
             activebackground='#B794F6',
@@ -398,7 +398,7 @@ class PowderXRDModule(GUIBase):
         self.analysis_module_btn = tk.Button(
             btn_container,
             text="Cal_Volume & BM_Fitting",
-            font=('Comic Sans MS', 10),
+            font=('Arial', 10),
             bg='#E8D5F0',
             fg='#4A2C5F',
             activebackground='#FFB6D9',
@@ -445,10 +445,10 @@ class PowderXRDModule(GUIBase):
 
         tk.Label(log_header, text="Process Log",
                 bg=self.colors['card_bg'], fg=self.colors['primary'],
-                font=('Comic Sans MS', 11, 'bold')).pack(side=tk.LEFT)
+                font=('Arial', 11, 'bold')).pack(side=tk.LEFT)
 
         self.log_text = scrolledtext.ScrolledText(log_content, height=10, wrap=tk.WORD,
-                                                  font=('Comic Sans MS', 10),
+                                                  font=('Arial', 10),
                                                   bg='#FAFAFA', fg='#B794F6',
                                                   relief='flat', borderwidth=0, padx=10, pady=10)
         self.log_text.pack(fill=tk.BOTH, expand=True)
@@ -501,12 +501,12 @@ class PowderXRDModule(GUIBase):
         container.pack(fill=tk.X, pady=(5, 0))
 
         tk.Label(container, text=label_text, bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
 
         input_frame = tk.Frame(container, bg=self.colors['card_bg'])
         input_frame.pack(fill=tk.X)
 
-        tk.Entry(input_frame, textvariable=var, font=('Comic Sans MS', 9),
+        tk.Entry(input_frame, textvariable=var, font=('Arial', 9),
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=5)
 
         if pattern:
@@ -525,12 +525,12 @@ class PowderXRDModule(GUIBase):
         container.pack(fill=tk.X, pady=(5, 0))
 
         tk.Label(container, text=label_text, bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
 
         input_frame = tk.Frame(container, bg=self.colors['card_bg'])
         input_frame.pack(fill=tk.X)
 
-        tk.Entry(input_frame, textvariable=var, font=('Comic Sans MS', 9),
+        tk.Entry(input_frame, textvariable=var, font=('Arial', 9),
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=5)
 
         btn = SpinboxStyleButton(input_frame, "Browse",
@@ -556,18 +556,18 @@ class PowderXRDModule(GUIBase):
 
         tk.Label(header_merged, text="Integration Settings & Output Options",
                 bg=self.colors['card_bg'], fg=self.colors['primary'],
-                font=('Comic Sans MS', 11, 'bold')).pack(side=tk.LEFT)
+                font=('Arial', 11, 'bold')).pack(side=tk.LEFT)
 
         # Container for left-right layout
         main_container = tk.Frame(content_merged, bg=self.colors['card_bg'])
         main_container.pack(fill=tk.BOTH, expand=True, pady=5)
 
-        # ========== LEFT SECTION: Integration Settings (占更多空间) ==========
+        # ========== LEFT SECTION: Integration Settings (takes more space) ==========
         left_section = tk.Frame(main_container, bg=self.colors['card_bg'])
         left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 30))
 
         tk.Label(left_section, text="Integration Settings", bg=self.colors['card_bg'],
-                fg=self.colors['primary'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
+                fg=self.colors['primary'], font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
         self.create_file_picker_with_spinbox_btn(left_section, "PONI File", self.poni_path,
                                [("PONI files", "*.poni"), ("All files", "*.*")])
@@ -582,12 +582,12 @@ class PowderXRDModule(GUIBase):
         dataset_container.pack(fill=tk.X, pady=(5, 0))
 
         tk.Label(dataset_container, text="Dataset Path", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 2))
 
         dataset_input_frame = tk.Frame(dataset_container, bg=self.colors['card_bg'])
         dataset_input_frame.pack(fill=tk.X)
 
-        tk.Entry(dataset_input_frame, textvariable=self.dataset_path, font=('Comic Sans MS', 9),
+        tk.Entry(dataset_input_frame, textvariable=self.dataset_path, font=('Arial', 9),
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=5)
 
         dataset_browse_btn = SpinboxStyleButton(
@@ -602,36 +602,36 @@ class PowderXRDModule(GUIBase):
         param_frame = tk.Frame(left_section, bg=self.colors['card_bg'])
         param_frame.pack(fill=tk.X, pady=(10, 0))
 
-        # Number of Points (左侧)
+        # Number of Points (left side)
         npt_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
         npt_cont.pack(side=tk.LEFT, padx=(0, 30))
         tk.Label(npt_cont, text="Number of Points", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
         CustomSpinbox(npt_cont, from_=500, to=10000, textvariable=self.npt,
                      increment=100, is_float=False).pack(anchor=tk.W)
 
-        # Unit (右侧，改为单选按钮形式)
+        # Unit (right side, using radio button format)
         unit_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
         unit_cont.pack(side=tk.LEFT)
 
         tk.Label(unit_cont, text="Unit", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(pady=(0, 8))
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(pady=(0, 8))
 
         unit_options_frame = tk.Frame(unit_cont, bg=self.colors['card_bg'])
         unit_options_frame.pack()
 
         tk.Radiobutton(unit_options_frame, text="2θ (°)", variable=self.unit, value='2θ (°)',
-                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      bg=self.colors['card_bg'], font=('Arial', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
 
         tk.Radiobutton(unit_options_frame, text="Q (Å⁻¹)", variable=self.unit, value='Q (Å⁻¹)',
-                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      bg=self.colors['card_bg'], font=('Arial', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
 
         tk.Radiobutton(unit_options_frame, text="r (mm)", variable=self.unit, value='r (mm)',
-                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      bg=self.colors['card_bg'], font=('Arial', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
 
@@ -640,29 +640,47 @@ class PowderXRDModule(GUIBase):
         right_outer.pack(side=tk.LEFT, fill=tk.Y)
         right_outer.pack_propagate(False)
 
-        # 创建垂直居中容器
+        # Create vertical centering container
         center_container = tk.Frame(right_outer, bg=self.colors['card_bg'])
         center_container.pack(fill=tk.BOTH, expand=True)
 
-        # 上方填充
+        # Top padding
         tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
 
-        # 内容区域（水平居中，垂直居中）
+        # Content area (horizontally and vertically centered)
         right_section = tk.Frame(center_container, bg=self.colors['card_bg'])
         right_section.pack()
 
-        # 右侧标题（与下方内容左对齐）
-        tk.Label(right_section, text="Output Options", bg=self.colors['card_bg'],
-                fg=self.colors['primary'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
+        # Output Options outer border frame
+        output_options_border = tk.Frame(right_section, bg=self.colors['card_bg'],
+                                         relief='solid', borderwidth=1)
+        output_options_border.pack(fill=tk.X)
 
-        # 下方填充
+        # Output Options content area (with padding)
+        output_options_content = tk.Frame(output_options_border, bg=self.colors['card_bg'])
+        output_options_content.pack(fill=tk.X, padx=10, pady=10)
+
+        # Right side title (aligned left with content below)
+        tk.Label(output_options_content, text="Output Options", bg=self.colors['card_bg'],
+                fg=self.colors['primary'], font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=(0, 8))
+
+        # Bottom padding
         tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
 
-        # Output Formats
-        tk.Label(right_section, text="Select Output Formats:", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
+        # Output Formats title (outside border)
+        tk.Label(output_options_content, text="Select Output Formats:", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
-        formats_grid = tk.Frame(right_section, bg=self.colors['card_bg'])
+        # Output Formats with border (only frames the six format checkboxes)
+        formats_border_frame = tk.Frame(output_options_content, bg=self.colors['card_bg'],
+                                       relief='solid', borderwidth=1, highlightbackground='#CCCCCC')
+        formats_border_frame.pack(fill=tk.X, pady=(0, 10))
+
+        # Inner padding frame
+        formats_content = tk.Frame(formats_border_frame, bg=self.colors['card_bg'])
+        formats_content.pack(fill=tk.X, padx=8, pady=8)
+
+        formats_grid = tk.Frame(formats_content, bg=self.colors['card_bg'])
         formats_grid.pack(fill=tk.X)
 
         # First row of formats (3 checkboxes)
@@ -670,17 +688,17 @@ class PowderXRDModule(GUIBase):
         row1.pack(fill=tk.X, pady=3)
 
         tk.Checkbutton(row1, text=".xy", variable=self.format_xy, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
+                      font=('Arial', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
                       ).pack(side=tk.LEFT, padx=(0, 15))
 
         tk.Checkbutton(row1, text=".dat", variable=self.format_dat, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
+                      font=('Arial', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
                       ).pack(side=tk.LEFT, padx=(0, 15))
 
         tk.Checkbutton(row1, text=".chi", variable=self.format_chi, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
+                      font=('Arial', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
                       ).pack(side=tk.LEFT)
 
@@ -689,37 +707,37 @@ class PowderXRDModule(GUIBase):
         row2.pack(fill=tk.X, pady=3)
 
         tk.Checkbutton(row2, text=".fxye", variable=self.format_fxye, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
+                      font=('Arial', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
                       ).pack(side=tk.LEFT, padx=(0, 15))
 
         tk.Checkbutton(row2, text=".svg", variable=self.format_svg, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
+                      font=('Arial', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
                       ).pack(side=tk.LEFT, padx=(0, 15))
 
         tk.Checkbutton(row2, text=".png", variable=self.format_png, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
+                      font=('Arial', 9), fg=self.colors['text_dark'],
                       selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
                       ).pack(side=tk.LEFT)
 
         # Stacked Plot Options
-        tk.Label(right_section, text="Stacked Plot Options:", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(15, 8))
+        tk.Label(output_options_content, text="Stacked Plot Options:", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(15, 8))
 
         # Checkbox on first line
-        tk.Checkbutton(right_section, text="Create Stacked Plot",
+        tk.Checkbutton(output_options_content, text="Create Stacked Plot",
                       variable=self.create_stacked_plot,
-                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      bg=self.colors['card_bg'], font=('Arial', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(anchor=tk.W, pady=(0, 8))
 
         # Offset section on second line
-        offset_container = tk.Frame(right_section, bg=self.colors['card_bg'])
+        offset_container = tk.Frame(output_options_content, bg=self.colors['card_bg'])
         offset_container.pack(anchor=tk.W, fill=tk.X)
 
         tk.Label(offset_container, text="Offset:", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 5))
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 5))
 
         offset_entry = tk.Entry(offset_container, textvariable=self.stacked_plot_offset,
                                font=('Arial', 10), width=12, justify='center',
@@ -727,9 +745,9 @@ class PowderXRDModule(GUIBase):
         offset_entry.pack(side=tk.LEFT, ipady=2)
 
         # Help text below
-        tk.Label(right_section, text="(use 'auto' or number for offset)",
+        tk.Label(output_options_content, text="(use 'auto' or number for offset)",
                 bg=self.colors['card_bg'], fg='#888888',
-                font=('Comic Sans MS', 8, 'italic')).pack(anchor=tk.W, pady=(2, 0))
+                font=('Arial', 8, 'italic')).pack(anchor=tk.W, pady=(2, 0))
 
         # ===== Run Integration Button (Moved above Peak Fitting Settings) =====
         btn_frame_top = tk.Frame(parent_frame, bg=self.colors['bg'])
@@ -756,23 +774,23 @@ class PowderXRDModule(GUIBase):
 
         tk.Label(header2, text="Peak Fitting Settings",
                 bg=self.colors['card_bg'], fg=self.colors['primary'],
-                font=('Comic Sans MS', 11, 'bold')).pack(side=tk.LEFT)
+                font=('Arial', 11, 'bold')).pack(side=tk.LEFT)
 
         fit_cont = tk.Frame(content2, bg=self.colors['card_bg'])
         fit_cont.pack(fill=tk.X)
         tk.Label(fit_cont, text="Fitting Method", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
         fit_method_frame = tk.Frame(fit_cont, bg=self.colors['card_bg'])
         fit_method_frame.pack(anchor=tk.W)
 
         tk.Radiobutton(fit_method_frame, text="Pseudo", variable=self.fit_method, value='pseudo',
-                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      bg=self.colors['card_bg'], font=('Arial', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
 
         tk.Radiobutton(fit_method_frame, text="Voigt", variable=self.fit_method, value='voigt',
-                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      bg=self.colors['card_bg'], font=('Arial', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
 
@@ -873,7 +891,7 @@ class PowderXRDModule(GUIBase):
 
         tk.Label(header3, text="Phase Transition Analysis & Volume Calculation",
                 bg=self.colors['card_bg'], fg=self.colors['primary'],
-                font=('Comic Sans MS', 11, 'bold')).pack(side=tk.LEFT)
+                font=('Arial', 11, 'bold')).pack(side=tk.LEFT)
 
         main_content = tk.Frame(content3, bg=self.colors['card_bg'])
         main_content.pack(fill=tk.BOTH, expand=True)
@@ -882,29 +900,36 @@ class PowderXRDModule(GUIBase):
         left_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 8))
 
         tk.Label(left_col, text="Input CSV (Peak Data)", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
 
         peak_input_frame = tk.Frame(left_col, bg=self.colors['card_bg'])
         peak_input_frame.pack(fill=tk.X, pady=(0, 12))
 
-        tk.Entry(peak_input_frame, textvariable=self.phase_peak_csv, font=('Comic Sans MS', 9),
+        tk.Entry(peak_input_frame, textvariable=self.phase_peak_csv, font=('Arial', 9),
                 bg='white', relief='solid', borderwidth=1, width=90).pack(side=tk.LEFT, fill=tk.X, ipady=3)
 
         SpinboxStyleButton(peak_input_frame, "Browse",
                           lambda: self.browse_file(self.phase_peak_csv, [("CSV files", "*.csv")]),
                           width=75).pack(side=tk.LEFT, padx=(5, 0))
 
-        SpinboxStyleButton(left_col, "🐶 Separate Original & New Peaks",
+        # Center the button container
+        separate_btn_frame = tk.Frame(left_col, bg=self.colors['card_bg'])
+        separate_btn_frame.pack(fill=tk.X, pady=(0, 15))
+
+        separate_btn_container = tk.Frame(separate_btn_frame, bg=self.colors['card_bg'])
+        separate_btn_container.pack(expand=True)
+
+        SpinboxStyleButton(separate_btn_container, "🐶 Separate Original & New Peaks",
                           self.separate_peaks,
-                          width=280).pack(pady=(0, 15))
+                          width=280, font_size=11).pack()
 
         tk.Label(left_col, text="Input CSV (Volume Calculation)", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
 
         volume_input_frame = tk.Frame(left_col, bg=self.colors['card_bg'])
         volume_input_frame.pack(fill=tk.X, pady=(0, 8))
 
-        tk.Entry(volume_input_frame, textvariable=self.phase_volume_csv, font=('Comic Sans MS', 9),
+        tk.Entry(volume_input_frame, textvariable=self.phase_volume_csv, font=('Arial', 9),
                 bg='white', relief='solid', borderwidth=1, width=90).pack(side=tk.LEFT, fill=tk.X, ipady=3)
 
         SpinboxStyleButton(volume_input_frame, "Browse",
@@ -915,74 +940,96 @@ class PowderXRDModule(GUIBase):
         system_frame.pack(fill=tk.X, pady=(0, 12))
 
         tk.Label(system_frame, text="Crystal System", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
         # All 7 options in one row
         system_row = tk.Frame(system_frame, bg=self.colors['card_bg'])
         system_row.pack(fill=tk.X)
 
         tk.Radiobutton(system_row, text="FCC", variable=self.phase_volume_system, value='FCC',
-                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      bg=self.colors['card_bg'], font=('Arial', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 10))
 
         tk.Radiobutton(system_row, text="BCC", variable=self.phase_volume_system, value='BCC',
-                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      bg=self.colors['card_bg'], font=('Arial', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 10))
 
         tk.Radiobutton(system_row, text="Hexagonal", variable=self.phase_volume_system, value='Hexagonal',
-                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      bg=self.colors['card_bg'], font=('Arial', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 10))
 
         tk.Radiobutton(system_row, text="Tetragonal", variable=self.phase_volume_system, value='Tetragonal',
-                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      bg=self.colors['card_bg'], font=('Arial', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 10))
 
         tk.Radiobutton(system_row, text="Orthorhombic", variable=self.phase_volume_system, value='Orthorhombic',
-                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      bg=self.colors['card_bg'], font=('Arial', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 10))
 
         tk.Radiobutton(system_row, text="Monoclinic", variable=self.phase_volume_system, value='Monoclinic',
-                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      bg=self.colors['card_bg'], font=('Arial', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 10))
 
         tk.Radiobutton(system_row, text="Triclinic", variable=self.phase_volume_system, value='Triclinic',
-                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      bg=self.colors['card_bg'], font=('Arial', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
 
         tk.Label(left_col, text="Output Directory", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
 
         output_frame = tk.Frame(left_col, bg=self.colors['card_bg'])
         output_frame.pack(fill=tk.X)
 
-        tk.Entry(output_frame, textvariable=self.phase_volume_output, font=('Comic Sans MS', 9),
+        tk.Entry(output_frame, textvariable=self.phase_volume_output, font=('Arial', 9),
                 bg='white', relief='solid', borderwidth=1, width=90).pack(side=tk.LEFT, fill=tk.X, ipady=3)
 
         SpinboxStyleButton(output_frame, "Browse",
                           lambda: self.browse_folder(self.phase_volume_output),
                           width=75).pack(side=tk.LEFT, padx=(5, 0))
 
-        SpinboxStyleButton(left_col, "🦊 Calculate Volume & Fit Lattice Parameters",
-                          self.run_phase_analysis,
-                          width=300).pack(pady=(15, 0))
+        # Center the button container
+        calc_btn_frame = tk.Frame(left_col, bg=self.colors['card_bg'])
+        calc_btn_frame.pack(fill=tk.X, pady=(15, 0))
 
+        calc_btn_container = tk.Frame(calc_btn_frame, bg=self.colors['card_bg'])
+        calc_btn_container.pack(expand=True)
+
+        SpinboxStyleButton(calc_btn_container, "🦊 Calculate Volume & Fit Lattice Parameters",
+                          self.run_phase_analysis,
+                          width=300, font_size=11).pack()
+
+        # Create right outer container for centering
+        right_outer = tk.Frame(main_content, bg=self.colors['card_bg'])
+        right_outer.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Create vertical centering container
+        center_container = tk.Frame(right_outer, bg=self.colors['card_bg'])
+        center_container.pack(fill=tk.BOTH, expand=True)
+
+        # Top padding
+        tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
+
+        # Actual content area (horizontally and vertically centered)
         right_col = tk.Frame(
-            main_content, 
-            bg=self.colors['card_bg'], 
-            padx=6, 
+            center_container,
+            bg=self.colors['card_bg'],
+            padx=6,
             pady=6,
             highlightbackground="#8B7BB8",
             highlightthickness=2,
             relief=tk.SOLID
         )
-        right_col.pack(side=tk.LEFT, fill=tk.NONE, anchor=tk.N)  # Changed this line
+        right_col.pack()
+
+        # Bottom padding
+        tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
 
         param_header = tk.Frame(right_col, bg=self.colors['card_bg'])
         param_header.pack(pady=(5, 15))
@@ -991,7 +1038,7 @@ class PowderXRDModule(GUIBase):
                 font=('Segoe UI Emoji', 12)).pack(side=tk.LEFT, padx=(0, 5))
 
         tk.Label(param_header, text="Analysis Parameters", bg=self.colors['card_bg'],
-                fg='#9966CC', font=('Comic Sans MS', 10, 'bold')).pack(side=tk.LEFT)
+                fg='#9966CC', font=('Arial', 10, 'bold')).pack(side=tk.LEFT)
 
         wl_container = tk.Frame(right_col, bg=self.colors['card_bg'])
         wl_container.pack(fill=tk.X, pady=(0, 8))
@@ -1003,7 +1050,7 @@ class PowderXRDModule(GUIBase):
                 font=('Segoe UI Emoji', 10)).pack(side=tk.LEFT, padx=(0, 5))
 
         tk.Label(wl_label_frame, text="Wavelength (Å)", bg=self.colors['card_bg'],
-                fg='#4A4A4A', font=('Comic Sans MS', 9,'bold')).pack(side=tk.LEFT)
+                fg='#4A4A4A', font=('Arial', 9,'bold')).pack(side=tk.LEFT)
 
         wl_entry = tk.Entry(wl_container, textvariable=self.phase_wavelength,
                            font=('Arial', 10), width=9, justify='center',
@@ -1017,12 +1064,12 @@ class PowderXRDModule(GUIBase):
                 font=('Segoe UI Emoji', 10)).pack(side=tk.LEFT, padx=(0, 5))
 
         tk.Label(tol_header, text="Peak Tolerances", bg=self.colors['card_bg'],
-                fg='#4A4A4A', font=('Comic Sans MS', 9, 'bold')).pack(side=tk.LEFT)
+                fg='#4A4A4A', font=('Arial', 9, 'bold')).pack(side=tk.LEFT)
 
         tol1_row = tk.Frame(right_col, bg=self.colors['card_bg'])
         tol1_row.pack(fill=tk.X, pady=3)
         tk.Label(tol1_row, text="Tolerance 1:", bg=self.colors['card_bg'],
-                font=('Comic Sans MS', 8), anchor='w').pack(side=tk.LEFT)
+                font=('Arial', 8), anchor='w').pack(side=tk.LEFT)
         tk.Entry(tol1_row, textvariable=self.phase_tolerance_1,
                 font=('Arial', 9), width=8, justify='center',
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.RIGHT, padx=(0, 0))
@@ -1030,7 +1077,7 @@ class PowderXRDModule(GUIBase):
         tol2_row = tk.Frame(right_col, bg=self.colors['card_bg'])
         tol2_row.pack(fill=tk.X, pady=3)
         tk.Label(tol2_row, text="Tolerance 2:", bg=self.colors['card_bg'],
-                font=('Comic Sans MS', 8), anchor='w').pack(side=tk.LEFT)
+                font=('Arial', 8), anchor='w').pack(side=tk.LEFT)
         tk.Entry(tol2_row, textvariable=self.phase_tolerance_2,
                 font=('Arial', 9), width=8, justify='center',
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.RIGHT, padx=(0, 0))
@@ -1038,7 +1085,7 @@ class PowderXRDModule(GUIBase):
         tol3_row = tk.Frame(right_col, bg=self.colors['card_bg'])
         tol3_row.pack(fill=tk.X, pady=3)
         tk.Label(tol3_row, text="Tolerance 3:", bg=self.colors['card_bg'],
-                font=('Comic Sans MS', 8), anchor='w').pack(side=tk.LEFT)
+                font=('Arial', 8), anchor='w').pack(side=tk.LEFT)
         tk.Entry(tol3_row, textvariable=self.phase_tolerance_3,
                 font=('Arial', 9), width=8, justify='center',
                 bg='white', relief='solid', borderwidth=1).pack(side=tk.RIGHT, padx=(0, 0))
@@ -1047,7 +1094,7 @@ class PowderXRDModule(GUIBase):
         n_row.pack(fill=tk.X, pady=(12, 5))
 
         tk.Label(n_row, text="N Pressure Points:", bg=self.colors['card_bg'],
-                font=('Comic Sans MS', 8), anchor='w').pack(side=tk.LEFT)
+                font=('Arial', 8), anchor='w').pack(side=tk.LEFT)
 
         tk.Entry(n_row, textvariable=self.phase_n_points,
                 font=('Arial', 9), width=8, justify='center',
@@ -1068,7 +1115,7 @@ class PowderXRDModule(GUIBase):
 
         tk.Label(header4, text="Birch-Murnaghan EOS",
                 bg=self.colors['card_bg'], fg=self.colors['primary'],
-                font=('Comic Sans MS', 11, 'bold')).pack(side=tk.LEFT)
+                font=('Arial', 11, 'bold')).pack(side=tk.LEFT)
 
         # Container for left-right layout
         bm_main_container = tk.Frame(content4, bg=self.colors['card_bg'])
@@ -1079,12 +1126,12 @@ class PowderXRDModule(GUIBase):
         bm_left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 15))
 
         tk.Label(bm_left_section, text="Input CSV (P-V Data)", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
 
         bm_input_frame = tk.Frame(bm_left_section, bg=self.colors['card_bg'])
         bm_input_frame.pack(fill=tk.X, pady=(0, 12))
 
-        tk.Entry(bm_input_frame, textvariable=self.bm_input_file, font=('Comic Sans MS', 9),
+        tk.Entry(bm_input_frame, textvariable=self.bm_input_file, font=('Arial', 9),
                 bg='white', relief='solid', borderwidth=1, width=90).pack(side=tk.LEFT, fill=tk.X, ipady=3)
 
         SpinboxStyleButton(bm_input_frame, "Browse",
@@ -1092,17 +1139,28 @@ class PowderXRDModule(GUIBase):
                           width=75).pack(side=tk.LEFT, padx=(5, 0))
 
         tk.Label(bm_left_section, text="Output Directory", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
 
         bm_output_frame = tk.Frame(bm_left_section, bg=self.colors['card_bg'])
         bm_output_frame.pack(fill=tk.X)
 
-        tk.Entry(bm_output_frame, textvariable=self.bm_output_dir, font=('Comic Sans MS', 9),
+        tk.Entry(bm_output_frame, textvariable=self.bm_output_dir, font=('Arial', 9),
                 bg='white', relief='solid', borderwidth=1, width=90).pack(side=tk.LEFT, fill=tk.X, ipady=3)
 
         SpinboxStyleButton(bm_output_frame, "Browse",
                           lambda: self.browse_folder(self.bm_output_dir),
                           width=75).pack(side=tk.LEFT, padx=(5, 0))
+
+        # Center the BM fitting button
+        bm_btn_frame = tk.Frame(bm_left_section, bg=self.colors['card_bg'])
+        bm_btn_frame.pack(fill=tk.X, pady=(15, 0))
+
+        bm_btn_container = tk.Frame(bm_btn_frame, bg=self.colors['card_bg'])
+        bm_btn_container.pack(expand=True)
+
+        SpinboxStyleButton(bm_btn_container, "⚗️ Birch-Murnaghan Fit",
+                          self.run_birch_murnaghan,
+                          width=250, font_size=11).pack()
 
         # Right section: BM Order (centered vertically)
         bm_right_outer = tk.Frame(bm_main_container, bg=self.colors['card_bg'])
@@ -1112,31 +1170,30 @@ class PowderXRDModule(GUIBase):
         bm_right_center = tk.Frame(bm_right_outer, bg=self.colors['card_bg'])
         bm_right_center.pack(expand=True)
 
-        tk.Label(bm_right_center, text="BM Order", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(pady=(0, 8))
+        # BM Order with border frame
+        bm_order_border = tk.Frame(bm_right_center, bg=self.colors['card_bg'],
+                                   relief='solid', borderwidth=1)
+        bm_order_border.pack()
 
-        bm_order_frame = tk.Frame(bm_right_center, bg=self.colors['card_bg'])
+        # Inner content with padding
+        bm_order_content = tk.Frame(bm_order_border, bg=self.colors['card_bg'])
+        bm_order_content.pack(padx=10, pady=10)
+
+        tk.Label(bm_order_content, text="BM Order", bg=self.colors['card_bg'],
+                fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(pady=(0, 8))
+
+        bm_order_frame = tk.Frame(bm_order_content, bg=self.colors['card_bg'])
         bm_order_frame.pack()
 
         tk.Radiobutton(bm_order_frame, text="2nd Order", variable=self.bm_order, value='2',
-                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      bg=self.colors['card_bg'], font=('Arial', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
 
         tk.Radiobutton(bm_order_frame, text="3rd Order", variable=self.bm_order, value='3',
-                      bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
+                      bg=self.colors['card_bg'], font=('Arial', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
                       activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
-
-        btn_frame3 = tk.Frame(parent_frame, bg=self.colors['bg'])
-        btn_frame3.pack(fill=tk.X, pady=(10, 0))
-
-        btn_cont3 = tk.Frame(btn_frame3, bg=self.colors['bg'])
-        btn_cont3.pack(expand=True)
-
-        SpinboxStyleButton(btn_cont3, "⚗️ Birch-Murnaghan Fit",
-                          self.run_birch_murnaghan,
-                          width=250).pack()
 
     # ==================== Processing Functions ====================
 
@@ -1223,7 +1280,7 @@ class PowderXRDModule(GUIBase):
             title_frame.pack(pady=5)
             
             tk.Label(title_frame, text=title, bg='#F0E6FA',
-                    fg='#9966CC', font=('Comic Sans MS', 16, 'bold')).pack()
+                    fg='#9966CC', font=('Arial', 16, 'bold')).pack()
             
             # Message card with border
             msg_card = tk.Frame(dialog, bg='white', relief='solid',
@@ -1235,13 +1292,13 @@ class PowderXRDModule(GUIBase):
             msg_inner.pack(fill=tk.BOTH, expand=True)
             
             tk.Label(msg_inner, text=message, bg='white',
-                    fg='#333333', font=('Comic Sans MS', 11),
+                    fg='#333333', font=('Arial', 11),
                     wraplength=420, justify=tk.LEFT).pack()
             
             if details:
                 tk.Frame(msg_inner, bg='#E8D5F0', height=1).pack(fill=tk.X, pady=10)
                 tk.Label(msg_inner, text=details, bg='white',
-                        fg='#666666', font=('Comic Sans MS', 9),
+                        fg='#666666', font=('Arial', 9),
                         wraplength=420, justify=tk.LEFT).pack()
             
             # OK Button with gradient-like effect
@@ -1254,7 +1311,7 @@ class PowderXRDModule(GUIBase):
                 command=dialog.destroy,
                 bg='#C8A2D9',
                 fg='white',
-                font=('Comic Sans MS', 12, 'bold'),
+                font=('Arial', 12, 'bold'),
                 relief='flat',
                 borderwidth=0,
                 padx=40,
@@ -1265,9 +1322,9 @@ class PowderXRDModule(GUIBase):
             
             # Enhanced hover effect
             def on_enter(e):
-                ok_btn.config(bg='#B794F6', font=('Comic Sans MS', 12, 'bold'))
+                ok_btn.config(bg='#B794F6', font=('Arial', 12, 'bold'))
             def on_leave(e):
-                ok_btn.config(bg='#C8A2D9', font=('Comic Sans MS', 12, 'bold'))
+                ok_btn.config(bg='#C8A2D9', font=('Arial', 12, 'bold'))
             
             ok_btn.bind('<Enter>', on_enter)
             ok_btn.bind('<Leave>', on_leave)
