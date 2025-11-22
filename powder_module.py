@@ -235,7 +235,7 @@ class PowderXRDModule(GUIBase):
         self.output_dir = tk.StringVar(master=self.root)
         self.dataset_path = tk.StringVar(master=self.root, value="entry/data/data")
         self.npt = tk.IntVar(master=self.root, value=4000)
-        self.unit = tk.StringVar(master=self.root, value='2th_deg')
+        self.unit = tk.StringVar(master=self.root, value='2θ (°)')
         self.fit_method = tk.StringVar(master=self.root, value='pseudo')
 
         # Output format options (6 formats)
@@ -602,7 +602,7 @@ class PowderXRDModule(GUIBase):
         tk.Label(unit_cont, text="Unit", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
         ttk.Combobox(unit_cont, textvariable=self.unit,
-                    values=['2th_deg', 'q_A^-1', 'q_nm^-1', 'r_mm'],
+                    values=['2θ (°)', 'Q (Å⁻¹)', 'r (mm)'],
                     width=16, state='readonly', font=('Comic Sans MS', 9)).pack(anchor=tk.W)
 
         # ===== IMPROVED LAYOUT: Output Formats and Stacked Plot Side by Side =====
@@ -628,7 +628,7 @@ class PowderXRDModule(GUIBase):
 
         # LEFT SECTION: Output Formats
         left_section = tk.Frame(main_container, bg=self.colors['card_bg'])
-        left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 20))
+        left_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
 
         tk.Label(left_section, text="Select Output Formats:", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
@@ -638,31 +638,41 @@ class PowderXRDModule(GUIBase):
 
         row1 = tk.Frame(formats_grid, bg=self.colors['card_bg'])
         row1.pack(fill=tk.X, pady=3)
+        
         tk.Checkbutton(row1, text=".xy", variable=self.format_xy, bg=self.colors['card_bg'],
                       font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
-                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 20))
+                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
+                      ).pack(side=tk.LEFT, padx=(0, 15))
+        
         tk.Checkbutton(row1, text=".dat", variable=self.format_dat, bg=self.colors['card_bg'],
                       font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
-                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 20))
+                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
+                      ).pack(side=tk.LEFT, padx=(0, 15))
+        
         tk.Checkbutton(row1, text=".chi", variable=self.format_chi, bg=self.colors['card_bg'],
                       font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
-                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
+                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
+                      ).pack(side=tk.LEFT, padx=(0, 15))
+        
+        tk.Checkbutton(row1, text=".fxye", variable=self.format_fxye, bg=self.colors['card_bg'],
+                      font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
+                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
+                      ).pack(side=tk.LEFT, padx=(0, 15))
+        
+        tk.Checkbutton(row1, text=".svg", variable=self.format_svg, bg=self.colors['card_bg'],
+                      font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
+                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
+                      ).pack(side=tk.LEFT, padx=(0, 15))
+        
+        tk.Checkbutton(row1, text=".png", variable=self.format_png, bg=self.colors['card_bg'],
+                      font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
+                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']
+                      ).pack(side=tk.LEFT)
 
-        row2 = tk.Frame(formats_grid, bg=self.colors['card_bg'])
-        row2.pack(fill=tk.X, pady=3)
-        tk.Checkbutton(row2, text=".fxye", variable=self.format_fxye, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
-                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 20))
-        tk.Checkbutton(row2, text=".svg", variable=self.format_svg, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
-                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 20))
-        tk.Checkbutton(row2, text=".png", variable=self.format_png, bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 9), fg=self.colors['text_dark'],
-                      selectcolor='#E8D5F0', activebackground=self.colors['card_bg']).pack(side=tk.LEFT)
 
         # RIGHT SECTION: Stacked Plot Options (Horizontal layout for better UI)
         right_section = tk.Frame(main_container, bg=self.colors['card_bg'])
-        right_section.pack(side=tk.LEFT, fill=tk.Y)
+        right_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         tk.Label(right_section, text="Stacked Plot Options:", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
@@ -675,7 +685,7 @@ class PowderXRDModule(GUIBase):
                       variable=self.create_stacked_plot,
                       bg=self.colors['card_bg'], font=('Comic Sans MS', 9),
                       fg=self.colors['text_dark'], selectcolor='#E8D5F0',
-                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 15))
+                      activebackground=self.colors['card_bg']).pack(side=tk.LEFT, padx=(0, 40))
 
         # Offset section in the same row
         offset_container = tk.Frame(stacked_options_row, bg=self.colors['card_bg'])
@@ -1391,7 +1401,6 @@ class PowderXRDModule(GUIBase):
         unit_labels = {
             '2th_deg': '2θ (°)',
             'q_A^-1': 'Q (Å⁻¹)',
-            'q_nm^-1': 'Q (nm⁻¹)',
             'r_mm': 'r (mm)'
         }
         xlabel = unit_labels.get(unit, unit)
@@ -1427,7 +1436,7 @@ class PowderXRDModule(GUIBase):
                 try:
                     offset_value = float(offset)
                 except:
-                    offset_value = 1000  # Default fallback
+                    offset_value = 500  # Default fallback
 
             all_x_min = float('inf')
             all_x_max = float('-inf')
@@ -1459,7 +1468,7 @@ class PowderXRDModule(GUIBase):
                 baseline_y = i * offset_value
 
                 # Find the minimum intensity value at the label position to place label above the curve
-                label_x_pos = x_min + 0.02 * (x_max - x_min)
+                label_x_pos = x_min + 0.03 * (x_max - x_min)
                 # Find y value at label x position (approximate using nearest point)
                 idx = np.argmin(np.abs(x - label_x_pos))
                 label_y = y_offset[idx] if idx < len(y_offset) else baseline_y
@@ -1470,10 +1479,12 @@ class PowderXRDModule(GUIBase):
                        fontsize=9,
                        verticalalignment='bottom',  # Changed to 'bottom' so label sits above the curve
                        horizontalalignment='left',
-                       bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
-                                edgecolor='gray', alpha=0.8))
+                       #bbox=dict(boxstyle='square,pad=0.3', facecolor='white', edgecolor='none', alpha=0.8)
+                       )
 
             ax.set_xlim(x_min, x_max)
+            ax.text(0.02, 0.78, 'P (GPa)',
+            transform=ax.transAxes, fontsize=15, verticalalignment='top', horizontalalignment='left')
             ax.set_xlabel(xlabel, fontsize=13, fontweight='bold')
             ax.set_ylabel('Intensity (offset)', fontsize=13, fontweight='bold')
             ax.set_title('Stacked XRD Patterns (Sorted by Pressure)',
