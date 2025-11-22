@@ -731,9 +731,13 @@ class AzimuthalIntegrationModule(GUIBase):
                 bg=self.colors['card_bg'], fg=self.colors['primary'],
                 font=('Comic Sans MS', 10, 'bold')).pack(side=tk.LEFT)
 
-        # Mode selection
-        mode_frame = tk.Frame(content, bg=self.colors['card_bg'])
-        mode_frame.pack(fill=tk.X, pady=(0, 15))
+        # Mode selection with warning box in same row
+        mode_container = tk.Frame(content, bg=self.colors['card_bg'])
+        mode_container.pack(fill=tk.X, pady=(0, 15))
+
+        # Left side: Mode selection
+        mode_frame = tk.Frame(mode_container, bg=self.colors['card_bg'])
+        mode_frame.pack(side=tk.LEFT)
 
         tk.Label(mode_frame, text="Integration Mode:", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 6))
@@ -743,13 +747,28 @@ class AzimuthalIntegrationModule(GUIBase):
 
         tk.Radiobutton(mode_buttons, text="Single Sector", variable=self.mode,
                       value='single', bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 10),
+                      font=('Comic Sans MS', 10, 'bold'),
                       command=self.update_mode).pack(side=tk.LEFT, padx=(0, 25))
 
         tk.Radiobutton(mode_buttons, text="Multiple Sectors", variable=self.mode,
                       value='multiple', bg=self.colors['card_bg'],
-                      font=('Comic Sans MS', 10),
+                      font=('Comic Sans MS', 10, 'bold'),
                       command=self.update_mode).pack(side=tk.LEFT)
+
+        # Right side: Reference warning box (centered vertically)
+        warning_container = tk.Frame(mode_container, bg=self.colors['card_bg'])
+        warning_container.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(30, 0))
+
+        # Center vertically
+        center_frame = tk.Frame(warning_container, bg=self.colors['card_bg'])
+        center_frame.pack(expand=True)
+
+        warning_box = tk.Frame(center_frame, bg='#FFF4DC', relief='solid', borderwidth=1, padx=10, pady=6)
+        warning_box.pack()
+
+        tk.Label(warning_box, text="🍓 0°=Right(→) | 90°=Top(↑) | 180°=Left(←) | 270°=Bottom(↓)",
+                bg='#FFF4DC', fg=self.colors['text_dark'],
+                font=('Comic Sans MS', 9, 'bold')).pack()
 
         self.dynamic_frame = tk.Frame(content, bg=self.colors['card_bg'])
         self.dynamic_frame.pack(fill=tk.BOTH, expand=True)
@@ -866,7 +885,7 @@ class AzimuthalIntegrationModule(GUIBase):
                     fg=self.colors['text_dark'],
                     font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 4))
             tk.Entry(start_cont, textvariable=self.bin_start,
-                    font=('Comic Sans MS', 10), width=10).pack(anchor=tk.W)
+                    font=('Comic Sans MS', 10), width=20).pack(anchor=tk.W)
 
             end_cont = tk.Frame(range_frame, bg=self.colors['card_bg'])
             end_cont.pack(side=tk.LEFT, fill=tk.X, expand=True)
@@ -875,7 +894,7 @@ class AzimuthalIntegrationModule(GUIBase):
                     fg=self.colors['text_dark'],
                     font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 4))
             tk.Entry(end_cont, textvariable=self.bin_end,
-                    font=('Comic Sans MS', 10), width=10).pack(anchor=tk.W)
+                    font=('Comic Sans MS', 10), width=20).pack(anchor=tk.W)
 
             # Row 2: Bin size and calculated bin count
             step_frame = tk.Frame(bin_container, bg=self.colors['card_bg'])
@@ -888,7 +907,7 @@ class AzimuthalIntegrationModule(GUIBase):
                     fg=self.colors['text_dark'],
                     font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 4))
             tk.Entry(step_cont, textvariable=self.bin_step,
-                    font=('Comic Sans MS', 10), width=10).pack(anchor=tk.W)
+                    font=('Comic Sans MS', 10), width=20).pack(anchor=tk.W)
 
             # Display calculated bin count
             info_cont = tk.Frame(step_frame, bg=self.colors['card_bg'])
@@ -934,21 +953,21 @@ class AzimuthalIntegrationModule(GUIBase):
             tk.Label(start_cont, text="Start Angle (°)", bg=self.colors['card_bg'],
                     fg=self.colors['text_dark'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 4))
             tk.Entry(start_cont, textvariable=self.azimuth_start,
-                    font=('Comic Sans MS', 10), width=10).pack(anchor=tk.W)
+                    font=('Comic Sans MS', 10), width=20).pack(anchor=tk.W)
 
             end_cont = tk.Frame(angle_frame, bg=self.colors['card_bg'])
             end_cont.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 15))
             tk.Label(end_cont, text="End Angle (°)", bg=self.colors['card_bg'],
                     fg=self.colors['text_dark'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 4))
             tk.Entry(end_cont, textvariable=self.azimuth_end,
-                    font=('Comic Sans MS', 10), width=10).pack(anchor=tk.W)
+                    font=('Comic Sans MS', 10), width=20).pack(anchor=tk.W)
 
             label_cont = tk.Frame(angle_frame, bg=self.colors['card_bg'])
             label_cont.pack(side=tk.LEFT, fill=tk.X, expand=True)
             tk.Label(label_cont, text="Sector Label", bg=self.colors['card_bg'],
                     fg=self.colors['text_dark'], font=('Comic Sans MS', 10, 'bold')).pack(anchor=tk.W, pady=(0, 4))
             tk.Entry(label_cont, textvariable=self.sector_label,
-                    font=('Comic Sans MS', 10), width=24).pack(anchor=tk.W)
+                    font=('Comic Sans MS', 10), width=30).pack(anchor=tk.W)
 
     def _setup_multiple_sectors_ui(self):
         """Multiple sectors - Custom sectors only"""
@@ -1046,7 +1065,20 @@ class AzimuthalIntegrationModule(GUIBase):
         self.sectors_container = tk.Frame(sectors_outer_frame, bg=self.colors['card_bg'])
         self.sectors_container.pack(side=tk.LEFT, anchor='center')
 
-        # No add/clear buttons - fixed 2 sectors
+        # Buttons for add/clear sectors
+        btn_frame = tk.Frame(self.custom_center_all, bg=self.colors['card_bg'])
+        btn_frame.pack(anchor='center')
+
+        tk.Button(btn_frame, text="🐾 Add Sector", command=self._add_sector,
+                 bg='#D8A7D8', fg='white',
+                 font=('Comic Sans MS', 10, 'bold'), relief='flat',
+                 padx=6, pady=7, cursor='hand2').pack(side=tk.LEFT, padx=15)
+
+        tk.Button(btn_frame, text="🍉 Clear All", command=self._clear_all_sectors,
+                 bg='#FF9FB5', fg='white',
+                 font=('Comic Sans MS', 10, 'bold'), relief='flat',
+                 padx=6, pady=7, cursor='hand2').pack(side=tk.LEFT, padx=15)
+
         for idx in range(len(self.custom_sectors)):
             self._create_sector_row(idx)
 
@@ -1115,24 +1147,24 @@ class AzimuthalIntegrationModule(GUIBase):
             num_label.pack(side=tk.LEFT, padx=(0, 8))
 
             tk.Label(row_frame, text="Start:", bg=self.colors['card_bg'],
-                    font=('Comic Sans MS', 10)).pack(side=tk.LEFT, padx=(0, 4))
-            tk.Entry(row_frame, textvariable=sector[0], width=7,
+                    font=('Comic Sans MS', 10, 'bold')).pack(side=tk.LEFT, padx=(0, 4))
+            tk.Entry(row_frame, textvariable=sector[0], width=12,
                     font=('Comic Sans MS', 10)).pack(side=tk.LEFT, padx=(0, 10))
 
             tk.Label(row_frame, text="End:", bg=self.colors['card_bg'],
-                    font=('Comic Sans MS', 10)).pack(side=tk.LEFT, padx=(0, 4))
-            tk.Entry(row_frame, textvariable=sector[1], width=7,
+                    font=('Comic Sans MS', 10, 'bold')).pack(side=tk.LEFT, padx=(0, 4))
+            tk.Entry(row_frame, textvariable=sector[1], width=12,
                     font=('Comic Sans MS', 10)).pack(side=tk.LEFT, padx=(0, 10))
 
             tk.Label(row_frame, text="Label:", bg=self.colors['card_bg'],
-                    font=('Comic Sans MS', 10)).pack(side=tk.LEFT, padx=(0, 4))
+                    font=('Comic Sans MS', 10, 'bold')).pack(side=tk.LEFT, padx=(0, 4))
             tk.Entry(row_frame, textvariable=sector[2],
-                    font=('Comic Sans MS', 10), width=12).pack(side=tk.LEFT, padx=(0, 10))
+                    font=('Comic Sans MS', 10), width=18).pack(side=tk.LEFT, padx=(0, 10))
 
             if self.multi_bin_mode.get():
                 tk.Label(row_frame, text="Bin:", bg=self.colors['card_bg'],
-                        font=('Comic Sans MS', 10)).pack(side=tk.LEFT, padx=(0, 4))
-                tk.Entry(row_frame, textvariable=sector[3], width=5,
+                        font=('Comic Sans MS', 10, 'bold')).pack(side=tk.LEFT, padx=(0, 4))
+                tk.Entry(row_frame, textvariable=sector[3], width=10,
                         font=('Comic Sans MS', 10)).pack(side=tk.LEFT, padx=(0, 10))
 
                 def calculate_sector_bins(s=sector):
@@ -1179,7 +1211,9 @@ class AzimuthalIntegrationModule(GUIBase):
                 self._add_trace(sector[1], callback)
                 self._add_trace(sector[3], callback)
 
-            # No delete button - fixed 2 sectors
+            tk.Button(row_frame, text="✖", command=lambda i=idx: self._delete_sector(i),
+                     bg='#E88C8C', fg='white', font=('Comic Sans MS', 9, 'bold'),
+                     relief='flat', width=3, cursor='hand2').pack(side=tk.LEFT)
 
         except Exception as e:
             print(f"Error creating sector row {idx}: {e}")
