@@ -563,6 +563,14 @@ class PeakFittingGUI:
         self.smoothing_window = tk.IntVar(value=11)
         self.y_smoothed = None
 
+        # Batch auto-fitting settings
+        self.batch_running = False
+        self.batch_paused = False
+        self.batch_skip_current = False
+        self.batch_delay = tk.DoubleVar(value=2.0)  # seconds to display each fit
+        self.batch_on_failure = tk.StringVar(value="pause")  # pause/skip/stop
+        self.batch_auto_save = tk.BooleanVar(value=True)
+
         # Initialize GUI components
         self.create_widgets()
 
@@ -660,6 +668,19 @@ class PeakFittingGUI:
                                           command=self.toggle_overlap_mode,
                                           state=tk.DISABLED, **btn_style)
         self.btn_overlap_mode.pack(side=tk.LEFT, padx=5, pady=8)
+
+        self.btn_batch_auto = tk.Button(control_frame, text="Batch Auto Fit",
+                                        bg='#00CED1', fg='white',
+                                        command=self.batch_auto_fit, state=tk.DISABLED, **btn_style)
+        self.btn_batch_auto.pack(side=tk.LEFT, padx=5, pady=8)
+
+        self.btn_batch_settings = tk.Button(control_frame, text="⚙",
+                                           bg='#87CEEB', fg='white',
+                                           command=self.show_batch_settings,
+                                           state=tk.NORMAL,
+                                           font=('Arial', 10, 'bold'),
+                                           width=3, height=2, relief=tk.RAISED, bd=3)
+        self.btn_batch_settings.pack(side=tk.LEFT, padx=2, pady=8)
 
         self.status_label = tk.Label(control_frame, text="Please load a file to start",
                                      bg='#BA55D3', fg='white',
@@ -1103,6 +1124,7 @@ class PeakFittingGUI:
             if len(self.file_list) > 1:
                 self.btn_prev_file.config(state=tk.NORMAL)
                 self.btn_next_file.config(state=tk.NORMAL)
+                self.btn_batch_auto.config(state=tk.NORMAL)
 
             file_info = f"File {self.current_file_index + 1}/{len(self.file_list)}: {self.filename}"
             self.status_label.config(text=file_info)
@@ -1953,6 +1975,324 @@ class PeakFittingGUI:
         self.info_text.insert(tk.END, message)
         self.info_text.see(tk.END)
         self.info_text.config(state=tk.DISABLED)
+
+    # ==================== Batch Auto-Fitting Methods ====================
+
+    def show_batch_settings(self):
+        """Show batch auto-fitting settings dialog"""
+        settings_window = tk.Toplevel(self.master)
+        settings_window.title("Batch Auto-Fit Settings")
+        settings_window.geometry("400x300")
+        settings_window.configure(bg='#F0E6FA')
+        settings_window.transient(self.master)
+        settings_window.grab_set()
+
+        # Delay setting
+        delay_frame = tk.Frame(settings_window, bg='#F0E6FA')
+        delay_frame.pack(pady=10, padx=20, fill=tk.X)
+
+        tk.Label(delay_frame, text="Display delay per file (seconds):",
+                bg='#F0E6FA', fg='#4B0082',
+                font=('Arial', 10, 'bold')).pack(side=tk.LEFT, padx=5)
+
+        delay_spinbox = tk.Spinbox(delay_frame, from_=0.5, to=10.0, increment=0.5,
+                                   textvariable=self.batch_delay,
+                                   width=10, font=('Arial', 10))
+        delay_spinbox.pack(side=tk.LEFT, padx=5)
+
+        # Auto-save setting
+        autosave_frame = tk.Frame(settings_window, bg='#F0E6FA')
+        autosave_frame.pack(pady=10, padx=20, fill=tk.X)
+
+        tk.Checkbutton(autosave_frame, text="Auto-save results for each file",
+                      variable=self.batch_auto_save,
+                      bg='#F0E6FA', fg='#4B0082',
+                      font=('Arial', 10, 'bold')).pack(anchor=tk.W)
+
+        # Failure handling
+        failure_frame = tk.Frame(settings_window, bg='#F0E6FA')
+        failure_frame.pack(pady=10, padx=20, fill=tk.X)
+
+        tk.Label(failure_frame, text="When auto-fitting fails:",
+                bg='#F0E6FA', fg='#4B0082',
+                font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=5)
+
+        tk.Radiobutton(failure_frame, text="Pause and allow manual adjustment",
+                      variable=self.batch_on_failure, value="pause",
+                      bg='#F0E6FA', fg='#4B0082',
+                      font=('Arial', 9)).pack(anchor=tk.W, padx=20)
+
+        tk.Radiobutton(failure_frame, text="Skip to next file",
+                      variable=self.batch_on_failure, value="skip",
+                      bg='#F0E6FA', fg='#4B0082',
+                      font=('Arial', 9)).pack(anchor=tk.W, padx=20)
+
+        tk.Radiobutton(failure_frame, text="Stop batch processing",
+                      variable=self.batch_on_failure, value="stop",
+                      bg='#F0E6FA', fg='#4B0082',
+                      font=('Arial', 9)).pack(anchor=tk.W, padx=20)
+
+        # Info text
+        info_text = tk.Label(settings_window,
+                           text="Batch Auto-Fit will:\n"
+                                "1. Auto-find peaks\n"
+                                "2. Auto-select background\n"
+                                "3. Subtract background\n"
+                                "4. Fit peaks\n"
+                                "5. Save results (if enabled)",
+                           bg='#FAF0FF', fg='#4B0082',
+                           font=('Courier', 9),
+                           relief=tk.SUNKEN, bd=2,
+                           justify=tk.LEFT)
+        info_text.pack(pady=10, padx=20, fill=tk.BOTH, expand=True)
+
+        # Close button
+        tk.Button(settings_window, text="Close",
+                 bg='#9370DB', fg='white',
+                 font=('Arial', 10, 'bold'),
+                 command=settings_window.destroy,
+                 width=10).pack(pady=10)
+
+    def batch_auto_fit(self):
+        """Start batch auto-fitting for all files in folder"""
+        if len(self.file_list) <= 1:
+            messagebox.showwarning("Insufficient Files",
+                                 "Need at least 2 files for batch processing!")
+            return
+
+        # Confirm start
+        response = messagebox.askyesno(
+            "Start Batch Auto-Fit",
+            f"Start batch processing {len(self.file_list)} files?\n\n"
+            f"Settings:\n"
+            f"- Display delay: {self.batch_delay.get()}s per file\n"
+            f"- Auto-save: {'Yes' if self.batch_auto_save.get() else 'No'}\n"
+            f"- On failure: {self.batch_on_failure.get()}"
+        )
+
+        if not response:
+            return
+
+        # Initialize batch processing
+        self.batch_running = True
+        self.batch_paused = False
+        self.batch_skip_current = False
+
+        # Disable other buttons during batch processing
+        self._set_batch_mode_ui(True)
+
+        # Start from current file
+        start_index = self.current_file_index
+
+        try:
+            for i in range(len(self.file_list)):
+                if not self.batch_running:
+                    break
+
+                file_idx = (start_index + i) % len(self.file_list)
+                self.current_file_index = file_idx
+                filepath = self.file_list[file_idx]
+
+                self.update_info(f"\n{'='*50}\n")
+                self.update_info(f"Batch processing file {i+1}/{len(self.file_list)}: "
+                               f"{os.path.basename(filepath)}\n")
+                self.status_label.config(text=f"Batch: {i+1}/{len(self.file_list)}")
+
+                # Process this file
+                success = self._process_single_file_auto(filepath)
+
+                if not success:
+                    # Handle failure according to settings
+                    if self.batch_on_failure.get() == "stop":
+                        self.update_info("Batch processing stopped due to failure.\n")
+                        break
+                    elif self.batch_on_failure.get() == "pause":
+                        self.update_info("Auto-fitting failed. Pausing for manual adjustment...\n")
+                        self.batch_paused = True
+                        self._show_manual_adjustment_dialog()
+
+                        # Wait for user to continue or skip
+                        while self.batch_paused and self.batch_running:
+                            self.master.update()
+                            self.master.after(100)
+
+                        if self.batch_skip_current:
+                            self.update_info("Skipping current file...\n")
+                            self.batch_skip_current = False
+                            continue
+                    elif self.batch_on_failure.get() == "skip":
+                        self.update_info("Auto-fitting failed. Skipping to next file...\n")
+                        continue
+
+                # Display result for specified delay
+                delay_ms = int(self.batch_delay.get() * 1000)
+                self.master.after(delay_ms)
+                self.master.update()
+
+        except Exception as e:
+            import traceback
+            messagebox.showerror("Batch Error", f"Batch processing error:\n{str(e)}")
+            self.update_info(f"Batch error: {traceback.format_exc()}\n")
+
+        finally:
+            # Clean up
+            self.batch_running = False
+            self.batch_paused = False
+            self._set_batch_mode_ui(False)
+            self.update_info("\nBatch processing complete!\n")
+            self.status_label.config(text="Batch processing complete")
+            messagebox.showinfo("Complete", "Batch auto-fitting finished!")
+
+    def _process_single_file_auto(self, filepath):
+        """
+        Automatically process a single file: load → find peaks → background → fit → save
+
+        Returns:
+            bool: True if successful, False if failed
+        """
+        try:
+            # Step 1: Load file
+            self.load_file_by_path(filepath)
+            self.master.update()
+
+            # Step 2: Auto-find peaks
+            self.update_info("  Step 1: Auto-finding peaks...\n")
+            self.auto_find_peaks()
+            self.master.update()
+
+            if len(self.selected_peaks) == 0:
+                self.update_info("  ❌ No peaks found!\n")
+                return False
+
+            self.update_info(f"  ✓ Found {len(self.selected_peaks)} peaks\n")
+
+            # Step 3: Auto-select background
+            self.update_info("  Step 2: Auto-selecting background...\n")
+            self.auto_select_background()
+            self.master.update()
+
+            if len(self.bg_points) < 2:
+                self.update_info("  ❌ Background selection failed!\n")
+                return False
+
+            self.update_info(f"  ✓ Selected {len(self.bg_points)} background points\n")
+
+            # Step 4: Subtract background
+            self.update_info("  Step 3: Subtracting background...\n")
+            self.subtract_background()
+            self.master.update()
+            self.update_info("  ✓ Background subtracted\n")
+
+            # Step 5: Fit peaks
+            self.update_info("  Step 4: Fitting peaks...\n")
+            self.fit_peaks()
+            self.master.update()
+
+            if not self.fitted or self.fit_results is None:
+                self.update_info("  ❌ Peak fitting failed!\n")
+                return False
+
+            self.update_info(f"  ✓ Successfully fitted {len(self.fit_results)} peaks\n")
+
+            # Step 6: Save results (if enabled)
+            if self.batch_auto_save.get():
+                self.update_info("  Step 5: Saving results...\n")
+                save_dir = os.path.dirname(filepath)
+                self._save_results_to_dir(save_dir)
+                self.update_info(f"  ✓ Results saved to {save_dir}\n")
+
+            self.update_info("  ✅ File processed successfully!\n")
+            return True
+
+        except Exception as e:
+            import traceback
+            self.update_info(f"  ❌ Error: {str(e)}\n")
+            self.update_info(f"  {traceback.format_exc()}\n")
+            return False
+
+    def _show_manual_adjustment_dialog(self):
+        """Show dialog for manual adjustment during batch processing"""
+        dialog = tk.Toplevel(self.master)
+        dialog.title("Manual Adjustment Needed")
+        dialog.geometry("400x250")
+        dialog.configure(bg='#FFF8DC')
+        dialog.transient(self.master)
+        dialog.grab_set()
+
+        # Message
+        msg = tk.Label(dialog,
+                      text="Auto-fitting failed for current file.\n\n"
+                           "You can now manually:\n"
+                           "• Click on peak positions\n"
+                           "• Adjust background points\n"
+                           "• Click 'Fit Peaks' button\n\n"
+                           "When ready, choose an action below:",
+                      bg='#FFF8DC', fg='#8B4513',
+                      font=('Arial', 10),
+                      justify=tk.LEFT)
+        msg.pack(pady=20, padx=20)
+
+        # Buttons
+        btn_frame = tk.Frame(dialog, bg='#FFF8DC')
+        btn_frame.pack(pady=10)
+
+        def continue_batch():
+            self.batch_paused = False
+            dialog.destroy()
+
+        def skip_current():
+            self.batch_skip_current = True
+            self.batch_paused = False
+            dialog.destroy()
+
+        def stop_batch():
+            self.batch_running = False
+            self.batch_paused = False
+            dialog.destroy()
+
+        tk.Button(btn_frame, text="Continue After Manual Fix",
+                 bg='#90EE90', fg='#006400',
+                 font=('Arial', 10, 'bold'),
+                 command=continue_batch,
+                 width=20).pack(pady=5)
+
+        tk.Button(btn_frame, text="Skip This File",
+                 bg='#FFD700', fg='#8B4513',
+                 font=('Arial', 10, 'bold'),
+                 command=skip_current,
+                 width=20).pack(pady=5)
+
+        tk.Button(btn_frame, text="Stop Batch Processing",
+                 bg='#FF6347', fg='white',
+                 font=('Arial', 10, 'bold'),
+                 command=stop_batch,
+                 width=20).pack(pady=5)
+
+    def _set_batch_mode_ui(self, batch_mode):
+        """Enable/disable UI elements during batch processing"""
+        if batch_mode:
+            # Disable most buttons during batch
+            self.btn_load.config(state=tk.DISABLED)
+            self.btn_prev_file.config(state=tk.DISABLED)
+            self.btn_next_file.config(state=tk.DISABLED)
+            self.btn_batch_auto.config(text="Stop Batch", bg='#FF0000',
+                                      command=self._stop_batch_processing)
+        else:
+            # Re-enable buttons
+            self.btn_load.config(state=tk.NORMAL)
+            if len(self.file_list) > 1:
+                self.btn_prev_file.config(state=tk.NORMAL)
+                self.btn_next_file.config(state=tk.NORMAL)
+                self.btn_batch_auto.config(text="Batch Auto Fit", bg='#00CED1',
+                                          command=self.batch_auto_fit,
+                                          state=tk.NORMAL)
+
+    def _stop_batch_processing(self):
+        """Stop the batch processing"""
+        if messagebox.askyesno("Stop Batch", "Are you sure you want to stop batch processing?"):
+            self.batch_running = False
+            self.batch_paused = False
+            self.update_info("\nBatch processing stopped by user.\n")
 
 # ==================== Startup Window ====================
 # ==================== Main Entry Point (无启动窗口版) ====================
