@@ -249,7 +249,6 @@ class PowderXRDModule(GUIBase):
         # Stacked plot options
         self.create_stacked_plot = tk.BooleanVar(master=self.root, value=False)
         self.stacked_plot_offset = tk.StringVar(master=self.root, value='auto')
-        self.output_text = tk.StringVar(master=self.root, value='')
 
         # Phase analysis variables
         self.phase_peak_csv = tk.StringVar(master=self.root)
@@ -659,11 +658,19 @@ class PowderXRDModule(GUIBase):
         # 下方填充
         tk.Frame(center_container, bg=self.colors['card_bg']).pack(expand=True)
 
-        # Output Formats
-        tk.Label(right_section, text="Select Output Formats:", bg=self.colors['card_bg'],
+        # Output Formats with border
+        formats_border_frame = tk.Frame(right_section, bg=self.colors['card_bg'],
+                                       relief='solid', borderwidth=1, highlightbackground='#CCCCCC')
+        formats_border_frame.pack(fill=tk.X, pady=(0, 10))
+
+        # Inner padding frame
+        formats_content = tk.Frame(formats_border_frame, bg=self.colors['card_bg'])
+        formats_content.pack(fill=tk.X, padx=8, pady=8)
+
+        tk.Label(formats_content, text="Select Output Formats:", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(anchor=tk.W, pady=(0, 8))
 
-        formats_grid = tk.Frame(right_section, bg=self.colors['card_bg'])
+        formats_grid = tk.Frame(formats_content, bg=self.colors['card_bg'])
         formats_grid.pack(fill=tk.X)
 
         # First row of formats (3 checkboxes)
@@ -731,18 +738,6 @@ class PowderXRDModule(GUIBase):
         tk.Label(right_section, text="(use 'auto' or number for offset)",
                 bg=self.colors['card_bg'], fg='#888888',
                 font=('Comic Sans MS', 8, 'italic')).pack(anchor=tk.W, pady=(2, 0))
-
-        # Output text input section
-        output_text_container = tk.Frame(right_section, bg=self.colors['card_bg'])
-        output_text_container.pack(anchor=tk.W, fill=tk.X, pady=(12, 0))
-
-        tk.Label(output_text_container, text="Note:", bg=self.colors['card_bg'],
-                fg=self.colors['text_dark'], font=('Comic Sans MS', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 8))
-
-        output_text_entry = tk.Entry(output_text_container, textvariable=self.output_text,
-                                     font=('Arial', 10), width=18, justify='left',
-                                     bg='white', relief='solid', borderwidth=1)
-        output_text_entry.pack(side=tk.LEFT, ipady=2)
 
         # ===== Run Integration Button (Moved above Peak Fitting Settings) =====
         btn_frame_top = tk.Frame(parent_frame, bg=self.colors['bg'])
