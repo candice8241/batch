@@ -973,7 +973,7 @@ class PowderXRDModule(GUIBase):
                           self.run_phase_analysis,
                           width=300).pack(pady=(15, 0))
 
-        right_col = tk.Frame(main_content, bg='#F0E6FA', relief='solid', borderwidth=1, padx=10, pady=10)
+        right_col = tk.Frame(main_content, bg='#F0E6FA', relief='solid', borderwidth=1, padx=8, pady=8)
         right_col.pack(side=tk.LEFT, fill=tk.Y)
 
         param_header = tk.Frame(right_col, bg='#F0E6FA')
