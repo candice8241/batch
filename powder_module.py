@@ -1312,6 +1312,14 @@ class PowderXRDModule(GUIBase):
         if vars['format_png']: formats.append('png')
         if not formats: formats = ['xy']
 
+        # Convert UI-friendly unit to pyFAI-compatible unit
+        unit_conversion = {
+            '2θ (°)': '2th_deg',
+            'Q (Å⁻¹)': 'q_A^-1',
+            'r (mm)': 'r_mm'
+        }
+        pyfai_unit = unit_conversion.get(vars['unit'], vars['unit'])
+
         try:
             self.root.after(0, self.progress.start)
 
@@ -1336,7 +1344,7 @@ class PowderXRDModule(GUIBase):
             self.log(f"📊 Total files to process: {total_files}")
             self.log(f"📈 Output formats: {', '.join(formats)}")
             self.log(f"📉 Number of points: {vars['npt']}")
-            self.log(f"📏 Unit: {vars['unit']}")
+            self.log(f"📏 Unit: {vars['unit']} (pyFAI: {pyfai_unit})")
             self.log(f"{'='*60}\n")
 
             integrator = BatchIntegrator(vars['poni_path'], vars['mask_path'])
@@ -1348,7 +1356,7 @@ class PowderXRDModule(GUIBase):
                     input_pattern=h5_file,
                     output_dir=vars['output_dir'],
                     npt=vars['npt'],
-                    unit=vars['unit'],
+                    unit=pyfai_unit,
                     dataset_path=vars['dataset_path'],
                     formats=formats,
                     create_stacked_plot=False
@@ -1358,7 +1366,7 @@ class PowderXRDModule(GUIBase):
 
             if vars['create_stacked_plot'] and total_files > 1:
                 self.log(f"📈 Creating combined stacked plot for all {total_files} files...")
-                self._create_combined_stacked_plot(vars['output_dir'], vars['stacked_plot_offset'], vars['unit'])
+                self._create_combined_stacked_plot(vars['output_dir'], vars['stacked_plot_offset'], pyfai_unit)
 
             self.log(f"\n{'='*60}")
             self.log(f"✅ All integrations completed!")
