@@ -977,7 +977,7 @@ class PowderXRDModule(GUIBase):
             main_content,
             bg=self.colors['card_bg'],
             padx=6,
-            pady=(0, 0),
+            pady=0,
             highlightbackground="#8B7BB8",  # Border color (matching your purple theme)
             highlightthickness=2,             # Border width
             relief=tk.SOLID                   # Border style
