@@ -557,6 +557,7 @@ class PeakFittingGUI:
         self.bg_line = None
         self.bg_connect_line = None
         self.selecting_bg = False
+        self.fitted_bg_points = []  # Store background points used for fitting
 
         # Undo stack
         self.undo_stack = []
@@ -1265,13 +1266,15 @@ class PeakFittingGUI:
 
             self.canvas.draw()
 
+            # Save background points for fitting, then clear visual markers
+            self.fitted_bg_points = sorted_points.copy()
             self.bg_points = []
             self.bg_markers = []
             self.bg_line = None
             self.bg_connect_line = None
             self.btn_subtract_bg.config(state=tk.DISABLED)
 
-            self.update_info("Background subtracted\n")
+            self.update_info(f"Background subtracted using {len(self.fitted_bg_points)} points\n")
             self.status_label.config(text="Background subtracted")
 
         except Exception as e:
@@ -1303,6 +1306,7 @@ class PeakFittingGUI:
         self.bg_line = None
         self.bg_connect_line = None
         self.selecting_bg = False
+        self.fitted_bg_points = []  # Also clear saved background points
 
         self.undo_stack = [item for item in self.undo_stack if item[0] != 'bg_point']
         if not self.undo_stack:
@@ -1559,13 +1563,21 @@ class PeakFittingGUI:
             # Fit global background
             self.update_info("Fitting global background...\n")
 
-            if len(self.bg_points) >= 2:
+            # Use saved background points from subtract_background if available
+            if len(self.fitted_bg_points) >= 2:
+                sorted_bg_points = self.fitted_bg_points
+                bg_x = np.array([p[0] for p in sorted_bg_points])
+                bg_y = np.array([p[1] for p in sorted_bg_points])
+                global_bg = np.interp(self.x, bg_x, bg_y)
+                global_bg_points = sorted_bg_points
+                self.update_info(f"Using {len(global_bg_points)} saved background points (from subtraction)\n")
+            elif len(self.bg_points) >= 2:
                 sorted_bg_points = sorted(self.bg_points, key=lambda p: p[0])
                 bg_x = np.array([p[0] for p in sorted_bg_points])
                 bg_y = np.array([p[1] for p in sorted_bg_points])
                 global_bg = np.interp(self.x, bg_x, bg_y)
                 global_bg_points = sorted_bg_points
-                self.update_info(f"Using {len(global_bg_points)} manually selected background points\n")
+                self.update_info(f"Using {len(global_bg_points)} currently selected background points\n")
             else:
                 global_bg, global_bg_points = BackgroundFitter.fit_global_background(
                     self.x, self.y, sorted_peaks, method='piecewise')
