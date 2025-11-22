@@ -602,17 +602,17 @@ class PowderXRDModule(GUIBase):
         param_frame = tk.Frame(left_section, bg=self.colors['card_bg'])
         param_frame.pack(fill=tk.X, pady=(10, 0))
 
-        # Number of Points (left side)
+        # Number of Points (left side with expand for distributed centering)
         npt_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
-        npt_cont.pack(side=tk.LEFT, padx=(0, 30))
+        npt_cont.pack(side=tk.LEFT, expand=True)
         tk.Label(npt_cont, text="Number of Points", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 5))
         CustomSpinbox(npt_cont, from_=500, to=10000, textvariable=self.npt,
                      increment=100, is_float=False).pack(anchor=tk.W)
 
-        # Unit (right side, using radio button format)
+        # Unit (right side with expand for distributed centering)
         unit_cont = tk.Frame(param_frame, bg=self.colors['card_bg'])
-        unit_cont.pack(side=tk.LEFT)
+        unit_cont.pack(side=tk.LEFT, expand=True)
 
         tk.Label(unit_cont, text="Unit", bg=self.colors['card_bg'],
                 fg=self.colors['text_dark'], font=('Arial', 9, 'bold')).pack(pady=(0, 8))
