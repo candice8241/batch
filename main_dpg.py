@@ -100,8 +100,8 @@ class XRDProcessingGUI(GUIBase):
             with dpg.child_window(
                 tag="content_area",
                 border=False,
-                autosize_x=True,
-                autosize_y=True
+                width=-1,
+                height=-1
             ):
                 pass
 

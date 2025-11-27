@@ -235,7 +235,8 @@ class RadialIntegrationModule(GUIBase):
 
     def setup_ui(self):
         """Setup the complete UI"""
-        with dpg.child_window(parent=self.parent_tag, border=False, menubar=False):
+        with dpg.child_window(parent=self.parent_tag, border=False, menubar=False, 
+                              autosize_x=True, height=-1):
             
             # Reference Section
             self._create_reference_section()
