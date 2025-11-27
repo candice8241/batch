@@ -9,13 +9,7 @@ This is the DPG (Dear PyGui) version of powder_module.py
 import dearpygui.dearpygui as dpg
 import threading
 import os
-import numpy as np
-import pandas as pd
-
-from dpg_components import (
-    ColorScheme, ModernButton, CardFrame, FilePicker,
-    MessageDialog, ScrolledText, CustomSpinbox, SpinboxStyleButton
-)
+from dpg_components import FilePicker, MessageDialog
 from gui_base_dpg import GUIBase
 from batch_integration import BatchIntegrator
 
@@ -52,7 +46,7 @@ class PowderXRDModule(GUIBase):
             'output_dir': '',
             'dataset_path': 'entry/data/data',
             'npt': 4000,
-            'unit': '2th_deg',
+            'unit': '2θ (°)',
             'fit_method': 'pseudo',
 
             # Output formats
@@ -81,230 +75,226 @@ class PowderXRDModule(GUIBase):
 
     def setup_ui(self):
         """Setup the complete powder XRD UI"""
-        with dpg.child_window(parent=self.parent_tag, border=False):
-            # Integration Settings Card
-            self._create_integration_card()
+        self._create_theme()
 
-            dpg.add_spacer(height=15)
+        with dpg.child_window(parent=self.parent_tag, border=False, width=-1, show=False) as module_root:
+            dpg.bind_item_theme(module_root, "powder_square_theme")
+            with dpg.collapsing_header(label="Integration Settings & Output Options", default_open=True):
+                self._create_integration_section()
 
-            # Action Buttons
-            self._create_action_buttons()
+            with dpg.collapsing_header(label="Volume Calculation & Lattice Fitting", default_open=True):
+                self._create_volume_section()
 
-            dpg.add_spacer(height=15)
+            with dpg.group():
+                dpg.add_text("Process Progress:")
+                dpg.add_progress_bar(tag="powder_progress_bar", width=-1)
 
-            # Volume Calculation Card
-            self._create_volume_calculation_card()
+            with dpg.collapsing_header(label="Process Log", default_open=True):
+                with dpg.child_window(width=-1, height=220, border=True):
+                    dpg.add_input_text(
+                        tag="powder_log_text",
+                        multiline=True,
+                        readonly=True,
+                        height=-1,
+                        width=-1
+                    )
 
-            dpg.add_spacer(height=15)
+        dpg.configure_item(module_root, show=True)
 
-            # Progress and Log
-            self._create_progress_log()
+    def _create_theme(self):
+        """Create a square-corner theme for inputs and panels"""
+        if dpg.does_item_exist("powder_square_theme"):
+            return
 
-    def _create_integration_card(self):
-        """Create integration settings card"""
-        with dpg.child_window(border=True, height=450, menubar=False):
-            dpg.add_text("Integration Settings & Output Options",
-                        color=ColorScheme.PRIMARY + (255,))
-            dpg.add_separator()
+        with dpg.theme(tag="powder_square_theme"):
+            for component in (dpg.mvInputText, dpg.mvInputInt, dpg.mvInputFloat, dpg.mvButton, dpg.mvRadioButton, dpg.mvCheckbox):
+                with dpg.theme_component(component):
+                    dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 0, category=dpg.mvThemeCat_Core)
+                    dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 1, category=dpg.mvThemeCat_Core)
+                    dpg.add_theme_color(dpg.mvThemeCol_FrameBg, (255, 255, 255), category=dpg.mvThemeCat_Core)
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, (187, 152, 236), category=dpg.mvThemeCat_Core)
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (178, 140, 229), category=dpg.mvThemeCat_Core)
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (169, 127, 223), category=dpg.mvThemeCat_Core)
+                dpg.add_theme_color(dpg.mvThemeCol_Text, (70, 60, 88), category=dpg.mvThemeCat_Core)
+            with dpg.theme_component(dpg.mvChildWindow):
+                dpg.add_theme_style(dpg.mvStyleVar_ChildRounding, 0, category=dpg.mvThemeCat_Core)
+                dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (248, 242, 252), category=dpg.mvThemeCat_Core)
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 10, 10, category=dpg.mvThemeCat_Core)
 
-            # Two-column layout
-            with dpg.group(horizontal=True):
-                # Left column - Settings
-                with dpg.child_window(width=600, border=False):
-                    dpg.add_text("Integration Settings",
-                               color=ColorScheme.PRIMARY + (255,))
-                    dpg.add_spacer(height=5)
+    def _create_integration_section(self):
+        """Create integration settings and output options"""
+        with dpg.group():
+            dpg.add_text("Integration Settings", color=(123, 89, 162))
+            dpg.add_spacer(height=6)
+            with dpg.group(horizontal=True, horizontal_spacing=18):
+                with dpg.child_window(width=820, height=250, border=True, no_scrollbar=True):
+                    with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchProp,
+                                   borders_innerV=False, borders_innerH=True):
+                        dpg.add_table_column(init_width_or_weight=0.2)
+                        dpg.add_table_column(init_width_or_weight=0.65)
+                        dpg.add_table_column(init_width_or_weight=0.15)
 
-                    # PONI File
-                    self._create_file_input("PONI File", "poni_path",
-                                          [".poni"], "poni_input")
+                        self._add_labeled_file_row("PONI File:", "powder_poni_path",
+                                                   self.values['poni_path'], [".poni"])
+                        self._add_labeled_file_row("Mask File:", "powder_mask_path",
+                                                   self.values['mask_path'], [".edf", ".npy"])
+                        self._add_labeled_file_row("Import .h5 File:", "powder_input_pattern",
+                                                   self.values['input_pattern'], [".h5"])
+                        self._add_labeled_folder_row("Output Directory:", "powder_output_dir",
+                                                     self.values['output_dir'])
 
-                    # Mask File
-                    self._create_file_input("Mask File", "mask_path",
-                                          [".edf", ".npy"], "mask_input")
+                        with dpg.table_row():
+                            dpg.add_text("Dataset Path:")
+                            dpg.add_input_text(
+                                tag="dataset_path_input",
+                                default_value=self.values['dataset_path'],
+                                width=-1
+                            )
+                            dpg.add_spacer(width=1)
 
-                    # Input File
-                    self._create_file_input("Input .h5 File", "input_pattern",
-                                          [".h5"], "input_h5")
+                    dpg.add_spacer(height=8)
 
-                    # Output Directory
-                    self._create_folder_input("Output Directory", "output_dir",
-                                            "output_dir_input")
-
-                    # Dataset Path
-                    dpg.add_text("Dataset Path:")
-                    dpg.add_input_text(tag="dataset_path_input",
-                                     default_value=self.values['dataset_path'],
-                                     width=-1)
-
-                    dpg.add_spacer(height=10)
-
-                    # Parameters row
-                    with dpg.group(horizontal=True):
-                        # Number of Points
-                        with dpg.group():
+                    with dpg.group(horizontal=True, horizontal_spacing=22):
+                        with dpg.group(horizontal=True):
                             dpg.add_text("Number of Points:")
-                            dpg.add_input_int(tag="npt_input",
-                                            default_value=self.values['npt'],
-                                            width=150, min_value=500, max_value=10000,
-                                            min_clamped=True, max_clamped=True)
+                            dpg.add_input_int(
+                                tag="npt_input",
+                                default_value=self.values['npt'],
+                                width=110
+                            )
 
-                        dpg.add_spacer(width=20)
-
-                        # Unit selection
-                        with dpg.group():
+                        with dpg.group(horizontal=True):
                             dpg.add_text("Unit:")
                             dpg.add_radio_button(
-                                ["2θ (°)", "Q (Å⁻¹)", "r (mm)"],
-                                tag="unit_radio",
-                                default_value="2θ (°)",
+                                items=['2θ (°)', 'Q (Å⁻¹)', 'r (mm)'],
+                                tag="unit_combo",
+                                default_value=self.values['unit'],
                                 horizontal=True
                             )
 
-                # Right column - Output Options
-                with dpg.child_window(width=-1, border=True, menubar=False):
-                    dpg.add_text("Output Options", color=ColorScheme.PRIMARY + (255,))
-                    dpg.add_spacer(height=5)
-
+                with dpg.child_window(width=320, height=250, border=True, no_scrollbar=True) as output_panel:
+                    dpg.add_text("Output Options", color=(123, 89, 162))
+                    dpg.add_separator()
                     dpg.add_text("Select Output Formats:")
-                    dpg.add_spacer(height=5)
+                    with dpg.table(header_row=False, borders_innerH=False, borders_innerV=False,
+                                   policy=dpg.mvTable_SizingStretchProp):
+                        dpg.add_table_column(init_width_or_weight=0.5)
+                        dpg.add_table_column(init_width_or_weight=0.5)
+                        with dpg.table_row():
+                            dpg.add_checkbox(label=".xy", tag="format_xy", default_value=self.values['format_xy'])
+                            dpg.add_checkbox(label=".dat", tag="format_dat", default_value=self.values['format_dat'])
+                        with dpg.table_row():
+                            dpg.add_checkbox(label=".chi", tag="format_chi", default_value=self.values['format_chi'])
+                            dpg.add_checkbox(label=".fxye", tag="format_fxye", default_value=self.values['format_fxye'])
+                        with dpg.table_row():
+                            dpg.add_checkbox(label=".svg", tag="format_svg", default_value=self.values['format_svg'])
+                            dpg.add_checkbox(label=".png", tag="format_png", default_value=self.values['format_png'])
 
-                    # Format checkboxes in bordered area
-                    with dpg.child_window(height=100, border=True, menubar=False):
-                        # First row
-                        with dpg.group(horizontal=True):
-                            dpg.add_checkbox(label=".xy", tag="format_xy",
-                                           default_value=True)
-                            dpg.add_checkbox(label=".dat", tag="format_dat")
-                            dpg.add_checkbox(label=".chi", tag="format_chi")
-
-                        # Second row
-                        with dpg.group(horizontal=True):
-                            dpg.add_checkbox(label=".fxye", tag="format_fxye")
-                            dpg.add_checkbox(label=".svg", tag="format_svg")
-                            dpg.add_checkbox(label=".png", tag="format_png")
-
-                    dpg.add_spacer(height=10)
+                    dpg.add_spacer(height=6)
                     dpg.add_text("Stacked Plot Options:")
-                    dpg.add_checkbox(label="Create Stacked Plot",
-                                   tag="create_stacked_plot")
-
+                    dpg.add_checkbox(
+                        label="Create Stacked Plot?",
+                        tag="create_stacked_plot",
+                        default_value=self.values['create_stacked_plot']
+                    )
                     with dpg.group(horizontal=True):
                         dpg.add_text("Offset:")
-                        dpg.add_input_text(tag="stacked_offset",
-                                         default_value="auto",
-                                         width=100)
+                        dpg.add_input_text(
+                            tag="stacked_offset",
+                            default_value=self.values['stacked_plot_offset'],
+                            width=90
+                        )
+                    dpg.bind_item_theme(output_panel, "powder_square_theme")
 
-                    dpg.add_text("(use 'auto' or number)",
-                               color=ColorScheme.TEXT_LIGHT + (255,))
+            dpg.add_spacer(height=12)
 
-    def _create_action_buttons(self):
-        """Create action buttons"""
-        with dpg.group(horizontal=True):
-            dpg.add_spacer(width=10)
-            dpg.add_button(label="Run Integration",
-                         callback=self.run_integration,
-                         width=200, height=40)
-            dpg.add_spacer(width=20)
-            dpg.add_button(label="Interactive Fitting",
-                         callback=self.open_interactive_fitting,
-                         width=200, height=40)
+            with dpg.group(horizontal=True, horizontal_spacing=26):
+                dpg.add_spacer(width=220)
+                dpg.add_button(
+                    label="Run Integration",
+                    callback=self.run_integration,
+                    width=230
+                )
+                dpg.add_button(
+                    label="Interactive Fitting",
+                    callback=self.open_interactive_fitting,
+                    width=230
+                )
 
-    def _create_volume_calculation_card(self):
-        """Create volume calculation card"""
-        with dpg.child_window(border=True, height=300, menubar=False):
-            dpg.add_text("Volume Calculation & Lattice Fitting",
-                        color=ColorScheme.PRIMARY + (255,))
-            dpg.add_separator()
+    def _create_volume_section(self):
+        """Create volume calculation and lattice fitting UI"""
+        with dpg.group():
+            with dpg.group(horizontal=True, horizontal_spacing=18):
+                with dpg.child_window(width=820, height=170, border=True, no_scrollbar=True):
+                    with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchProp,
+                                   borders_innerH=True, borders_innerV=False):
+                        dpg.add_table_column(init_width_or_weight=0.2)
+                        dpg.add_table_column(init_width_or_weight=0.65)
+                        dpg.add_table_column(init_width_or_weight=0.15)
 
-            with dpg.group(horizontal=True):
-                # Left - Input fields
-                with dpg.child_window(width=600, border=False):
-                    # Input CSV
-                    self._create_file_input("Input CSV (Volume Calculation)",
-                                          "phase_volume_csv", [".csv"],
-                                          "volume_csv_input")
-
-                    # Output Directory
-                    self._create_folder_input("Output Directory",
-                                            "phase_volume_output",
-                                            "volume_output_input")
-
-                # Right - Crystal system and wavelength
-                with dpg.child_window(width=-1, border=True, menubar=False):
-                    dpg.add_text("Crystal System:")
-                    dpg.add_spacer(height=5)
-
-                    # Crystal systems in two rows
-                    with dpg.group(horizontal=True):
-                        dpg.add_radio_button(
-                            ["FCC", "BCC", "Hexagonal", "Tetragonal"],
-                            tag="crystal_system",
-                            default_value="FCC"
+                        self._add_labeled_file_row(
+                            "Input CSV (Volume Calculation):",
+                            "volume_csv_input",
+                            self.values['phase_volume_csv'],
+                            [".csv"]
+                        )
+                        self._add_labeled_folder_row(
+                            "Output Directory:",
+                            "volume_output_input",
+                            self.values['phase_volume_output']
                         )
 
-                    dpg.add_spacer(height=10)
+                with dpg.child_window(width=320, height=170, border=True, no_scrollbar=True) as volume_panel:
+                    dpg.add_text("Crystal System:", color=(123, 89, 162))
+                    dpg.add_radio_button(
+                        ['FCC', 'BCC', 'Hexagonal', 'Tetragonal', 'Orthorhombic', 'Monoclinic', 'Triclinic'],
+                        tag="crystal_system",
+                        default_value=self.values['phase_volume_system'],
+                        horizontal=True
+                    )
 
-                    # Wavelength
+                    dpg.add_spacer(height=10)
                     with dpg.group(horizontal=True):
                         dpg.add_text("Wavelength:")
-                        dpg.add_input_float(tag="wavelength_input",
-                                          default_value=0.4133,
-                                          width=100, format="%.4f")
+                        dpg.add_input_float(
+                            tag="wavelength_input",
+                            default_value=self.values['phase_wavelength'],
+                            width=100,
+                            format="%.4f"
+                        )
                         dpg.add_text("Å")
 
-            dpg.add_spacer(height=10)
-
-            # Action buttons
-            with dpg.group(horizontal=True):
-                dpg.add_spacer(width=10)
-                dpg.add_button(label="Calculate Lattice Parameters",
-                             callback=self.run_phase_analysis,
-                             width=280, height=40)
-                dpg.add_spacer(width=20)
-                dpg.add_button(label="Open Interactive EoS GUI",
-                             callback=self.open_interactive_eos_gui,
-                             width=240, height=40)
-
-    def _create_progress_log(self):
-        """Create progress indicator and log area"""
-        with dpg.child_window(border=True, height=250, menubar=False):
-            dpg.add_text("Process Log", color=ColorScheme.PRIMARY + (255,))
-            dpg.add_separator()
-
-            # Progress bar
-            dpg.add_progress_bar(tag="progress_bar", width=-1, height=30)
+                    dpg.bind_item_theme(volume_panel, "powder_square_theme")
 
             dpg.add_spacer(height=10)
 
-            # Log text area
-            self.log_widget = ScrolledText(
-                parent=dpg.last_container(),
-                height=150,
-                readonly=True,
-                tag="log_text"
-            )
+            with dpg.group(horizontal=True, horizontal_spacing=26):
+                dpg.add_spacer(width=220)
+                dpg.add_button(
+                    label="Calculate Lattice Parameters",
+                    callback=self.run_phase_analysis,
+                    width=260
+                )
+                dpg.add_button(
+                    label="Open Interactive EoS GUI",
+                    callback=self.open_interactive_eos_gui,
+                    width=260
+                )
 
-    def _create_file_input(self, label: str, value_key: str,
-                          file_types: list, tag: str):
-        """Create file input with browse button"""
-        dpg.add_text(label + ":")
-        with dpg.group(horizontal=True):
-            dpg.add_input_text(tag=tag, width=-120,
-                             default_value=self.values[value_key])
-            dpg.add_button(label="Browse", width=100,
-                         callback=lambda: self._browse_file(tag, file_types))
-        dpg.add_spacer(height=5)
+    def _add_labeled_file_row(self, label: str, tag: str, default_value: str, file_types: list):
+        """Add a table row with a label, text field, and browse button for files"""
+        with dpg.table_row():
+            dpg.add_text(label)
+            dpg.add_input_text(tag=tag, default_value=default_value, width=-1)
+            dpg.add_button(label="Browse", width=80, callback=lambda: self._browse_file(tag, file_types))
 
-    def _create_folder_input(self, label: str, value_key: str, tag: str):
-        """Create folder input with browse button"""
-        dpg.add_text(label + ":")
-        with dpg.group(horizontal=True):
-            dpg.add_input_text(tag=tag, width=-120,
-                             default_value=self.values[value_key])
-            dpg.add_button(label="Browse", width=100,
-                         callback=lambda: self._browse_folder(tag))
-        dpg.add_spacer(height=5)
+    def _add_labeled_folder_row(self, label: str, tag: str, default_value: str):
+        """Add a table row with a label, text field, and browse button for folders"""
+        with dpg.table_row():
+            dpg.add_text(label)
+            dpg.add_input_text(tag=tag, default_value=default_value, width=-1)
+            dpg.add_button(label="Browse", width=80, callback=lambda: self._browse_folder(tag))
 
     def _browse_file(self, input_tag: str, file_types: list):
         """Browse for file"""
@@ -323,28 +313,31 @@ class PowderXRDModule(GUIBase):
     def log(self, message: str):
         """Add log message"""
         try:
-            self.log_widget.insert(message + "\n")
-        except:
+            current_text = dpg.get_value("powder_log_text")
+            dpg.set_value("powder_log_text", current_text + message + "\n")
+        except Exception:
             print(message)
 
     def update_progress(self, value: float):
         """Update progress bar (0.0 to 1.0)"""
         try:
-            dpg.set_value("progress_bar", value)
+            dpg.set_value("powder_progress_bar", value)
         except:
             pass
 
     def run_integration(self):
         """Run 1D integration"""
         # Get values from UI
-        poni_path = dpg.get_value("poni_input")
-        mask_path = dpg.get_value("mask_input")
-        input_pattern = dpg.get_value("input_h5")
-        output_dir = dpg.get_value("output_dir_input")
+        poni_path = dpg.get_value("powder_poni_path")
+        mask_path = dpg.get_value("powder_mask_path")
+        input_pattern = dpg.get_value("powder_input_pattern")
+        output_dir = dpg.get_value("powder_output_dir")
 
-        if not all([poni_path, input_pattern, output_dir]):
-            MessageDialog.show_error("Error",
-                "Please fill all required fields:\n- PONI File\n- Input File\n- Output Directory")
+        if not all([poni_path, mask_path, input_pattern, output_dir]):
+            MessageDialog.show_error(
+                "Error",
+                "Please fill all required fields:\n- PONI File\n- Mask File\n- Input File\n- Output Directory"
+            )
             return
 
         # Start integration in background thread
@@ -358,14 +351,14 @@ class PowderXRDModule(GUIBase):
             self.update_progress(0.1)
 
             # Get parameters
-            poni_path = dpg.get_value("poni_input")
-            mask_path = dpg.get_value("mask_input") or None
-            input_pattern = dpg.get_value("input_h5")
-            output_dir = dpg.get_value("output_dir_input")
+            poni_path = dpg.get_value("powder_poni_path")
+            mask_path = dpg.get_value("powder_mask_path") or None
+            input_pattern = dpg.get_value("powder_input_pattern")
+            output_dir = dpg.get_value("powder_output_dir")
             npt = dpg.get_value("npt_input")
 
             # Get unit
-            unit_text = dpg.get_value("unit_radio")
+            unit_text = dpg.get_value("unit_combo")
             unit_map = {
                 '2θ (°)': '2th_deg',
                 'Q (Å⁻¹)': 'q_A^-1',
@@ -375,8 +368,8 @@ class PowderXRDModule(GUIBase):
 
             # Get formats
             formats = []
-            if dpg.get_value("format_xy"): formats.append('xy')
             if dpg.get_value("format_dat"): formats.append('dat')
+            if dpg.get_value("format_xy"): formats.append('xy')
             if dpg.get_value("format_chi"): formats.append('chi')
             if dpg.get_value("format_fxye"): formats.append('fxye')
             if dpg.get_value("format_svg"): formats.append('svg')
@@ -480,9 +473,9 @@ class PowderXRDModule(GUIBase):
 
             os.makedirs(output_dir, exist_ok=True)
 
-            self.log(f"📄 Input CSV: {os.path.basename(csv_path)}")
-            self.log(f"🔷 Crystal system: {crystal_system}")
-            self.log(f"📏 Wavelength: {wavelength} Å")
+            self.log(f"Input CSV: {os.path.basename(csv_path)}")
+            self.log(f"Crystal system: {crystal_system}")
+            self.log(f"Wavelength: {wavelength} Å")
 
             self.update_progress(0.3)
 
@@ -491,7 +484,10 @@ class PowderXRDModule(GUIBase):
                 'FCC': 'cubic_FCC',
                 'BCC': 'cubic_BCC',
                 'Hexagonal': 'Hexagonal',
-                'Tetragonal': 'Tetragonal'
+                'Tetragonal': 'Tetragonal',
+                'Orthorhombic': 'Orthorhombic',
+                'Monoclinic': 'Monoclinic',
+                'Triclinic': 'Triclinic'
             }
             system = system_map.get(crystal_system, 'cubic_FCC')
 
