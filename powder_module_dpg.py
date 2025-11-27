@@ -77,7 +77,7 @@ class PowderXRDModule(GUIBase):
         """Setup the complete powder XRD UI"""
         self._create_theme()
 
-        with dpg.child_window(parent=self.parent_tag, border=False, width=-1) as module_root:
+        with dpg.child_window(parent=self.parent_tag, border=False, width=-1, show=False) as module_root:
             dpg.bind_item_theme(module_root, "powder_square_theme")
             with dpg.collapsing_header(label="Integration Settings & Output Options", default_open=True):
                 self._create_integration_section()
@@ -98,6 +98,8 @@ class PowderXRDModule(GUIBase):
                         height=-1,
                         width=-1
                     )
+
+        dpg.configure_item(module_root, show=True)
 
     def _create_theme(self):
         """Create a square-corner theme for inputs and panels"""

@@ -235,8 +235,8 @@ class RadialIntegrationModule(GUIBase):
 
     def setup_ui(self):
         """Setup the complete UI"""
-        with dpg.child_window(parent=self.parent_tag, border=False, menubar=False):
-            
+        with dpg.child_window(parent=self.parent_tag, border=False, menubar=False, show=False) as module_root:
+
             # Reference Section
             self._create_reference_section()
             
@@ -259,11 +259,13 @@ class RadialIntegrationModule(GUIBase):
             
             # Action Buttons
             self._create_action_buttons()
-            
+
             dpg.add_spacer(height=15)
-            
+
             # Progress and Log
             self._create_progress_log()
+
+        dpg.configure_item(module_root, show=True)
 
     def _create_reference_section(self):
         """Create azimuthal angle reference section"""
