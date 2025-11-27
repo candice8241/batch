@@ -109,6 +109,12 @@ class PowderXRDModule(GUIBase):
                 with dpg.theme_component(component):
                     dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 0, category=dpg.mvThemeCat_Core)
                     dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 1, category=dpg.mvThemeCat_Core)
+                    dpg.add_theme_color(dpg.mvThemeCol_FrameBg, (255, 255, 255), category=dpg.mvThemeCat_Core)
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, (187, 152, 236), category=dpg.mvThemeCat_Core)
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (178, 140, 229), category=dpg.mvThemeCat_Core)
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (169, 127, 223), category=dpg.mvThemeCat_Core)
+                dpg.add_theme_color(dpg.mvThemeCol_Text, (70, 60, 88), category=dpg.mvThemeCat_Core)
             with dpg.theme_component(dpg.mvChildWindow):
                 dpg.add_theme_style(dpg.mvStyleVar_ChildRounding, 0, category=dpg.mvThemeCat_Core)
                 dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (248, 242, 252), category=dpg.mvThemeCat_Core)
@@ -201,8 +207,8 @@ class PowderXRDModule(GUIBase):
 
             dpg.add_spacer(height=12)
 
-            with dpg.group(horizontal=True, horizontal_spacing=18):
-                dpg.add_spacer(width=10)
+            with dpg.group(horizontal=True, horizontal_spacing=26):
+                dpg.add_spacer(width=220)
                 dpg.add_button(
                     label="Run Integration",
                     callback=self.run_integration,
@@ -261,12 +267,12 @@ class PowderXRDModule(GUIBase):
 
             dpg.add_spacer(height=10)
 
-            with dpg.group(horizontal=True, horizontal_spacing=18):
-                dpg.add_spacer(width=10)
+            with dpg.group(horizontal=True, horizontal_spacing=26):
+                dpg.add_spacer(width=220)
                 dpg.add_button(
                     label="Calculate Lattice Parameters",
                     callback=self.run_phase_analysis,
-                    width=270
+                    width=260
                 )
                 dpg.add_button(
                     label="Open Interactive EoS GUI",
