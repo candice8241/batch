@@ -75,7 +75,10 @@ class PowderXRDModule(GUIBase):
 
     def setup_ui(self):
         """Setup the complete powder XRD UI"""
-        with dpg.child_window(parent=self.parent_tag, border=False):
+        self._create_theme()
+
+        with dpg.child_window(parent=self.parent_tag, border=False) as module_root:
+            dpg.bind_item_theme(module_root, "powder_square_theme")
             with dpg.collapsing_header(label="🦊 Integration Settings & Output Options", default_open=True):
                 self._create_integration_section()
 
@@ -95,15 +98,29 @@ class PowderXRDModule(GUIBase):
                     width=-1
                 )
 
+    def _create_theme(self):
+        """Create a square-corner theme for inputs and panels"""
+        if dpg.does_item_exist("powder_square_theme"):
+            return
+
+        with dpg.theme(tag="powder_square_theme"):
+            for component in (dpg.mvInputText, dpg.mvInputInt, dpg.mvInputFloat, dpg.mvButton, dpg.mvRadioButton, dpg.mvCheckbox):
+                with dpg.theme_component(component):
+                    dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 0, category=dpg.mvThemeCat_Core)
+                    dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 1, category=dpg.mvThemeCat_Core)
+            with dpg.theme_component(dpg.mvChildWindow):
+                dpg.add_theme_style(dpg.mvStyleVar_ChildRounding, 0, category=dpg.mvThemeCat_Core)
+                dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (248, 242, 252), category=dpg.mvThemeCat_Core)
+
     def _create_integration_section(self):
         """Create integration settings and output options"""
         with dpg.group():
             with dpg.group(horizontal=True, horizontal_spacing=24):
                 with dpg.group():
                     with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchProp,
-                                   borders_innerV=False, borders_innerH=False):
-                        dpg.add_table_column(init_width_or_weight=0.2)
-                        dpg.add_table_column(init_width_or_weight=0.65)
+                                   borders_innerV=False, borders_innerH=True):
+                        dpg.add_table_column(init_width_or_weight=0.18)
+                        dpg.add_table_column(init_width_or_weight=0.67)
                         dpg.add_table_column(init_width_or_weight=0.15)
 
                         self._add_labeled_file_row("PONI File:", "powder_poni_path",
@@ -126,24 +143,25 @@ class PowderXRDModule(GUIBase):
 
                     dpg.add_spacer(height=6)
 
-                    with dpg.group(horizontal=True):
-                        dpg.add_text("Number of Points:")
-                        dpg.add_input_int(
-                            tag="npt_input",
-                            default_value=self.values['npt'],
-                            width=120
-                        )
+                    with dpg.group(horizontal=True, horizontal_spacing=22):
+                        with dpg.group(horizontal=True):
+                            dpg.add_text("Number of Points:")
+                            dpg.add_input_int(
+                                tag="npt_input",
+                                default_value=self.values['npt'],
+                                width=110
+                            )
 
-                        dpg.add_spacer(width=30)
-                        dpg.add_text("Unit:")
-                        dpg.add_radio_button(
-                            items=['2θ (°)', 'Q (Å⁻¹)', 'r (mm)'],
-                            tag="unit_combo",
-                            default_value=self.values['unit'],
-                            horizontal=True
-                        )
+                        with dpg.group(horizontal=True):
+                            dpg.add_text("Unit:")
+                            dpg.add_radio_button(
+                                items=['2θ (°)', 'Q (Å⁻¹)', 'r (mm)'],
+                                tag="unit_combo",
+                                default_value=self.values['unit'],
+                                horizontal=True
+                            )
 
-                with dpg.child_window(width=250, height=200, border=True):
+                with dpg.child_window(width=280, height=220, border=True) as output_panel:
                     dpg.add_text("Output Options")
                     dpg.add_separator()
                     dpg.add_text("Select Output Formats:")
@@ -152,8 +170,8 @@ class PowderXRDModule(GUIBase):
                         dpg.add_table_column(init_width_or_weight=0.5)
                         dpg.add_table_column(init_width_or_weight=0.5)
                         with dpg.table_row():
-                            dpg.add_checkbox(label=".dat", tag="format_dat", default_value=self.values['format_dat'])
                             dpg.add_checkbox(label=".xy", tag="format_xy", default_value=self.values['format_xy'])
+                            dpg.add_checkbox(label=".dat", tag="format_dat", default_value=self.values['format_dat'])
                         with dpg.table_row():
                             dpg.add_checkbox(label=".chi", tag="format_chi", default_value=self.values['format_chi'])
                             dpg.add_checkbox(label=".fxye", tag="format_fxye", default_value=self.values['format_fxye'])
@@ -161,7 +179,7 @@ class PowderXRDModule(GUIBase):
                             dpg.add_checkbox(label=".svg", tag="format_svg", default_value=self.values['format_svg'])
                             dpg.add_checkbox(label=".png", tag="format_png", default_value=self.values['format_png'])
 
-                    dpg.add_spacer(height=4)
+                    dpg.add_spacer(height=6)
                     dpg.add_text("Stacked Plot Options:")
                     dpg.add_checkbox(
                         label="Create Stacked Plot?",
@@ -175,20 +193,21 @@ class PowderXRDModule(GUIBase):
                             default_value=self.values['stacked_plot_offset'],
                             width=90
                         )
+                    dpg.bind_item_theme(output_panel, "powder_square_theme")
 
             dpg.add_spacer(height=10)
 
-            with dpg.group(horizontal=True, horizontal_spacing=16):
-                dpg.add_spacer(width=20)
+            with dpg.group(horizontal=True, horizontal_spacing=18):
+                dpg.add_spacer(width=10)
                 dpg.add_button(
-                    label="Run Integration",
+                    label="🦊  Run Integration",
                     callback=self.run_integration,
-                    width=200
+                    width=230
                 )
                 dpg.add_button(
-                    label="Interactive Fitting",
+                    label="🐱  Interactive Fitting",
                     callback=self.open_interactive_fitting,
-                    width=200
+                    width=230
                 )
 
     def _create_volume_section(self):
@@ -197,9 +216,9 @@ class PowderXRDModule(GUIBase):
             with dpg.group(horizontal=True, horizontal_spacing=24):
                 with dpg.group():
                     with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchProp,
-                                   borders_innerH=False, borders_innerV=False):
-                        dpg.add_table_column(init_width_or_weight=0.2)
-                        dpg.add_table_column(init_width_or_weight=0.65)
+                                   borders_innerH=True, borders_innerV=False):
+                        dpg.add_table_column(init_width_or_weight=0.18)
+                        dpg.add_table_column(init_width_or_weight=0.67)
                         dpg.add_table_column(init_width_or_weight=0.15)
 
                         self._add_labeled_file_row(
@@ -214,7 +233,7 @@ class PowderXRDModule(GUIBase):
                             self.values['phase_volume_output']
                         )
 
-                with dpg.child_window(width=250, height=150, border=True):
+                with dpg.child_window(width=430, height=150, border=True) as volume_panel:
                     dpg.add_text("Crystal System:")
                     dpg.add_radio_button(
                         ['FCC', 'BCC', 'Hexagonal', 'Tetragonal', 'Orthorhombic', 'Monoclinic', 'Triclinic'],
@@ -223,7 +242,7 @@ class PowderXRDModule(GUIBase):
                         horizontal=True
                     )
 
-                    dpg.add_spacer(height=6)
+                    dpg.add_spacer(height=10)
                     with dpg.group(horizontal=True):
                         dpg.add_text("Wavelength:")
                         dpg.add_input_float(
@@ -234,19 +253,21 @@ class PowderXRDModule(GUIBase):
                         )
                         dpg.add_text("Å")
 
+                    dpg.bind_item_theme(volume_panel, "powder_square_theme")
+
             dpg.add_spacer(height=10)
 
-            with dpg.group(horizontal=True, horizontal_spacing=16):
-                dpg.add_spacer(width=20)
+            with dpg.group(horizontal=True, horizontal_spacing=18):
+                dpg.add_spacer(width=10)
                 dpg.add_button(
-                    label="Calculate Lattice Parameters",
+                    label="🐹  Calculate Lattice Parameters",
                     callback=self.run_phase_analysis,
-                    width=260
+                    width=270
                 )
                 dpg.add_button(
-                    label="Open Interactive EoS GUI",
+                    label="🦄  Open Interactive EoS GUI",
                     callback=self.open_interactive_eos_gui,
-                    width=240
+                    width=260
                 )
 
     def _add_labeled_file_row(self, label: str, tag: str, default_value: str, file_types: list):
