@@ -76,17 +76,17 @@ class PowderXRDModule(GUIBase):
     def setup_ui(self):
         """Setup the complete powder XRD UI"""
         with dpg.child_window(parent=self.parent_tag, border=False):
-            with dpg.collapsing_header(label="🦊 Integration Settings & Output Options", default_open=True):
+            with dpg.collapsing_header(label="◆ Integration Settings & Output Options", default_open=True):
                 self._create_integration_section()
 
-            with dpg.collapsing_header(label="🐱 Volume Calculation & Lattice Fitting", default_open=True):
+            with dpg.collapsing_header(label="◇ Volume Calculation & Lattice Fitting", default_open=True):
                 self._create_volume_section()
 
             with dpg.group():
                 dpg.add_text("Process Progress:")
                 dpg.add_progress_bar(tag="progress_bar", width=-1)
 
-            with dpg.collapsing_header(label="🐰 Process Log", default_open=True):
+            with dpg.collapsing_header(label="☑ Process Log", default_open=True):
                 dpg.add_input_text(
                     tag="log_text",
                     multiline=True,
@@ -98,115 +98,134 @@ class PowderXRDModule(GUIBase):
     def _create_integration_section(self):
         """Create integration settings and output options"""
         with dpg.group():
-            # File inputs
-            self._create_file_input("PONI File:", "poni_path", [".poni"], "poni_input")
-            self._create_file_input("Mask File:", "mask_path", [".edf", ".npy"], "mask_input")
-            self._create_file_input("Input .h5 File:", "input_pattern", [".h5"], "input_h5")
-            self._create_folder_input("Output Directory:", "output_dir", "output_dir_input")
-
-            # Dataset path (kept for compatibility)
             with dpg.group(horizontal=True):
-                dpg.add_text("Dataset Path:")
-                dpg.add_input_text(
-                    tag="dataset_path_input",
-                    default_value=self.values['dataset_path'],
-                    width=400
-                )
+                # Left column: integration settings
+                with dpg.group():
+                    dpg.add_text("Integration Settings")
+                    self._create_file_input("PONI File:", "poni_path", [".poni"], "poni_input")
+                    self._create_file_input("Mask File:", "mask_path", [".edf", ".npy"], "mask_input")
+                    self._create_file_input("Input .h5 File:", "input_pattern", [".h5"], "input_h5")
+                    self._create_folder_input("Output Directory:", "output_dir", "output_dir_input")
 
-            # Parameters
-            with dpg.group(horizontal=True):
-                dpg.add_text("Number of Points:")
-                dpg.add_input_int(
-                    tag="npt_input",
-                    default_value=self.values['npt'],
-                    width=100,
-                    min_value=500,
-                    max_value=10000,
-                    min_clamped=True,
-                    max_clamped=True
-                )
+                    # Dataset path (kept for compatibility)
+                    with dpg.group(horizontal=True):
+                        dpg.add_text("Dataset Path:")
+                        dpg.add_input_text(
+                            tag="dataset_path_input",
+                            default_value=self.values['dataset_path'],
+                            width=400
+                        )
 
-                dpg.add_text("Unit:")
-                dpg.add_combo(
-                    ["2θ (°)", "Q (Å⁻¹)", "r (mm)"],
-                    tag="unit_radio",
-                    default_value="2θ (°)",
-                    width=120
-                )
+                    # Parameters
+                    with dpg.group(horizontal=True):
+                        dpg.add_text("Number of Points:")
+                        dpg.add_input_int(
+                            tag="npt_input",
+                            default_value=self.values['npt'],
+                            width=100,
+                            min_value=500,
+                            max_value=10000,
+                            min_clamped=True,
+                            max_clamped=True
+                        )
 
-            # Output formats
-            dpg.add_text("Select Output Formats:")
-            with dpg.group(horizontal=True):
-                dpg.add_checkbox(label=".xy", tag="format_xy", default_value=True)
-                dpg.add_checkbox(label=".dat", tag="format_dat")
-                dpg.add_checkbox(label=".chi", tag="format_chi")
-                dpg.add_checkbox(label=".fxye", tag="format_fxye")
-                dpg.add_checkbox(label=".svg", tag="format_svg")
-                dpg.add_checkbox(label=".png", tag="format_png")
+                        dpg.add_text("Unit:")
+                        dpg.add_radio_button(
+                            ["2θ (°)", "Q (Å⁻¹)", "r (mm)"],
+                            tag="unit_radio",
+                            default_value="2θ (°)",
+                            horizontal=True
+                        )
 
-            # Stacked plot options
-            with dpg.group(horizontal=True):
-                dpg.add_checkbox(label="Create Stacked Plot", tag="create_stacked_plot")
-                dpg.add_text("Offset:")
-                dpg.add_input_text(tag="stacked_offset", default_value="auto", width=100)
+                # Right column: output options
+                with dpg.child_window(width=280, border=True):
+                    dpg.add_text("Output Options")
+                    dpg.add_separator()
+
+                    dpg.add_text("Select Output Formats:")
+                    with dpg.group():
+                        dpg.add_checkbox(label=".xy", tag="format_xy", default_value=True)
+                        dpg.add_checkbox(label=".dat", tag="format_dat")
+                        dpg.add_checkbox(label=".chi", tag="format_chi")
+                        dpg.add_checkbox(label=".fxye", tag="format_fxye")
+                        dpg.add_checkbox(label=".svg", tag="format_svg")
+                        dpg.add_checkbox(label=".png", tag="format_png")
+
+                    dpg.add_separator()
+                    dpg.add_text("Stacked Plot Options:")
+                    with dpg.group():
+                        dpg.add_checkbox(label="Create Stacked Plot", tag="create_stacked_plot")
+                        with dpg.group(horizontal=True):
+                            dpg.add_text("Offset:")
+                            dpg.add_input_text(tag="stacked_offset", default_value="auto", width=100)
+
+            dpg.add_spacer(height=5)
 
             # Action buttons
             with dpg.group(horizontal=True):
-                dpg.add_button(label="🐿️ Run Integration", callback=self.run_integration, width=200)
-                dpg.add_button(label="📊 Interactive Fitting", callback=self.open_interactive_fitting, width=200)
+                dpg.add_button(label="▶ Run Integration", callback=self.run_integration, width=220)
+                dpg.add_button(label="★ Interactive Fitting", callback=self.open_interactive_fitting, width=220)
 
     def _create_volume_section(self):
         """Create volume calculation and lattice fitting UI"""
         with dpg.group():
-            self._create_file_input(
-                "Input CSV (Volume Calculation):",
-                "phase_volume_csv",
-                [".csv"],
-                "volume_csv_input"
-            )
-
-            self._create_folder_input(
-                "Output Directory:",
-                "phase_volume_output",
-                "volume_output_input"
-            )
-
-            dpg.add_text("Crystal System:")
             with dpg.group(horizontal=True):
-                dpg.add_radio_button(
-                    [
-                        "FCC",
-                        "BCC",
-                        "Hexagonal",
-                        "Tetragonal",
-                        "Orthorhombic",
-                        "Monoclinic",
-                        "Triclinic"
-                    ],
-                    tag="crystal_system",
-                    default_value="FCC",
-                    horizontal=True
-                )
+                # Left column: inputs
+                with dpg.group():
+                    dpg.add_text("Volume Calculation & Lattice Fitting")
+                    self._create_file_input(
+                        "Input CSV (Volume Calculation):",
+                        "phase_volume_csv",
+                        [".csv"],
+                        "volume_csv_input"
+                    )
 
-            with dpg.group(horizontal=True):
-                dpg.add_text("Wavelength (Å):")
-                dpg.add_input_float(
-                    tag="wavelength_input",
-                    default_value=0.4133,
-                    width=100,
-                    format="%.4f"
-                )
+                    self._create_folder_input(
+                        "Output Directory:",
+                        "phase_volume_output",
+                        "volume_output_input"
+                    )
 
+                # Right column: options panel
+                with dpg.child_window(width=320, border=True):
+                    dpg.add_text("Crystal System")
+                    dpg.add_separator()
+                    dpg.add_radio_button(
+                        [
+                            "FCC",
+                            "BCC",
+                            "Hexagonal",
+                            "Tetragonal",
+                            "Orthorhombic",
+                            "Monoclinic",
+                            "Triclinic"
+                        ],
+                        tag="crystal_system",
+                        default_value="FCC",
+                        horizontal=True
+                    )
+
+                    dpg.add_separator()
+                    with dpg.group(horizontal=True):
+                        dpg.add_text("Wavelength (Å):")
+                        dpg.add_input_float(
+                            tag="wavelength_input",
+                            default_value=0.4133,
+                            width=100,
+                            format="%.4f"
+                        )
+
+            dpg.add_spacer(height=5)
             with dpg.group(horizontal=True):
                 dpg.add_button(
-                    label="🐼 Calculate Lattice Parameters",
+                    label="◆ Calculate Lattice Parameters",
                     callback=self.run_phase_analysis,
-                    width=280
+                    width=260
                 )
                 dpg.add_button(
-                    label="🌌 Open Interactive EoS GUI",
+                    label="◇ Open Interactive EoS GUI",
                     callback=self.open_interactive_eos_gui,
-                    width=240
+                    width=260
                 )
 
     def _create_file_input(self, label: str, value_key: str,
