@@ -112,7 +112,7 @@ class XRDAzimuthalIntegrator:
         return output_files
 
 
-class AzimuthalIntegrationModule(GUIBase):
+class RadialIntegrationModule(GUIBase):
     """Azimuthal Integration module - Dear PyGui version"""
 
     def __init__(self, parent_tag: str):
@@ -522,7 +522,7 @@ def main():
 
     # Create main window
     with dpg.window(tag="radial_main", label="Azimuthal Integration Module"):
-        module = AzimuthalIntegrationModule("radial_main")
+        module = RadialIntegrationModule("radial_main")
         module.setup_ui()
 
     dpg.create_viewport(title="Radial Integration Module", width=1200, height=900)
