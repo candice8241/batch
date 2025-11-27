@@ -76,17 +76,17 @@ class PowderXRDModule(GUIBase):
     def setup_ui(self):
         """Setup the complete powder XRD UI"""
         with dpg.child_window(parent=self.parent_tag, border=False):
-            with dpg.collapsing_header(label="🦊 Integration Settings & Output Options", default_open=True):
+            with dpg.collapsing_header(label="Integration Settings & Output Options", default_open=True):
                 self._create_integration_section()
 
-            with dpg.collapsing_header(label="🐱 Volume Calculation & Lattice Fitting", default_open=True):
+            with dpg.collapsing_header(label="Volume Calculation & Lattice Fitting", default_open=True):
                 self._create_volume_section()
 
             with dpg.group():
                 dpg.add_text("Process Progress:")
                 dpg.add_progress_bar(tag="powder_progress_bar", width=-1)
 
-            with dpg.collapsing_header(label="🐰 Process Log", default_open=True):
+            with dpg.collapsing_header(label="Process Log", default_open=True):
                 dpg.add_input_text(
                     tag="powder_log_text",
                     multiline=True,
@@ -110,8 +110,10 @@ class PowderXRDModule(GUIBase):
                 dpg.add_input_text(
                     tag="dataset_path_input",
                     default_value=self.values['dataset_path'],
-                    width=400
+                    width=520
                 )
+
+            dpg.add_spacer(height=4)
 
             # Parameters
             with dpg.group(horizontal=True):
@@ -133,8 +135,8 @@ class PowderXRDModule(GUIBase):
             # Output formats
             dpg.add_text("Select Output Formats:")
             with dpg.group(horizontal=True):
-                dpg.add_checkbox(label=".xy", tag="format_xy", default_value=self.values['format_xy'])
                 dpg.add_checkbox(label=".dat", tag="format_dat", default_value=self.values['format_dat'])
+                dpg.add_checkbox(label=".xy", tag="format_xy", default_value=self.values['format_xy'])
                 dpg.add_checkbox(label=".chi", tag="format_chi", default_value=self.values['format_chi'])
                 dpg.add_checkbox(label=".fxye", tag="format_fxye", default_value=self.values['format_fxye'])
                 dpg.add_checkbox(label=".svg", tag="format_svg", default_value=self.values['format_svg'])
@@ -157,12 +159,12 @@ class PowderXRDModule(GUIBase):
             # Action buttons
             with dpg.group(horizontal=True):
                 dpg.add_button(
-                    label="🐿️ Run Integration",
+                    label="Run Integration",
                     callback=self.run_integration,
                     width=200
                 )
                 dpg.add_button(
-                    label="📊 Interactive Fitting",
+                    label="Interactive Fitting",
                     callback=self.open_interactive_fitting,
                     width=200
                 )
@@ -176,7 +178,7 @@ class PowderXRDModule(GUIBase):
                 dpg.add_input_text(
                     tag="volume_csv_input",
                     default_value=self.values['phase_volume_csv'],
-                    width=400
+                    width=520
                 )
                 dpg.add_button(
                     label="Browse",
@@ -189,7 +191,7 @@ class PowderXRDModule(GUIBase):
                 dpg.add_input_text(
                     tag="volume_output_input",
                     default_value=self.values['phase_volume_output'],
-                    width=400
+                    width=520
                 )
                 dpg.add_button(
                     label="Browse",
@@ -219,12 +221,12 @@ class PowderXRDModule(GUIBase):
             # Action buttons
             with dpg.group(horizontal=True):
                 dpg.add_button(
-                    label="🐼 Calculate Lattice Parameters",
+                    label="Calculate Lattice Parameters",
                     callback=self.run_phase_analysis,
                     width=280
                 )
                 dpg.add_button(
-                    label="🌌 Open Interactive EoS GUI",
+                    label="Open Interactive EoS GUI",
                     callback=self.open_interactive_eos_gui,
                     width=240
                 )
@@ -234,7 +236,7 @@ class PowderXRDModule(GUIBase):
         """Create file input with browse button"""
         with dpg.group(horizontal=True):
             dpg.add_text(label)
-            dpg.add_input_text(tag=tag, width=400,
+            dpg.add_input_text(tag=tag, width=520,
                              default_value=self.values[value_key])
             dpg.add_button(label="Browse", width=80,
                          callback=lambda: self._browse_file(tag, file_types))
@@ -244,7 +246,7 @@ class PowderXRDModule(GUIBase):
         """Create folder input with browse button"""
         with dpg.group(horizontal=True):
             dpg.add_text(label)
-            dpg.add_input_text(tag=tag, width=400,
+            dpg.add_input_text(tag=tag, width=520,
                              default_value=self.values[value_key])
             dpg.add_button(label="Browse", width=80,
                          callback=lambda: self._browse_folder(tag))
@@ -322,8 +324,8 @@ class PowderXRDModule(GUIBase):
 
             # Get formats
             formats = []
-            if dpg.get_value("format_xy"): formats.append('xy')
             if dpg.get_value("format_dat"): formats.append('dat')
+            if dpg.get_value("format_xy"): formats.append('xy')
             if dpg.get_value("format_chi"): formats.append('chi')
             if dpg.get_value("format_fxye"): formats.append('fxye')
             if dpg.get_value("format_svg"): formats.append('svg')
@@ -427,9 +429,9 @@ class PowderXRDModule(GUIBase):
 
             os.makedirs(output_dir, exist_ok=True)
 
-            self.log(f"📄 Input CSV: {os.path.basename(csv_path)}")
-            self.log(f"🔷 Crystal system: {crystal_system}")
-            self.log(f"📏 Wavelength: {wavelength} Å")
+            self.log(f"Input CSV: {os.path.basename(csv_path)}")
+            self.log(f"Crystal system: {crystal_system}")
+            self.log(f"Wavelength: {wavelength} Å")
 
             self.update_progress(0.3)
 
