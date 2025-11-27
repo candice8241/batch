@@ -79,10 +79,10 @@ class PowderXRDModule(GUIBase):
 
         with dpg.child_window(parent=self.parent_tag, border=False, width=-1) as module_root:
             dpg.bind_item_theme(module_root, "powder_square_theme")
-            with dpg.collapsing_header(label="🦊 Integration Settings & Output Options", default_open=True):
+            with dpg.collapsing_header(label="Integration Settings & Output Options", default_open=True):
                 self._create_integration_section()
 
-            with dpg.collapsing_header(label="🐱 Volume Calculation & Lattice Fitting", default_open=True):
+            with dpg.collapsing_header(label="Volume Calculation & Lattice Fitting", default_open=True):
                 self._create_volume_section()
 
             with dpg.group():
@@ -117,8 +117,10 @@ class PowderXRDModule(GUIBase):
     def _create_integration_section(self):
         """Create integration settings and output options"""
         with dpg.group():
+            dpg.add_text("Integration Settings", color=(123, 89, 162))
+            dpg.add_spacer(height=6)
             with dpg.group(horizontal=True, horizontal_spacing=18):
-                with dpg.child_window(width=780, height=230, border=True):
+                with dpg.child_window(width=820, height=250, border=True, no_scrollbar=True):
                     with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchProp,
                                    borders_innerV=False, borders_innerH=True):
                         dpg.add_table_column(init_width_or_weight=0.2)
@@ -163,8 +165,8 @@ class PowderXRDModule(GUIBase):
                                 horizontal=True
                             )
 
-                with dpg.child_window(width=280, height=230, border=True) as output_panel:
-                    dpg.add_text("Output Options")
+                with dpg.child_window(width=320, height=250, border=True, no_scrollbar=True) as output_panel:
+                    dpg.add_text("Output Options", color=(123, 89, 162))
                     dpg.add_separator()
                     dpg.add_text("Select Output Formats:")
                     with dpg.table(header_row=False, borders_innerH=False, borders_innerV=False,
@@ -202,12 +204,12 @@ class PowderXRDModule(GUIBase):
             with dpg.group(horizontal=True, horizontal_spacing=18):
                 dpg.add_spacer(width=10)
                 dpg.add_button(
-                    label="🦊  Run Integration",
+                    label="Run Integration",
                     callback=self.run_integration,
                     width=230
                 )
                 dpg.add_button(
-                    label="🐱  Interactive Fitting",
+                    label="Interactive Fitting",
                     callback=self.open_interactive_fitting,
                     width=230
                 )
@@ -216,7 +218,7 @@ class PowderXRDModule(GUIBase):
         """Create volume calculation and lattice fitting UI"""
         with dpg.group():
             with dpg.group(horizontal=True, horizontal_spacing=18):
-                with dpg.child_window(width=780, height=170, border=True):
+                with dpg.child_window(width=820, height=170, border=True, no_scrollbar=True):
                     with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchProp,
                                    borders_innerH=True, borders_innerV=False):
                         dpg.add_table_column(init_width_or_weight=0.2)
@@ -235,8 +237,8 @@ class PowderXRDModule(GUIBase):
                             self.values['phase_volume_output']
                         )
 
-                with dpg.child_window(width=330, height=170, border=True) as volume_panel:
-                    dpg.add_text("Crystal System:")
+                with dpg.child_window(width=320, height=170, border=True, no_scrollbar=True) as volume_panel:
+                    dpg.add_text("Crystal System:", color=(123, 89, 162))
                     dpg.add_radio_button(
                         ['FCC', 'BCC', 'Hexagonal', 'Tetragonal', 'Orthorhombic', 'Monoclinic', 'Triclinic'],
                         tag="crystal_system",
@@ -262,12 +264,12 @@ class PowderXRDModule(GUIBase):
             with dpg.group(horizontal=True, horizontal_spacing=18):
                 dpg.add_spacer(width=10)
                 dpg.add_button(
-                    label="🐹  Calculate Lattice Parameters",
+                    label="Calculate Lattice Parameters",
                     callback=self.run_phase_analysis,
                     width=270
                 )
                 dpg.add_button(
-                    label="🦄  Open Interactive EoS GUI",
+                    label="Open Interactive EoS GUI",
                     callback=self.open_interactive_eos_gui,
                     width=260
                 )
