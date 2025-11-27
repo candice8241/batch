@@ -77,7 +77,7 @@ class PowderXRDModule(GUIBase):
         """Setup the complete powder XRD UI"""
         self._create_theme()
 
-        with dpg.child_window(parent=self.parent_tag, border=False) as module_root:
+        with dpg.child_window(parent=self.parent_tag, border=False, width=-1) as module_root:
             dpg.bind_item_theme(module_root, "powder_square_theme")
             with dpg.collapsing_header(label="🦊 Integration Settings & Output Options", default_open=True):
                 self._create_integration_section()
@@ -90,13 +90,14 @@ class PowderXRDModule(GUIBase):
                 dpg.add_progress_bar(tag="powder_progress_bar", width=-1)
 
             with dpg.collapsing_header(label="Process Log", default_open=True):
-                dpg.add_input_text(
-                    tag="powder_log_text",
-                    multiline=True,
-                    readonly=True,
-                    height=200,
-                    width=-1
-                )
+                with dpg.child_window(width=-1, height=220, border=True):
+                    dpg.add_input_text(
+                        tag="powder_log_text",
+                        multiline=True,
+                        readonly=True,
+                        height=-1,
+                        width=-1
+                    )
 
     def _create_theme(self):
         """Create a square-corner theme for inputs and panels"""
@@ -111,16 +112,17 @@ class PowderXRDModule(GUIBase):
             with dpg.theme_component(dpg.mvChildWindow):
                 dpg.add_theme_style(dpg.mvStyleVar_ChildRounding, 0, category=dpg.mvThemeCat_Core)
                 dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (248, 242, 252), category=dpg.mvThemeCat_Core)
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 10, 10, category=dpg.mvThemeCat_Core)
 
     def _create_integration_section(self):
         """Create integration settings and output options"""
         with dpg.group():
-            with dpg.group(horizontal=True, horizontal_spacing=24):
-                with dpg.group():
+            with dpg.group(horizontal=True, horizontal_spacing=18):
+                with dpg.child_window(width=780, height=230, border=True):
                     with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchProp,
                                    borders_innerV=False, borders_innerH=True):
-                        dpg.add_table_column(init_width_or_weight=0.18)
-                        dpg.add_table_column(init_width_or_weight=0.67)
+                        dpg.add_table_column(init_width_or_weight=0.2)
+                        dpg.add_table_column(init_width_or_weight=0.65)
                         dpg.add_table_column(init_width_or_weight=0.15)
 
                         self._add_labeled_file_row("PONI File:", "powder_poni_path",
@@ -141,7 +143,7 @@ class PowderXRDModule(GUIBase):
                             )
                             dpg.add_spacer(width=1)
 
-                    dpg.add_spacer(height=6)
+                    dpg.add_spacer(height=8)
 
                     with dpg.group(horizontal=True, horizontal_spacing=22):
                         with dpg.group(horizontal=True):
@@ -161,7 +163,7 @@ class PowderXRDModule(GUIBase):
                                 horizontal=True
                             )
 
-                with dpg.child_window(width=280, height=220, border=True) as output_panel:
+                with dpg.child_window(width=280, height=230, border=True) as output_panel:
                     dpg.add_text("Output Options")
                     dpg.add_separator()
                     dpg.add_text("Select Output Formats:")
@@ -195,7 +197,7 @@ class PowderXRDModule(GUIBase):
                         )
                     dpg.bind_item_theme(output_panel, "powder_square_theme")
 
-            dpg.add_spacer(height=10)
+            dpg.add_spacer(height=12)
 
             with dpg.group(horizontal=True, horizontal_spacing=18):
                 dpg.add_spacer(width=10)
@@ -213,12 +215,12 @@ class PowderXRDModule(GUIBase):
     def _create_volume_section(self):
         """Create volume calculation and lattice fitting UI"""
         with dpg.group():
-            with dpg.group(horizontal=True, horizontal_spacing=24):
-                with dpg.group():
+            with dpg.group(horizontal=True, horizontal_spacing=18):
+                with dpg.child_window(width=780, height=170, border=True):
                     with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchProp,
                                    borders_innerH=True, borders_innerV=False):
-                        dpg.add_table_column(init_width_or_weight=0.18)
-                        dpg.add_table_column(init_width_or_weight=0.67)
+                        dpg.add_table_column(init_width_or_weight=0.2)
+                        dpg.add_table_column(init_width_or_weight=0.65)
                         dpg.add_table_column(init_width_or_weight=0.15)
 
                         self._add_labeled_file_row(
@@ -233,7 +235,7 @@ class PowderXRDModule(GUIBase):
                             self.values['phase_volume_output']
                         )
 
-                with dpg.child_window(width=430, height=150, border=True) as volume_panel:
+                with dpg.child_window(width=330, height=170, border=True) as volume_panel:
                     dpg.add_text("Crystal System:")
                     dpg.add_radio_button(
                         ['FCC', 'BCC', 'Hexagonal', 'Tetragonal', 'Orthorhombic', 'Monoclinic', 'Triclinic'],
