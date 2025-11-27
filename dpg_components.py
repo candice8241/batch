@@ -284,16 +284,16 @@ class CuteSheepProgressBar:
         leg_color = ColorScheme.TEXT_DARK + (255,)
 
         # Body (fluffy cloud)
-        dpg.draw_ellipse((x + 32, y_pos + 5), 26, 18, parent=self.tag, color=body_color,
-                         fill=body_color, thickness=2)
-        dpg.draw_ellipse((x + 18, y_pos + 8), 18, 14, parent=self.tag, color=body_color,
-                         fill=body_color, thickness=2)
-        dpg.draw_ellipse((x + 46, y_pos + 8), 18, 14, parent=self.tag, color=body_color,
-                         fill=body_color, thickness=2)
+        self._ellipse_centered(x + 32, y_pos + 5, 26, 18, color=body_color,
+                               fill=body_color, thickness=2)
+        self._ellipse_centered(x + 18, y_pos + 8, 18, 14, color=body_color,
+                               fill=body_color, thickness=2)
+        self._ellipse_centered(x + 46, y_pos + 8, 18, 14, color=body_color,
+                               fill=body_color, thickness=2)
 
         # Head
-        dpg.draw_ellipse((x + 10, y_pos - 2), 10, 9, parent=self.tag, color=head_color,
-                         fill=head_color, thickness=2)
+        self._ellipse_centered(x + 10, y_pos - 2, 10, 9, color=head_color,
+                               fill=head_color, thickness=2)
         dpg.draw_circle((x + 4, y_pos - 4), 2.5, parent=self.tag, color=leg_color,
                         fill=leg_color, thickness=2)
 
@@ -301,6 +301,15 @@ class CuteSheepProgressBar:
         for offset in (18, 28, 38, 48):
             dpg.draw_line((x + offset, y_pos + 18), (x + offset, y_pos + 30),
                           color=leg_color, thickness=2, parent=self.tag)
+
+    def _ellipse_centered(self, cx: float, cy: float, rx: float, ry: float,
+                           *, color=(255, 255, 255, 255), fill=(0, 0, 0, 0),
+                           thickness: float = 1.0):
+        """Draw an ellipse using center and radii instead of bounding box."""
+        pmin = (cx - rx, cy - ry)
+        pmax = (cx + rx, cy + ry)
+        dpg.draw_ellipse(pmin, pmax, parent=self.tag, color=color,
+                         fill=fill, thickness=thickness)
 
 
 # ==============================================================================
