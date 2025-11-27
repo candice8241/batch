@@ -278,9 +278,29 @@ class CuteSheepProgressBar:
         jump = -abs(math.sin(jump_phase) * 15)
         y_pos = y + jump
 
-        # Draw sheep emoji using text
-        dpg.draw_text((x, y_pos), "🐿️", parent=self.tag, size=48,
-                     color=ColorScheme.TEXT_DARK + (255,))
+        # Draw a simple vector "sheep" to avoid missing emoji glyphs
+        body_color = ColorScheme.LIGHT_PURPLE + (255,)
+        head_color = ColorScheme.PRIMARY + (255,)
+        leg_color = ColorScheme.TEXT_DARK + (255,)
+
+        # Body (fluffy cloud)
+        dpg.draw_ellipse((x + 32, y_pos + 5), 26, 18, parent=self.tag, color=body_color,
+                         fill=body_color, thickness=2)
+        dpg.draw_ellipse((x + 18, y_pos + 8), 18, 14, parent=self.tag, color=body_color,
+                         fill=body_color, thickness=2)
+        dpg.draw_ellipse((x + 46, y_pos + 8), 18, 14, parent=self.tag, color=body_color,
+                         fill=body_color, thickness=2)
+
+        # Head
+        dpg.draw_ellipse((x + 10, y_pos - 2), 10, 9, parent=self.tag, color=head_color,
+                         fill=head_color, thickness=2)
+        dpg.draw_circle((x + 4, y_pos - 4), 2.5, parent=self.tag, color=leg_color,
+                        fill=leg_color, thickness=2)
+
+        # Legs
+        for offset in (18, 28, 38, 48):
+            dpg.draw_line((x + offset, y_pos + 18), (x + offset, y_pos + 30),
+                          color=leg_color, thickness=2, parent=self.tag)
 
 
 # ==============================================================================
