@@ -85,35 +85,33 @@ class PowderXRDModule(GUIBase):
             # Integration Settings Card
             self._create_integration_card()
 
-            dpg.add_spacer(height=15)
+            dpg.add_spacer(height=12)
 
             # Action Buttons
             self._create_action_buttons()
 
-            dpg.add_spacer(height=15)
+            dpg.add_spacer(height=12)
 
             # Volume Calculation Card
             self._create_volume_calculation_card()
 
-            dpg.add_spacer(height=15)
+            dpg.add_spacer(height=12)
 
             # Progress and Log
             self._create_progress_log()
 
     def _create_integration_card(self):
         """Create integration settings card"""
-        with dpg.child_window(border=True, height=450, menubar=False):
-            dpg.add_text("Integration Settings & Output Options",
-                        color=ColorScheme.PRIMARY + (255,))
-            dpg.add_separator()
+        with dpg.child_window(border=False):
+            # Outer card frame to mirror previous UI styling
+            card_tag = CardFrame(parent=dpg.last_container(),
+                                 label="Integration Settings & Output Options").tag
 
-            # Two-column layout
-            with dpg.group(horizontal=True):
-                # Left column - Settings
-                with dpg.child_window(width=600, border=False):
-                    dpg.add_text("Integration Settings",
-                               color=ColorScheme.PRIMARY + (255,))
-                    dpg.add_spacer(height=5)
+            with dpg.group(parent=card_tag, horizontal=True):
+                # Left column - Integration settings
+                with dpg.child_window(parent=dpg.last_container(), width=620, border=False):
+                    dpg.add_text("Integration Settings", color=ColorScheme.PRIMARY + (255,))
+                    dpg.add_spacer(height=6)
 
                     # PONI File
                     self._create_file_input("PONI File", "poni_path",
@@ -132,28 +130,28 @@ class PowderXRDModule(GUIBase):
                                             "output_dir_input")
 
                     # Dataset Path
-                    dpg.add_text("Dataset Path:")
+                    dpg.add_text("Dataset Path:", color=ColorScheme.TEXT_LIGHT + (255,))
                     dpg.add_input_text(tag="dataset_path_input",
                                      default_value=self.values['dataset_path'],
                                      width=-1)
 
-                    dpg.add_spacer(height=10)
+                    dpg.add_spacer(height=8)
 
                     # Parameters row
                     with dpg.group(horizontal=True):
                         # Number of Points
                         with dpg.group():
-                            dpg.add_text("Number of Points:")
+                            dpg.add_text("Number of Points:", color=ColorScheme.TEXT_LIGHT + (255,))
                             dpg.add_input_int(tag="npt_input",
                                             default_value=self.values['npt'],
-                                            width=150, min_value=500, max_value=10000,
+                                            width=160, min_value=500, max_value=10000,
                                             min_clamped=True, max_clamped=True)
 
-                        dpg.add_spacer(width=20)
+                        dpg.add_spacer(width=30)
 
                         # Unit selection
                         with dpg.group():
-                            dpg.add_text("Unit:")
+                            dpg.add_text("Unit:", color=ColorScheme.TEXT_LIGHT + (255,))
                             dpg.add_radio_button(
                                 ["2θ (°)", "Q (Å⁻¹)", "r (mm)"],
                                 tag="unit_radio",
@@ -161,65 +159,75 @@ class PowderXRDModule(GUIBase):
                                 horizontal=True
                             )
 
-                # Right column - Output Options
-                with dpg.child_window(width=-1, border=True, menubar=False):
-                    dpg.add_text("Output Options", color=ColorScheme.PRIMARY + (255,))
-                    dpg.add_spacer(height=5)
+                # Right column - Output Options inside its own card
+                output_card = CardFrame(parent=dpg.last_container(),
+                                        label="Output Options",
+                                        tag="output_options_card")
+                with dpg.group(parent=output_card.tag):
+                    dpg.add_spacer(height=4)
+                    dpg.add_text("Select Output Formats:",
+                                 color=ColorScheme.TEXT_LIGHT + (255,))
+                    dpg.add_spacer(height=6)
 
-                    dpg.add_text("Select Output Formats:")
-                    dpg.add_spacer(height=5)
-
-                    # Format checkboxes in bordered area
-                    with dpg.child_window(height=100, border=True, menubar=False):
-                        # First row
-                        with dpg.group(horizontal=True):
-                            dpg.add_checkbox(label=".xy", tag="format_xy",
-                                           default_value=True)
-                            dpg.add_checkbox(label=".dat", tag="format_dat")
-                            dpg.add_checkbox(label=".chi", tag="format_chi")
-
-                        # Second row
-                        with dpg.group(horizontal=True):
-                            dpg.add_checkbox(label=".fxye", tag="format_fxye")
-                            dpg.add_checkbox(label=".svg", tag="format_svg")
-                            dpg.add_checkbox(label=".png", tag="format_png")
+                    # Format checkboxes grouped like the reference UI
+                    with dpg.group(horizontal=True):
+                        dpg.add_checkbox(label=".xy", tag="format_xy",
+                                         default_value=True)
+                        dpg.add_checkbox(label=".dat", tag="format_dat")
+                        dpg.add_checkbox(label=".chi", tag="format_chi")
+                    with dpg.group(horizontal=True):
+                        dpg.add_checkbox(label=".fxye", tag="format_fxye")
+                        dpg.add_checkbox(label=".svg", tag="format_svg")
+                        dpg.add_checkbox(label=".png", tag="format_png")
 
                     dpg.add_spacer(height=10)
-                    dpg.add_text("Stacked Plot Options:")
+                    dpg.add_text("Stacked Plot Options:",
+                                 color=ColorScheme.TEXT_LIGHT + (255,))
                     dpg.add_checkbox(label="Create Stacked Plot",
-                                   tag="create_stacked_plot")
+                                     tag="create_stacked_plot")
 
                     with dpg.group(horizontal=True):
-                        dpg.add_text("Offset:")
+                        dpg.add_text("Offset:", color=ColorScheme.TEXT_LIGHT + (255,))
                         dpg.add_input_text(tag="stacked_offset",
                                          default_value="auto",
-                                         width=100)
+                                         width=120)
 
                     dpg.add_text("(use 'auto' or number)",
-                               color=ColorScheme.TEXT_LIGHT + (255,))
+                                 color=ColorScheme.TEXT_LIGHT + (255,))
 
     def _create_action_buttons(self):
         """Create action buttons"""
         with dpg.group(horizontal=True):
             dpg.add_spacer(width=10)
-            dpg.add_button(label="Run Integration",
-                         callback=self.run_integration,
-                         width=200, height=40)
-            dpg.add_spacer(width=20)
-            dpg.add_button(label="Interactive Fitting",
-                         callback=self.open_interactive_fitting,
-                         width=200, height=40)
+            ModernButton(
+                parent=dpg.last_container(),
+                text="Run Integration",
+                callback=self.run_integration,
+                bg_color=ColorScheme.PRIMARY,
+                hover_color=ColorScheme.PRIMARY_HOVER,
+                width=210,
+                height=42
+            )
+            dpg.add_spacer(width=14)
+            ModernButton(
+                parent=dpg.last_container(),
+                text="Interactive Fitting",
+                callback=self.open_interactive_fitting,
+                bg_color=ColorScheme.SECONDARY,
+                hover_color=ColorScheme.PRIMARY_HOVER,
+                width=210,
+                height=42
+            )
 
     def _create_volume_calculation_card(self):
         """Create volume calculation card"""
-        with dpg.child_window(border=True, height=300, menubar=False):
-            dpg.add_text("Volume Calculation & Lattice Fitting",
-                        color=ColorScheme.PRIMARY + (255,))
-            dpg.add_separator()
+        with dpg.child_window(border=False):
+            card_tag = CardFrame(parent=dpg.last_container(),
+                                 label="Volume Calculation & Lattice Fitting").tag
 
-            with dpg.group(horizontal=True):
+            with dpg.group(parent=card_tag, horizontal=True):
                 # Left - Input fields
-                with dpg.child_window(width=600, border=False):
+                with dpg.child_window(parent=dpg.last_container(), width=600, border=False):
                     # Input CSV
                     self._create_file_input("Input CSV (Volume Calculation)",
                                           "phase_volume_csv", [".csv"],
@@ -231,40 +239,47 @@ class PowderXRDModule(GUIBase):
                                             "volume_output_input")
 
                 # Right - Crystal system and wavelength
-                with dpg.child_window(width=-1, border=True, menubar=False):
-                    dpg.add_text("Crystal System:")
-                    dpg.add_spacer(height=5)
+                system_card = CardFrame(parent=dpg.last_container(), label="Crystal System")
+                with dpg.group(parent=system_card.tag):
+                    dpg.add_radio_button(
+                        ["FCC", "BCC", "Hexagonal", "Tetragonal"],
+                        tag="crystal_system",
+                        default_value="FCC"
+                    )
 
-                    # Crystal systems in two rows
+                    dpg.add_spacer(height=8)
+
                     with dpg.group(horizontal=True):
-                        dpg.add_radio_button(
-                            ["FCC", "BCC", "Hexagonal", "Tetragonal"],
-                            tag="crystal_system",
-                            default_value="FCC"
-                        )
-
-                    dpg.add_spacer(height=10)
-
-                    # Wavelength
-                    with dpg.group(horizontal=True):
-                        dpg.add_text("Wavelength:")
+                        dpg.add_text("Wavelength:", color=ColorScheme.TEXT_LIGHT + (255,))
                         dpg.add_input_float(tag="wavelength_input",
                                           default_value=0.4133,
-                                          width=100, format="%.4f")
-                        dpg.add_text("Å")
+                                          width=110, format="%.4f")
+                        dpg.add_text("Å", color=ColorScheme.TEXT_LIGHT + (255,))
 
-            dpg.add_spacer(height=10)
+            dpg.add_spacer(height=8)
 
             # Action buttons
-            with dpg.group(horizontal=True):
+            with dpg.group(parent=card_tag, horizontal=True):
                 dpg.add_spacer(width=10)
-                dpg.add_button(label="Calculate Lattice Parameters",
-                             callback=self.run_phase_analysis,
-                             width=280, height=40)
-                dpg.add_spacer(width=20)
-                dpg.add_button(label="Open Interactive EoS GUI",
-                             callback=self.open_interactive_eos_gui,
-                             width=240, height=40)
+                ModernButton(
+                    parent=dpg.last_container(),
+                    text="Calculate Lattice Parameters",
+                    callback=self.run_phase_analysis,
+                    bg_color=ColorScheme.PRIMARY,
+                    hover_color=ColorScheme.PRIMARY_HOVER,
+                    width=280,
+                    height=42
+                )
+                dpg.add_spacer(width=14)
+                ModernButton(
+                    parent=dpg.last_container(),
+                    text="Open Interactive EoS GUI",
+                    callback=self.open_interactive_eos_gui,
+                    bg_color=ColorScheme.SECONDARY,
+                    hover_color=ColorScheme.PRIMARY_HOVER,
+                    width=260,
+                    height=42
+                )
 
     def _create_progress_log(self):
         """Create progress indicator and log area"""
@@ -288,22 +303,36 @@ class PowderXRDModule(GUIBase):
     def _create_file_input(self, label: str, value_key: str,
                           file_types: list, tag: str):
         """Create file input with browse button"""
-        dpg.add_text(label + ":")
+        dpg.add_text(label + ":", color=ColorScheme.TEXT_LIGHT + (255,))
         with dpg.group(horizontal=True):
             dpg.add_input_text(tag=tag, width=-120,
                              default_value=self.values[value_key])
-            dpg.add_button(label="Browse", width=100,
-                         callback=lambda: self._browse_file(tag, file_types))
+            ModernButton(
+                parent=dpg.last_container(),
+                text="Browse",
+                callback=lambda: self._browse_file(tag, file_types),
+                bg_color=ColorScheme.SECONDARY,
+                hover_color=ColorScheme.PRIMARY_HOVER,
+                width=90,
+                height=32
+            )
         dpg.add_spacer(height=5)
 
     def _create_folder_input(self, label: str, value_key: str, tag: str):
         """Create folder input with browse button"""
-        dpg.add_text(label + ":")
+        dpg.add_text(label + ":", color=ColorScheme.TEXT_LIGHT + (255,))
         with dpg.group(horizontal=True):
             dpg.add_input_text(tag=tag, width=-120,
                              default_value=self.values[value_key])
-            dpg.add_button(label="Browse", width=100,
-                         callback=lambda: self._browse_folder(tag))
+            ModernButton(
+                parent=dpg.last_container(),
+                text="Browse",
+                callback=lambda: self._browse_folder(tag),
+                bg_color=ColorScheme.SECONDARY,
+                hover_color=ColorScheme.PRIMARY_HOVER,
+                width=90,
+                height=32
+            )
         dpg.add_spacer(height=5)
 
     def _browse_file(self, input_tag: str, file_types: list):
