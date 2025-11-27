@@ -235,61 +235,57 @@ class RadialIntegrationModule(GUIBase):
 
     def setup_ui(self):
         """Setup the complete UI"""
-        with dpg.child_window(parent=self.parent_tag, border=False, menubar=False, 
-                              autosize_x=True, height=-1):
+        with dpg.child_window(parent=self.parent_tag, border=False, height=-1, width=-1):
             
             # Reference Section
-            self._create_reference_section()
+            with dpg.group():
+                dpg.add_text("🍓 Azimuthal Angle Reference:")
+                dpg.add_text(
+                    "0° = Right (→)  |  90° = Top (↑)  |  180° = Left (←)  |  270° = Bottom (↓)",
+                    color=(107, 76, 122, 255)
+                )
+                dpg.add_text(
+                    "Counter-clockwise rotation from right horizontal",
+                    color=(150, 150, 150, 255)
+                )
+                dpg.add_separator()
             
-            dpg.add_spacer(height=10)
+            # Integration Settings
+            with dpg.collapsing_header(label="Integration Settings", default_open=True):
+                self._create_integration_settings()
             
-            # Integration Settings Card
-            self._create_integration_card()
+            # Azimuthal Angle Settings
+            with dpg.collapsing_header(label="Azimuthal Angle Settings", default_open=True):
+                self._create_azimuthal_settings()
             
-            dpg.add_spacer(height=15)
+            # Output Options
+            with dpg.collapsing_header(label="Output Options", default_open=True):
+                self._create_output_options()
             
-            # Azimuthal Angle Settings Card
-            self._create_azimuthal_card()
+            # Progress
+            with dpg.group():
+                dpg.add_text("Process Progress:")
+                dpg.add_progress_bar(tag="radial_progress", width=-1)
             
-            dpg.add_spacer(height=15)
-            
-            # Output Options Card
-            self._create_output_card()
-            
-            dpg.add_spacer(height=15)
-            
-            # Action Buttons
-            self._create_action_buttons()
-            
-            dpg.add_spacer(height=15)
-            
-            # Progress and Log
-            self._create_progress_log()
+            # Log
+            with dpg.collapsing_header(label="Process Log", default_open=True):
+                dpg.add_input_text(
+                    tag="radial_log",
+                    multiline=True,
+                    readonly=True,
+                    height=200,
+                    width=-1
+                )
 
-    def _create_reference_section(self):
-        """Create azimuthal angle reference section"""
-        with dpg.child_window(height=100, border=True, menubar=False):
-            dpg.add_text("Azimuthal Angle Reference", 
-                        color=ColorScheme.PRIMARY + (255,))
-            dpg.add_spacer(height=5)
-            dpg.add_text("0 deg = Right (->)  |  90 deg = Top (^)  |  180 deg = Left (<-)  |  270 deg = Bottom (v)",
-                        color=ColorScheme.TEXT_DARK + (255,))
-            dpg.add_text("Counter-clockwise rotation from right horizontal",
-                        color=ColorScheme.TEXT_LIGHT + (255,))
-
-    def _create_integration_card(self):
-        """Create integration settings card"""
-        with dpg.child_window(height=280, border=True, menubar=False):
-            dpg.add_text("Integration Settings", 
-                        color=ColorScheme.PRIMARY + (255,))
-            dpg.add_separator()
-            dpg.add_spacer(height=5)
-            
+    def _create_integration_settings(self):
+        """Create integration settings section"""
+        with dpg.group():
             # PONI file
             with dpg.group(horizontal=True):
-                dpg.add_text("PONI File:", width=120)
+                dpg.add_text("PONI File:", width=150)
                 dpg.add_input_text(
                     tag="radial_poni_path",
+                    default_value=self.values['poni_path'],
                     width=400,
                     callback=lambda s, a: self._update_value('poni_path', a)
                 )
@@ -298,26 +294,27 @@ class RadialIntegrationModule(GUIBase):
                     callback=lambda: self._browse_file('poni_path', [("PONI files", "*.poni")])
                 )
             
-            # Mask file (optional)
+            # Mask file
             with dpg.group(horizontal=True):
-                dpg.add_text("Mask File:", width=120)
+                dpg.add_text("Mask File:", width=150)
                 dpg.add_input_text(
                     tag="radial_mask_path",
+                    default_value=self.values['mask_path'],
                     width=400,
                     callback=lambda s, a: self._update_value('mask_path', a)
                 )
                 dpg.add_button(
                     label="Browse",
-                    callback=lambda: self._browse_file('mask_path', [("Mask files", "*.edf;*.npy;*.tif")])
+                    callback=lambda: self._browse_file('mask_path', [("Mask files", "*.edf;*.npy")])
                 )
             
-            # Input files
+            # Input pattern
             with dpg.group(horizontal=True):
-                dpg.add_text("Input .h5 Files:", width=120)
+                dpg.add_text("Input .h5 Files:", width=150)
                 dpg.add_input_text(
                     tag="radial_input_pattern",
+                    default_value=self.values['input_pattern'],
                     width=400,
-                    hint="Path or pattern (e.g., /path/*.h5)",
                     callback=lambda s, a: self._update_value('input_pattern', a)
                 )
                 dpg.add_button(
@@ -327,9 +324,10 @@ class RadialIntegrationModule(GUIBase):
             
             # Output directory
             with dpg.group(horizontal=True):
-                dpg.add_text("Output Directory:", width=120)
+                dpg.add_text("Output Directory:", width=150)
                 dpg.add_input_text(
                     tag="radial_output_dir",
+                    default_value=self.values['output_dir'],
                     width=400,
                     callback=lambda s, a: self._update_value('output_dir', a)
                 )
@@ -338,224 +336,112 @@ class RadialIntegrationModule(GUIBase):
                     callback=lambda: self._browse_folder('output_dir')
                 )
             
-            dpg.add_spacer(height=5)
-            
             # Parameters
             with dpg.group(horizontal=True):
-                dpg.add_text("Number of Points:", width=120)
+                dpg.add_text("Number of Points:")
                 dpg.add_input_int(
                     tag="radial_npt",
-                    default_value=4000,
+                    default_value=self.values['npt'],
                     width=100,
                     callback=lambda s, a: self._update_value('npt', a)
                 )
                 
-                dpg.add_spacer(width=20)
                 dpg.add_text("Unit:")
                 dpg.add_combo(
                     ['2th_deg', 'q_A^-1', 'r_mm'],
                     tag="radial_unit",
-                    default_value='2th_deg',
+                    default_value=self.values['unit'],
                     width=120,
                     callback=lambda s, a: self._update_value('unit', a)
                 )
-            
-            # Dataset path
-            with dpg.group(horizontal=True):
-                dpg.add_text("HDF5 Dataset Path:", width=120)
-                dpg.add_input_text(
-                    tag="radial_dataset_path",
-                    default_value="entry/data/data",
-                    width=300,
-                    callback=lambda s, a: self._update_value('dataset_path', a)
-                )
 
-    def _create_azimuthal_card(self):
-        """Create azimuthal angle settings card"""
-        with dpg.child_window(height=300, border=True, menubar=False):
-            dpg.add_text("Azimuthal Angle Settings", 
-                        color=ColorScheme.PRIMARY + (255,))
-            dpg.add_separator()
-            dpg.add_spacer(height=5)
-            
+    def _create_azimuthal_settings(self):
+        """Create azimuthal angle settings"""
+        with dpg.group():
             # Mode selection
             dpg.add_text("Integration Mode:")
             dpg.add_radio_button(
-                ['Single Sector', 'Multiple Sectors (Preset)', 'Bin Mode'],
+                ['Single Sector', 'Multiple Sectors', 'Bin Mode'],
                 tag="radial_mode",
                 default_value='Single Sector',
-                callback=self._on_mode_changed,
-                horizontal=True
+                callback=self._on_mode_changed
             )
             
-            dpg.add_spacer(height=10)
-            
             # Single sector settings
-            with dpg.child_window(tag="radial_single_group", height=150, 
-                                 border=True, menubar=False, show=True):
-                dpg.add_text("Single Sector Configuration:")
+            with dpg.group(tag="single_sector_group"):
                 dpg.add_separator()
-                dpg.add_spacer(height=5)
-                
+                dpg.add_text("Single Sector Configuration:")
                 with dpg.group(horizontal=True):
-                    dpg.add_text("Start Angle (deg):", width=120)
+                    dpg.add_text("Start Angle (°):")
                     dpg.add_input_double(
                         tag="radial_azimuth_start",
-                        default_value=0.0,
+                        default_value=self.values['azimuth_start'],
                         width=100,
                         format="%.1f",
                         callback=lambda s, a: self._update_value('azimuth_start', a)
                     )
-                    
-                    dpg.add_spacer(width=20)
-                    dpg.add_text("End Angle (deg):", width=120)
+                    dpg.add_text("End Angle (°):")
                     dpg.add_input_double(
                         tag="radial_azimuth_end",
-                        default_value=90.0,
+                        default_value=self.values['azimuth_end'],
                         width=100,
                         format="%.1f",
                         callback=lambda s, a: self._update_value('azimuth_end', a)
                     )
-                
                 with dpg.group(horizontal=True):
-                    dpg.add_text("Sector Label:", width=120)
+                    dpg.add_text("Sector Label:")
                     dpg.add_input_text(
                         tag="radial_sector_label",
-                        default_value="Sector_1",
+                        default_value=self.values['sector_label'],
                         width=150,
                         callback=lambda s, a: self._update_value('sector_label', a)
                     )
             
-            # Multiple sectors (preset)
-            with dpg.child_window(tag="radial_multiple_group", height=150,
-                                 border=True, menubar=False, show=False):
-                dpg.add_text("Multiple Sectors - Preset Configuration:")
-                dpg.add_separator()
-                dpg.add_spacer(height=5)
-                
-                dpg.add_text("Select Preset:")
-                dpg.add_radio_button(
-                    ['Quadrants (4 x 90 deg)', 'Octants (8 x 45 deg)', 'Custom Bins'],
-                    tag="radial_preset",
-                    default_value='Quadrants (4 x 90 deg)',
-                    callback=lambda s, a: self._update_value('preset', 
-                        'quadrants' if 'Quadrants' in a else 'octants' if 'Octants' in a else 'custom')
-                )
-            
-            # Bin mode settings
-            with dpg.child_window(tag="radial_bin_group", height=150,
-                                 border=True, menubar=False, show=False):
-                dpg.add_text("Bin Mode Configuration:")
-                dpg.add_separator()
-                dpg.add_spacer(height=5)
-                
-                with dpg.group(horizontal=True):
-                    dpg.add_text("Start Angle (deg):", width=120)
-                    dpg.add_input_double(
-                        tag="radial_bin_start",
-                        default_value=0.0,
-                        width=100,
-                        format="%.1f",
-                        callback=lambda s, a: self._update_value('bin_start', a)
-                    )
-                    
-                    dpg.add_spacer(width=20)
-                    dpg.add_text("End Angle (deg):", width=120)
-                    dpg.add_input_double(
-                        tag="radial_bin_end",
-                        default_value=360.0,
-                        width=100,
-                        format="%.1f",
-                        callback=lambda s, a: self._update_value('bin_end', a)
-                    )
-                
-                with dpg.group(horizontal=True):
-                    dpg.add_text("Bin Step (deg):", width=120)
-                    dpg.add_input_double(
-                        tag="radial_bin_step",
-                        default_value=10.0,
-                        width=100,
-                        format="%.1f",
-                        callback=lambda s, a: self._update_value('bin_step', a)
-                    )
-
-    def _create_output_card(self):
-        """Create output options card"""
-        with dpg.child_window(height=120, border=True, menubar=False):
-            dpg.add_text("Output Options", 
-                        color=ColorScheme.PRIMARY + (255,))
+            # Run button
             dpg.add_separator()
-            dpg.add_spacer(height=5)
-            
+            with dpg.group(horizontal=True):
+                dpg.add_button(
+                    label="🚀 Run Integration",
+                    callback=self.run_integration,
+                    width=200,
+                    height=40
+                )
+                dpg.add_button(
+                    label="⏹ Stop",
+                    callback=self.stop_integration,
+                    width=100,
+                    height=40
+                )
+
+    def _create_output_options(self):
+        """Create output options section"""
+        with dpg.group():
             dpg.add_text("Select Output Formats:")
             with dpg.group(horizontal=True):
                 dpg.add_checkbox(
-                    label=".xy (X-Y data)",
+                    label=".xy",
                     tag="radial_format_xy",
-                    default_value=True,
+                    default_value=self.values['format_xy'],
                     callback=lambda s, a: self._update_value('format_xy', a)
                 )
                 dpg.add_checkbox(
-                    label=".dat (Tab-delimited)",
+                    label=".dat",
                     tag="radial_format_dat",
-                    default_value=False,
+                    default_value=self.values['format_dat'],
                     callback=lambda s, a: self._update_value('format_dat', a)
                 )
                 dpg.add_checkbox(
-                    label=".chi (GSAS format)",
+                    label=".chi",
                     tag="radial_format_chi",
-                    default_value=False,
+                    default_value=self.values['format_chi'],
                     callback=lambda s, a: self._update_value('format_chi', a)
                 )
             
             dpg.add_checkbox(
                 label="Generate CSV Summary",
                 tag="radial_output_csv",
-                default_value=True,
+                default_value=self.values['output_csv'],
                 callback=lambda s, a: self._update_value('output_csv', a)
-            )
-
-    def _create_action_buttons(self):
-        """Create action buttons"""
-        with dpg.group(horizontal=True):
-            dpg.add_button(
-                label="Run Integration",
-                callback=self.run_integration,
-                width=200,
-                height=40
-            )
-            dpg.add_button(
-                label="Stop",
-                callback=self.stop_integration,
-                width=100,
-                height=40
-            )
-            dpg.add_button(
-                label="Clear Log",
-                callback=self.clear_log,
-                width=100,
-                height=40
-            )
-
-    def _create_progress_log(self):
-        """Create progress bar and log section"""
-        with dpg.child_window(height=300, border=True, menubar=False):
-            dpg.add_text("Process Progress & Log", 
-                        color=ColorScheme.PRIMARY + (255,))
-            dpg.add_separator()
-            dpg.add_spacer(height=5)
-            
-            dpg.add_text("Progress:")
-            dpg.add_progress_bar(tag="radial_progress", width=-1, default_value=0.0)
-            
-            dpg.add_spacer(height=10)
-            dpg.add_text("Log:")
-            dpg.add_input_text(
-                tag="radial_log",
-                multiline=True,
-                readonly=True,
-                height=180,
-                width=-1
             )
 
     def _on_mode_changed(self, sender, app_data):
@@ -577,78 +463,47 @@ class RadialIntegrationModule(GUIBase):
         self.values[key] = value
 
     def _browse_file(self, key: str, file_types: List[Tuple[str, str]]):
-        """Browse for file using DPG file dialog"""
-        def callback(sender, app_data):
-            selections = app_data['selections']
-            if selections:
-                file_path = list(selections.values())[0]
-                self.values[key] = file_path
-                dpg.set_value(f"radial_{key}", file_path)
-        
-        # Create file dialog
-        with dpg.file_dialog(
-            directory_selector=False,
-            show=True,
-            callback=callback,
-            width=700,
-            height=400,
-            modal=True
-        ):
-            for desc, pattern in file_types:
-                dpg.add_file_extension(pattern.replace('*.', '.'))
+        """Browse for file using tkinter file dialog"""
+        import tkinter as tk
+        from tkinter import filedialog
+
+        root = tk.Tk()
+        root.withdraw()
+        filename = filedialog.askopenfilename(filetypes=file_types)
+        root.destroy()
+
+        if filename:
+            dpg.set_value(f"radial_{key}", filename)
+            self.values[key] = filename
 
     def _browse_folder(self, key: str):
-        """Browse for folder using DPG file dialog"""
-        def callback(sender, app_data):
-            folder_path = app_data['file_path_name']
-            self.values[key] = folder_path
-            dpg.set_value(f"radial_{key}", folder_path)
-        
-        # Create directory dialog
-        with dpg.file_dialog(
-            directory_selector=True,
-            show=True,
-            callback=callback,
-            width=700,
-            height=400,
-            modal=True
-        ):
-            pass
+        """Browse for folder using tkinter folder dialog"""
+        import tkinter as tk
+        from tkinter import filedialog
 
-    def log(self, message: str):
+        root = tk.Tk()
+        root.withdraw()
+        foldername = filedialog.askdirectory()
+        root.destroy()
+
+        if foldername:
+            dpg.set_value(f"radial_{key}", foldername)
+            self.values[key] = foldername
+
+    def log(self, message):
         """Add message to log"""
-        if dpg.does_item_exist("radial_log"):
-            current = dpg.get_value("radial_log")
-            dpg.set_value("radial_log", current + message + "\n")
-
-    def clear_log(self):
-        """Clear log"""
-        if dpg.does_item_exist("radial_log"):
-            dpg.set_value("radial_log", "")
+        current = dpg.get_value("radial_log")
+        dpg.set_value("radial_log", current + message + "\n")
 
     def run_integration(self):
         """Run integration"""
-        # Validate inputs
-        if not self.values['poni_path']:
-            MessageDialog.show_error("Error", "Please specify PONI calibration file")
+        if not self.values['poni_path'] or not self.values['output_dir']:
+            self._show_error("Error", "Please specify PONI file and output directory")
             return
-        
-        if not self.values['output_dir']:
-            MessageDialog.show_error("Error", "Please specify output directory")
-            return
-        
-        if not self.values['input_pattern']:
-            MessageDialog.show_error("Error", "Please specify input files or folder")
-            return
-        
-        if not PYFAI_AVAILABLE:
-            MessageDialog.show_error("Error", "pyFAI library is not available. Please install it.")
-            return
-        
-        # Start processing in background thread
+
         self.processing = True
         self.stop_processing = False
-        
+
         thread = threading.Thread(target=self._run_integration_thread, daemon=True)
         thread.start()
 
@@ -656,159 +511,74 @@ class RadialIntegrationModule(GUIBase):
         """Background integration thread"""
         try:
             dpg.set_value("radial_progress", 0.0)
-            self.log("="*60)
-            self.log("Starting azimuthal integration...")
-            self.log("="*60)
-            
+
             # Get integrator
-            self.log(f"Loading calibration: {self.values['poni_path']}")
             integrator = XRDAzimuthalIntegrator(
                 self.values['poni_path'], 
                 self.values.get('mask_path', None)
             )
-            self.log("[OK] Calibration loaded")
-            
+
             # Get h5 files
             if os.path.isdir(self.values['input_pattern']):
                 h5_files = sorted(glob.glob(os.path.join(self.values['input_pattern'], "*.h5")))
             else:
                 h5_files = sorted(glob.glob(self.values['input_pattern']))
-            
+
             if not h5_files:
-                self.log("[ERROR] No .h5 files found")
+                self.log("❌ No .h5 files found")
                 return
-            
+
             total = len(h5_files)
-            self.log(f"Found {total} file(s) to process")
-            
-            # Create output directory
-            os.makedirs(self.values['output_dir'], exist_ok=True)
-            
-            # Get save formats
-            save_formats = []
-            if self.values['format_xy']:
-                save_formats.append('xy')
-            if self.values['format_dat']:
-                save_formats.append('dat')
-            if self.values['format_chi']:
-                save_formats.append('chi')
-            
-            if not save_formats:
-                save_formats = ['xy']  # Default
-            
-            # Get sectors based on mode
-            sectors = self._get_sectors()
-            
-            self.log(f"Processing mode: {self.values['mode']}")
-            self.log(f"Number of sectors: {len(sectors)}")
-            self.log("")
-            
-            # Process each file
+            self.log(f"📊 Processing {total} file(s)...\n")
+
             for i, h5_file in enumerate(h5_files, 1):
                 if self.stop_processing:
-                    self.log("")
-                    self.log("Processing stopped by user")
+                    self.log("\n⏹ Processing stopped by user")
                     break
-                
+
                 self.log(f"[{i}/{total}] Processing: {os.path.basename(h5_file)}")
-                
+
                 try:
-                    # Process each sector
-                    for sector_idx, (start, end, label) in enumerate(sectors, 1):
-                        integrator.integrate_file(
-                            h5_file,
-                            self.values['output_dir'],
-                            azimuth_range=(start, end),
-                            npt=self.values['npt'],
-                            unit=self.values['unit'],
-                            sector_label=label,
-                            dataset_path=self.values['dataset_path'],
-                            save_formats=save_formats
-                        )
-                    
-                    self.log(f"[{i}/{total}] [OK] Completed")
-                    
+                    integrator.integrate_file(
+                        h5_file,
+                        self.values['output_dir'],
+                        npt=self.values['npt'],
+                        unit=self.values['unit'],
+                        azimuth_range=(self.values['azimuth_start'], self.values['azimuth_end']),
+                        sector_label=self.values['sector_label'],
+                        dataset_path=self.values['dataset_path']
+                    )
+                    self.log(f"[{i}/{total}] ✓ Completed\n")
                 except Exception as e:
-                    self.log(f"[{i}/{total}] [ERROR] {str(e)}")
-                    print(traceback.format_exc())
-                
-                # Update progress
+                    self.log(f"[{i}/{total}] ❌ Error: {str(e)}\n")
+
                 progress = i / total
                 dpg.set_value("radial_progress", progress)
-            
-            self.log("")
-            self.log("="*60)
-            self.log("[OK] Integration complete!")
-            self.log(f"Output directory: {self.values['output_dir']}")
-            self.log("="*60)
-            
+
+            self.log(f"\n{'='*60}")
+            self.log("✅ Integration complete!")
+            self.log(f"{'='*60}")
+
         except Exception as e:
-            self.log("")
-            self.log(f"[ERROR] {str(e)}")
-            print(traceback.format_exc())
+            self.log(f"❌ Error: {str(e)}")
         finally:
             self.processing = False
             dpg.set_value("radial_progress", 1.0)
 
-    def _get_sectors(self) -> List[Tuple[float, float, str]]:
-        """
-        Get list of sectors based on current mode
-        
-        Returns:
-            List of (start_angle, end_angle, label) tuples
-        """
-        sectors = []
-        
-        if self.values['mode'] == 'single':
-            # Single sector
-            sectors.append((
-                self.values['azimuth_start'],
-                self.values['azimuth_end'],
-                self.values['sector_label']
-            ))
-            
-        elif self.values['mode'] == 'multiple':
-            # Multiple sectors (preset)
-            preset = self.values.get('preset', 'quadrants')
-            
-            if preset == 'quadrants':
-                # 4 quadrants
-                for i in range(4):
-                    start = i * 90.0
-                    end = (i + 1) * 90.0
-                    label = f"Q{i+1}_{int(start)}-{int(end)}"
-                    sectors.append((start, end, label))
-                    
-            elif preset == 'octants':
-                # 8 octants
-                for i in range(8):
-                    start = i * 45.0
-                    end = (i + 1) * 45.0
-                    label = f"Oct{i+1}_{int(start)}-{int(end)}"
-                    sectors.append((start, end, label))
-                    
-        elif self.values['mode'] == 'bin':
-            # Bin mode
-            start = self.values['bin_start']
-            end = self.values['bin_end']
-            step = self.values['bin_step']
-            
-            current = start
-            bin_num = 1
-            while current < end:
-                bin_end = min(current + step, end)
-                label = f"Bin{bin_num}_{int(current)}-{int(bin_end)}"
-                sectors.append((current, bin_end, label))
-                current = bin_end
-                bin_num += 1
-        
-        return sectors
-
     def stop_integration(self):
         """Stop ongoing integration"""
         self.stop_processing = True
-        self.log("")
-        self.log("Stopping integration...")
+        self.log("\n⏹ Stopping integration...")
+
+    def _show_error(self, title, message):
+        """Show error dialog"""
+        with dpg.window(label=title, modal=True, show=True, tag="radial_error_modal"):
+            dpg.add_text(message)
+            dpg.add_button(
+                label="OK",
+                width=75,
+                callback=lambda: dpg.delete_item("radial_error_modal")
+            )
 
     def cleanup(self):
         """Clean up resources"""
