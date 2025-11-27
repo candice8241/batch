@@ -100,8 +100,8 @@ class XRDProcessingGUI(GUIBase):
             with dpg.child_window(
                 tag="content_area",
                 border=False,
-                autosize_x=True,
-                autosize_y=True
+                width=-1,
+                height=-1
             ):
                 pass
 
@@ -165,10 +165,18 @@ class XRDProcessingGUI(GUIBase):
             self._show_module_error("Radial XRD Module", str(e))
 
     def _load_single_crystal_module(self):
-        """Load single crystal module (placeholder)"""
-        self._show_module_placeholder("Single Crystal XRD", 
-            "single_crystal_module_dpg.py", 
-            ["Coming soon..."])
+        """Load single crystal module"""
+        try:
+            from single_crystal_module_dpg import SingleCrystalModule
+            
+            if self.single_crystal_module is None:
+                self.single_crystal_module = SingleCrystalModule("content_area")
+            
+            self.single_crystal_module.setup_ui()
+            
+        except Exception as e:
+            # Fallback to error display if module fails to load
+            self._show_module_error("Single Crystal XRD Module", str(e))
     
     def _show_module_placeholder(self, title: str, filename: str, features: list):
         """Show placeholder for module not yet loaded"""
