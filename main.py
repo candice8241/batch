@@ -326,10 +326,13 @@ def main():
             resizable=False,
         )
 
-        _show_startup_window(lambda: _main_app_callback())
-
+        # Dear PyGui requires the context to be fully setup before frame callbacks
+        # (used by the splash animation) can be registered. Move the splash
+        # creation after setup/show to avoid initialization errors on startup.
         dpg.setup_dearpygui()
         dpg.show_viewport()
+
+        _show_startup_window(lambda: _main_app_callback())
         dpg.start_dearpygui()
         dpg.destroy_context()
     except Exception:
